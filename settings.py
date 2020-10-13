@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'health_check.db',  # stock Django health checkers
     'rest_framework',
     'drf_yasg',
-    'api'
+    'api',
+    'api.products'
 ]
 
 MIDDLEWARE = [
