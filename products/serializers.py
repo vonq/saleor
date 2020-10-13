@@ -1,11 +1,11 @@
 from rest_framework import serializers
 
-from api.products.models import ChannelProduct, Location
+from api.products.models import Product, Location
 
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ChannelProduct
+        model = Product
         fields = "__all__"
 
 
