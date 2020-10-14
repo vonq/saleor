@@ -35,18 +35,34 @@ class JobTitle(models.Model):
 
 class Location(models.Model):
     geocoder_id = models.CharField(max_length=64, null=True, unique=True)
-
     place_name = models.CharField(max_length=200, null=True)
     text = models.CharField(max_length=200, null=True)
     place_type = ArrayField(base_field=models.CharField(max_length=10, blank=False), default=list,
                             blank=False)
 
     within = models.ForeignKey('Location',  on_delete=models.SET_NULL, null=True, blank=True)
-
+    mapbox_context = ArrayField(base_field=models.CharField(max_length=50, blank=False), default=list)
     short_code = models.CharField(max_length=8, null=True)
 
     def __str__(self):
         return self.place_name
+
+    @classmethod
+    def from_mapbox_response(cls, mapbox_response: list):
+        locations = []
+        for result in mapbox_response:
+            location = cls()
+            location.geocoder_id = result['id']
+            location.place_name = result['place_name']
+            location.text = result['text']
+            location.place_type = result['place_type']
+            if 'short_code' in result['properties']:
+                location.short_code = result['properties']['short_code']
+            if 'context' in result:
+                location.mapbox_context = result['context']
+
+            locations.append(location)
+        return locations
 
 
 class Channel(models.Model):

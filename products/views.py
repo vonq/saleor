@@ -12,7 +12,8 @@ class LocationSearchViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         text = self.request.query_params['text']
         response = Geocoder.geocode(text)
-        return response
+        location = Location.from_mapbox_response(response)
+        return location
 
     def get_serializer_class(self):
         return LocationSerializer
