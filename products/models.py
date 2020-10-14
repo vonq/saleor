@@ -46,7 +46,7 @@ class Location(models.Model):
     short_code = models.CharField(max_length=8, null=True)
 
     def __str__(self):
-        return self.name
+        return self.place_name
 
 
 class Channel(models.Model):
@@ -60,6 +60,9 @@ class Channel(models.Model):
         ('aggregator', 'Aggregator')
     ]
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='job board')
+
+    def __str__(self):
+        return self.name
 
 
 class Product(models.Model):
