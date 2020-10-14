@@ -83,12 +83,12 @@ class Location(models.Model):
         locations = []
         for result in mapbox_response:
             location = cls()
-            location.geocoder_id = result['id']
-            location.fully_qualified_place_name = result['place_name']
-            location.canonical_name = result['text']
-            location.place_type = result['place_type']
+            location.mapbox_id = result['id']
+            location.mapbox_placename = result['place_name']
+            location.text = result['text']
+            location.mapbox_place_type = result['place_type']
             if 'short_code' in result['properties']:
-                location.short_code = result['properties']['short_code']
+                location.mapbox_shortcode = result['properties']['short_code']
             if 'context' in result:
                 location.mapbox_context = result['context']
 
