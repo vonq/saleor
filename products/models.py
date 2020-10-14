@@ -41,7 +41,7 @@ class Location(models.Model):
     place_type = ArrayField(base_field=models.CharField(max_length=10, blank=False), default=list,
                             blank=False)
 
-    within = models.ManyToManyField('Location', blank=False)
+    within = models.ForeignKey('Location',  on_delete=models.SET_NULL, null=True, blank=True)
 
     short_code = models.CharField(max_length=8, null=True)
 
