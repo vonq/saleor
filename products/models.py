@@ -57,7 +57,7 @@ class Location(models.Model):
 
 class Channel(models.Model):
     name = models.CharField(max_length=200)
-    url = models.CharField(max_length=300)
+    url = models.URLField(max_length=300, unique=True)
     TYPE_CHOICES = [
         ('job board', 'Job Board'),
         ('social media', 'Social Media'),
@@ -70,7 +70,7 @@ class Channel(models.Model):
 
 class Product(models.Model):
     title = models.CharField(max_length=200)
-    url = models.CharField(max_length=300)
+    url = models.URLField(max_length=300, unique=True)
     channel = models.ForeignKey(Channel, on_delete=models.SET_NULL, null=True, blank=True)
     description = models.TextField(default='')
     industries = models.ManyToManyField(
