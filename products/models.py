@@ -34,15 +34,32 @@ class JobTitle(models.Model):
 
 
 class Location(models.Model):
+    name = models.CharField(max_length=200)
+    desq_name_en = models.CharField(max_length=100)
+    desq_country_code = models.CharField(max_length=3)
     geocoder_id = models.CharField(max_length=64, null=True, unique=True)
     place_name = models.CharField(max_length=200, null=True)
     text = models.CharField(max_length=200, null=True)
     place_type = ArrayField(base_field=models.CharField(max_length=10, blank=False), default=list,
                             blank=False)
-
-    within = models.ForeignKey('Location',  on_delete=models.SET_NULL, null=True, blank=True)
-    mapbox_context = ArrayField(base_field=models.CharField(max_length=50, blank=False), default=list)
     short_code = models.CharField(max_length=8, null=True)
+
+    # within should only be null for 'Global'.
+    # To be deprecated once we switch to mapbox (or some other 3rd party)
+    within = models.ForeignKey('Location', on_delete=models.SET_NULL, null=True,
+                               blank=True)
+    # To be deprecated once we switch to mapbox (or some other 3rd party)
+    country_code = models.CharField(max_length=3, null=True)
+
+    # mapbox fields
+    mapbox_id = models.CharField(max_length=50, null=True, blank=True)
+    mapbox_text = models.CharField(max_length=100, null=True, blank=True)
+    mapbox_placename = models.CharField(max_length=300, null=True, blank=True)
+    mapbox_context = ArrayField(base_field=models.CharField(max_length=50, blank=False), default=list)
+    mapbox_place_type = models.CharField(max_length=500, null=True, blank=True)  # can be a list
+    mapbox_shortcode = models.CharField(max_length=10, null=True, blank=True)
+    mapbox_within = models.ForeignKey('Location', on_delete=models.CASCADE, null=True, blank=True,
+                                      related_name='mapbox_location')  # link up
 
     def __str__(self):
         return self.place_name
