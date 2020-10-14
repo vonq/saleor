@@ -122,6 +122,9 @@ class Product(models.Model):
     is_deleted = models.BooleanField(default=True)
     is_archived = models.BooleanField(default=True)
 
+    # Available_in_ATS = models.BooleanField(default=True)
+    # Available_in_JMP = models.BooleanField(default=True)
+
     product_solution = models.CharField(max_length=20, null=True)
 
     locations = models.ManyToManyField(Location, related_name="locations", null=True, blank=True)
