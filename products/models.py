@@ -34,22 +34,34 @@ class JobTitle(models.Model):
 
 
 class Location(models.Model):
-    name = models.CharField(max_length=200)
-    desq_name_en = models.CharField(max_length=100)
-    desq_country_code = models.CharField(max_length=3)
-    geocoder_id = models.CharField(max_length=64, null=True, unique=True)
-    place_name = models.CharField(max_length=200, null=True)
-    text = models.CharField(max_length=200, null=True)
-    place_type = ArrayField(base_field=models.CharField(max_length=10, blank=False), default=list,
-                            blank=False)
-    short_code = models.CharField(max_length=8, null=True)
+    # name = models.CharField(max_length=200)
 
-    # within should only be null for 'Global'.
-    # To be deprecated once we switch to mapbox (or some other 3rd party)
-    within = models.ForeignKey('Location', on_delete=models.SET_NULL, null=True,
-                               blank=True)
-    # To be deprecated once we switch to mapbox (or some other 3rd party)
-    country_code = models.CharField(max_length=3, null=True)
+    @property
+    def place_name(self):
+        return self.mapbox_placename
+
+    @property
+    def place_text(self):
+        return self.mapbox_placename
+
+    @property
+    def place_type(self):
+        return self.mapbox_place_type
+
+    @property
+    def geocoder_id(self):
+        return self.mapbox_id
+
+    @property
+    def short_code(self):
+        return self.mapbox_shortcode
+
+    @property
+    def within(self):
+        return self.mapbox_context | self.mapbox_within
+
+    desq_name_en = models.CharField(max_length=100, null=True)
+    desq_country_code = models.CharField(max_length=3, null=True)
 
     # mapbox fields
     mapbox_id = models.CharField(max_length=50, null=True, blank=True)
