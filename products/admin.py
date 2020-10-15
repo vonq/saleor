@@ -15,6 +15,7 @@ class ProductAdmin(admin.ModelAdmin):
     pass
 
 
+
 @admin.register(Channel)
 class ChannelAdmin(admin.ModelAdmin):
     fields = ['name', 'url', 'type']
@@ -38,4 +39,12 @@ class JobFunctionAdmin(admin.ModelAdmin):
     fields = ['name', 'parent']
     list_display = ('name', 'parent')
     search_fields = ('name',)
+    pass
+
+
+@admin.register(Location)
+class LocationAdmin(admin.ModelAdmin):
+    list_display = ('place_name', 'place_text', 'place_type')
+    search_fields = ('place_name', 'place_text')
+
     pass
