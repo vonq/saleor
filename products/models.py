@@ -143,7 +143,7 @@ class Product(models.Model):
 
     interests = models.CharField(max_length=200, default='', blank=True, null=True)
 
-    salesforce_id = models.CharField(max_length=20, null=True)
+    salesforce_id = models.CharField(max_length=36, null=True)
     salesforce_product_type = models.CharField(max_length=30, null=True)
     desq_product_id = models.BigIntegerField(null=True)
 
