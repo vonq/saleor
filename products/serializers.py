@@ -10,6 +10,11 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class LocationSerializer(serializers.ModelSerializer):
+    id = serializers.SerializerMethodField('get_geocoder_id')
+
+    def get_geocoder_id(self, obj):
+        return obj.geocoder_id
+
     class Meta:
         model = Location
-        fields = "__all__"
+        fields = ("id", "name", "place_text", "place_type", "within")
