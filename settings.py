@@ -28,7 +28,7 @@ DEBUG = True
 ALLOWED_HOSTS = [
     '.pkb.web-acceptance.vonq-aws.com',
     '.pkb.web-acceptance.vonq.int',
-    '.vonq.int' # This will cover nginx host renaming for health check
+    '.vonq.int'  # This will cover nginx host renaming for health check
 ]
 
 # Application definition
