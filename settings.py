@@ -25,7 +25,11 @@ SECRET_KEY = 'z+j#(4au++@zc_)99@z$ouf+e^f4n5*6i^khjjav^_jn8u!m2y'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '.pkb.web-acceptance.vonq-aws.com',
+    '.pkb.web-acceptance.vonq.int',
+    'localhost'
+]
 
 # Application definition
 
