@@ -13,6 +13,12 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 from pathlib import Path
 import os
 
+
+def is_development() -> bool:
+    """ Returns true if environment is development """
+    return os.getenv('ENV', 'dev') == 'dev'
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -23,13 +29,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'z+j#(4au++@zc_)99@z$ouf+e^f4n5*6i^khjjav^_jn8u!m2y'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = True if is_development else False
 
 ALLOWED_HOSTS = [
-    '.pkb.web-acceptance.vonq-aws.com',
-    '.pkb.web-acceptance.vonq.int',
-    '.vonq.int'  # This will cover nginx host renaming for health check
-]
+                    '.pkb.web-acceptance.vonq-aws.com',
+                    '.pkb.web-acceptance.vonq.int',
+                    '.vonq.int'  # This will cover nginx host renaming for health check
+                ] + ['localhost'] if is_development else []
 
 # Application definition
 
