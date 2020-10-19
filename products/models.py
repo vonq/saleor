@@ -34,15 +34,13 @@ class JobTitle(models.Model):
 
 
 class Location(models.Model):
-    # name = models.CharField(max_length=200)
-
     @property
     def place_name(self):
         return self.mapbox_placename
 
     @property
     def place_text(self):
-        return self.mapbox_placename
+        return self.mapbox_text
 
     @property
     def place_type(self):
@@ -58,7 +56,7 @@ class Location(models.Model):
 
     @property
     def within(self):
-        return self.mapbox_context | self.mapbox_within
+        return self.mapbox_within
 
     desq_name_en = models.CharField(max_length=100, null=True)
     desq_country_code = models.CharField(max_length=3, null=True)
