@@ -22,7 +22,6 @@ class ChannelAdmin(admin.ModelAdmin):
     list_display = ('name', 'url', 'type')
     list_filter = ('type',)
     search_fields = ('name',)
-    pass
 
 
 @admin.register(JobTitle)
@@ -31,7 +30,6 @@ class JobTitleAdmin(admin.ModelAdmin):
     list_display = ('name', 'jobFunction', 'industry', 'canonical', 'alias_of', 'active')
     list_filter = ('jobFunction', 'canonical', 'active')
     search_fields = ('name',)
-    pass
 
 
 @admin.register(JobFunction)
@@ -39,12 +37,9 @@ class JobFunctionAdmin(admin.ModelAdmin):
     fields = ['name', 'parent']
     list_display = ('name', 'parent')
     search_fields = ('name',)
-    pass
 
 
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
     list_display = ('place_name', 'place_text', 'place_type')
     search_fields = ('place_name', 'place_text')
-
-    pass
