@@ -72,7 +72,11 @@ class Location(models.Model):
                                       related_name='mapbox_location')  # link up
 
     def __str__(self):
-        return self.place_name
+        if self.mapbox_placename:
+            return "Mapbox name: {}".format(self.mapbox_placename)
+        if self.desq_name_en:
+            return "Desq name: {}".format(self.desq_name_en)
+        return "-Missing name-"
 
     @classmethod
     def from_mapbox_response(cls, mapbox_response: list):
@@ -105,7 +109,7 @@ class Channel(models.Model):
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='job board')
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
 
 class Product(models.Model):
@@ -149,4 +153,4 @@ class Product(models.Model):
     similarweb_top_country_shares = models.TextField(null=True, blank=True, default=None)
 
     def __str__(self):
-        return self.title + ' : ' + self.url
+        return "{}:{}".format(self.title, self.url)
