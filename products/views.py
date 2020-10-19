@@ -12,7 +12,9 @@ class LocationSearchViewSet(viewsets.ModelViewSet):
     models = Location
 
     def get_queryset(self):
-        text = self.request.query_params['text']
+        text = self.request.query_params.get('text')
+        if not text:
+            return None
         response = Geocoder.geocode(text)
         location = Location.from_mapbox_response(response)
         return location
