@@ -8,11 +8,10 @@ from api.products.models import Product, Channel, JobTitle, JobFunction
 class ProductAdmin(admin.ModelAdmin):
     fields = ['title', 'url', 'channel', 'description', 'industries', 'job_functions', 'is_active', 'product_solution',
               'locations']
-    list_display = ('title', 'url', 'is_active')
-    list_filter = ('is_active', 'industries', 'job_functions', 'locations')
-    filter_horizontal = ('industries', 'job_functions')
+    # list_display = ('title', 'url', 'is_active')
+    # list_filter = ('is_active', 'industries', 'job_functions', 'locations')
+    # filter_horizontal = ('industries', 'job_functions')
     search_fields = ('title', 'description')
-    pass
 
 
 
