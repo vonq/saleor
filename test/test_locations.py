@@ -70,8 +70,7 @@ class LocationsTest(TestCase):
         resp = self.client.get(reverse("api.products:products") + "?locationId=place.12006143788019830")
 
         self.assertEquals(resp.status_code, 200)
-
-        self.assertTrue(len(resp.json()) == 1)
+        self.assertEqual(len(resp.json()), 1)
         self.assertEquals(resp.json()[0]["title"], "Something in Reading")
 
         # Search for a product in England
@@ -80,17 +79,20 @@ class LocationsTest(TestCase):
         )
 
         self.assertEquals(resp.status_code, 200)
-
-        self.assertTrue(len(resp.json()) == 2)
+        self.assertEqual(len(resp.json()), 2)
 
         # Search for a product in UK
         resp = self.client.get(
             reverse("api.products:products") + "?locationId=country.12405201072814600"
         )
-
         self.assertEquals(resp.status_code, 200)
+        self.assertEqual(len(resp.json()), 3)
 
-        self.assertTrue(len(resp.json()) == 3)
+        # Search for a product in Slough OR Reading
+        resp = self.client.get(
+            reverse("api.products:products") + "?locationId=place.17224449158261700&locationId=place.12006143788019830"
+        )
+        self.assertEqual(len(resp.json()), 2)
 
         # TODO: boards marked as "global"
         # TODO: boards marked as "continent"

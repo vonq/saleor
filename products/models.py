@@ -118,9 +118,9 @@ class Channel(models.Model):
         return str(self.name)
 
 
-class ProductsManager(models.Manager):
-    def get_by_location_ids(self, location_ids: list) -> QuerySet:
-        return Product.objects.filter(
+class LocationIdsQuerySet(models.QuerySet):
+    def by_location_ids(self, location_ids: list) -> QuerySet:
+        return self.filter(
             Q(locations__mapbox_context__overlap=location_ids) |
             Q(locations__mapbox_id__in=location_ids)
         )
@@ -150,9 +150,6 @@ class Product(models.Model):
     is_deleted = models.BooleanField(default=True)
     is_archived = models.BooleanField(default=True)
 
-    # Available_in_ATS = models.BooleanField(default=True)
-    # Available_in_JMP = models.BooleanField(default=True)
-
     product_solution = models.CharField(max_length=20, null=True)
 
     locations = models.ManyToManyField(Location, related_name="locations", blank=True)
@@ -166,7 +163,7 @@ class Product(models.Model):
     similarweb_estimated_monthly_visits = models.CharField(max_length=300, null=True, blank=True, default=None)
     similarweb_top_country_shares = models.TextField(null=True, blank=True, default=None)
 
-    objects = ProductsManager()
+    objects = LocationIdsQuerySet.as_manager()
 
     def __str__(self):
         return "{}:{}".format(self.title, self.url)
