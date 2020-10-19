@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'health_check',  # required
     'health_check.db',  # stock Django health checkers
     'rest_framework',
-    'drf_yasg',
+    'drf_yasg2',
     'api',
     'api.products'
 ]
@@ -75,8 +75,9 @@ REST_FRAMEWORK = {
 }
 
 SWAGGER_SETTINGS = {
-    "DEFAULT_GENERATOR_CLASS": "rest_framework.schemas.generators.BaseSchemaGenerator"
+    "USE_SESSION_AUTH": True
 }
+
 
 TEMPLATES = [
     {
