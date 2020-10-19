@@ -3,18 +3,25 @@ from rest_framework import serializers
 from api.products.models import Product, Location
 
 
-class ProductSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Product
-        fields = "__all__"
-
-
 class LocationSerializer(serializers.ModelSerializer):
     id = serializers.SerializerMethodField('get_geocoder_id')
+    place_name = serializers.CharField()
+    place_text = serializers.CharField()
+    place_type = serializers.CharField()
+    within = serializers.CharField()
 
     def get_geocoder_id(self, obj):
         return obj.geocoder_id
 
     class Meta:
         model = Location
-        fields = ("id", "name", "place_text", "place_type", "within")
+        fields = ("id", "place_name", "place_text", "place_type", "within")
+
+
+class ProductSerializer(serializers.ModelSerializer):
+    locations = LocationSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Product
+        fields = ("title", "locations")
+
