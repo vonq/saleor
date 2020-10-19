@@ -29,11 +29,11 @@ class ProductsListView(ListAPIView):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-
-        locations = self.request.query_params.get('locationId', [])
+        locations = self.request.query_params.get('locationId')  # type: List
 
         if locations:
-            queryset = queryset.filter(locations__in=locations)
+            locations = locations.split(',')
+            queryset = Product.objects.get_by_location_ids(locations)
 
         serializer = ProductSerializer(queryset[:10], many=True)
         return Response(serializer.data)

@@ -1,5 +1,6 @@
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from django.db.models import QuerySet, Q
 
 
 class Industry(models.Model):
@@ -58,6 +59,10 @@ class Location(models.Model):
     def within(self):
         return self.mapbox_within
 
+    @property
+    def context(self):
+        return self.mapbox_context
+
     desq_name_en = models.CharField(max_length=100, null=True)
     desq_country_code = models.CharField(max_length=3, null=True)
 
@@ -66,6 +71,7 @@ class Location(models.Model):
     mapbox_text = models.CharField(max_length=100, null=True, blank=True)
     mapbox_placename = models.CharField(max_length=300, null=True, blank=True)
     mapbox_context = ArrayField(base_field=models.CharField(max_length=50, blank=False), default=list)
+
     mapbox_place_type = models.CharField(max_length=500, null=True, blank=True)  # can be a list
     mapbox_shortcode = models.CharField(max_length=10, null=True, blank=True)
     mapbox_within = models.ForeignKey('Location', on_delete=models.CASCADE, null=True, blank=True,
@@ -112,6 +118,14 @@ class Channel(models.Model):
         return str(self.name)
 
 
+class ProductsManager(models.Manager):
+    def get_by_location_ids(self, location_ids: list) -> QuerySet:
+        return Product.objects.filter(
+            Q(locations__mapbox_context__overlap=location_ids) |
+            Q(locations__mapbox_id__in=location_ids)
+        )
+
+
 class Product(models.Model):
     title = models.CharField(max_length=200)
     url = models.URLField(max_length=300, unique=True)
@@ -141,7 +155,7 @@ class Product(models.Model):
 
     product_solution = models.CharField(max_length=20, null=True)
 
-    locations = models.ManyToManyField(Location, related_name="locations", null=True, blank=True)
+    locations = models.ManyToManyField(Location, related_name="locations", blank=True)
 
     interests = models.CharField(max_length=200, default='', blank=True, null=True)
 
@@ -151,6 +165,8 @@ class Product(models.Model):
 
     similarweb_estimated_monthly_visits = models.CharField(max_length=300, null=True, blank=True, default=None)
     similarweb_top_country_shares = models.TextField(null=True, blank=True, default=None)
+
+    objects = ProductsManager()
 
     def __str__(self):
         return "{}:{}".format(self.title, self.url)
