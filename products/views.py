@@ -1,7 +1,9 @@
 from rest_framework import viewsets
+from rest_framework.generics import ListAPIView
+from rest_framework.response import Response
 
 from api.products.geocoder import Geocoder
-from api.products.models import Location
+from api.products.models import Location, Product
 from api.products.serializers import ProductSerializer, LocationSerializer
 
 
@@ -19,9 +21,19 @@ class LocationSearchViewSet(viewsets.ModelViewSet):
         return LocationSerializer
 
 
-class ProductsViewSet(viewsets.ModelViewSet):
-    def get_queryset(self):
-        return None
+class ProductsListView(ListAPIView):
+    serializer_class = ProductSerializer
 
-    def get_serializer_class(self):
-        return ProductSerializer
+    def get_queryset(self):
+        return Product.objects.all()
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        locations = self.request.query_params.get('locationId', [])
+
+        if locations:
+            queryset = queryset.filter(locations__in=locations)
+
+        serializer = ProductSerializer(queryset[:10], many=True)
+        return Response(serializer.data)
