@@ -6,9 +6,9 @@ from api.products.models import Product, Location
 class LocationSerializer(serializers.ModelSerializer):
     id = serializers.CharField(source='geocoder_id')
     fully_qualified_place_name = serializers.CharField()
-    canonical_name = serializers.CharField()
+    canonical_name = serializers.CharField(allow_null=True)
     place_type = serializers.CharField()
-    within = serializers.CharField()
+    within = serializers.CharField(allow_null=True)
 
     class Meta:
         model = Location
@@ -21,4 +21,3 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ("title", "locations")
-
