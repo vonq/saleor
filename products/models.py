@@ -138,14 +138,12 @@ class Product(models.Model):
         related_name="industries",
         related_query_name="industry",
         blank=True,
-        null=True,
     )
     job_functions = models.ManyToManyField(
         JobFunction,
         related_name="job_functions",
         related_query_name="job_function",
         blank=True,
-        null=True,
     )
     logo_url = models.CharField(max_length=300, null=True, blank=True, default=None)
     is_active = models.BooleanField(default=True)
