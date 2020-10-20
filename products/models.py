@@ -1,6 +1,6 @@
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models import QuerySet, Q
+from django.db.models import QuerySet, Q, Func, F
 
 
 class Industry(models.Model):
@@ -120,10 +120,18 @@ class Channel(models.Model):
 
 class LocationIdsQuerySet(models.QuerySet):
     def by_location_ids(self, location_ids: list) -> QuerySet:
-        return self.filter(
-            Q(locations__mapbox_context__overlap=location_ids) |
-            Q(locations__mapbox_id__in=location_ids)
-        )
+        qs = self
+        if location_ids:
+            qs = qs.filter(
+                Q(locations__mapbox_context__overlap=location_ids) |
+                Q(locations__mapbox_id__in=location_ids)
+            )
+        qs = qs.annotate(
+            # the more specific a location, the longer its context (['place', 'district', 'country'...)
+            # so we'll sort by descending cardinality to put most location-specific products first
+            locations_cardinality=Func(F('locations__mapbox_context'), function='CARDINALITY')
+        ).order_by('-locations_cardinality')
+        return qs
 
 
 class Product(models.Model):

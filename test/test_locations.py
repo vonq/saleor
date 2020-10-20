@@ -10,14 +10,17 @@ class LocationsTest(TestCase):
         united_kingdom = Location(
             mapbox_id="country.12405201072814600",
             mapbox_text="UK",
-            mapbox_context=[],
+            # "continent" here only serves to allow test assertions
+            # on sorting to work deterministically here
+            mapbox_context=["continent.europe"],
+            # note that there is no "global" context for those...
         )
         united_kingdom.save()
 
         england = Location(
             mapbox_id="region.13483278848453920",
             mapbox_text="England",
-            mapbox_context=["country.12405201072814600"],
+            mapbox_context=["country.12405201072814600", "continent.europe"],
         )
         england.save()
 
@@ -28,6 +31,7 @@ class LocationsTest(TestCase):
                 "district.17792293837019830",
                 "region.13483278848453920",
                 "country.12405201072814600",
+                "continent.europe",
             ],
         )
         reading.save()
@@ -39,13 +43,21 @@ class LocationsTest(TestCase):
                 "district.11228968263261700",
                 "region.13483278848453920",
                 "country.12405201072814600",
+                "continent.europe",
             ],
         )
         slough.save()
 
+        global_location = Location(
+            # global has a specific name to allow searching just for it
+            mapbox_id="global", mapbox_text="global", mapbox_context=[],
+        )
+        global_location.save()
+
         product = Product(
-                    title="Something in the whole of the UK", url="https://vonq.com/somethinglkasjdfhg"
-                )
+            title="Something in the whole of the UK",
+            url="https://vonq.com/somethinglkasjdfhg",
+        )
         product.save()
         product.locations.add(united_kingdom)
         product.save()
@@ -64,10 +76,18 @@ class LocationsTest(TestCase):
         product3.locations.add(slough)
         product3.save()
 
+        global_product = Product(
+            title="Something Global", url="https://vonq.com/somethingGlobal"
+        )
+        global_product.save()
+        global_product.locations.add(global_location)
+        global_product.save()
 
     def test_can_get_nested_locations(self):
         # Search for a product within Reading
-        resp = self.client.get(reverse("api.products:products") + "?locationId=place.12006143788019830")
+        resp = self.client.get(
+            reverse("api.products:products") + "?locationId=place.12006143788019830"
+        )
 
         self.assertEquals(resp.status_code, 200)
         self.assertEqual(len(resp.json()), 1)
@@ -90,9 +110,25 @@ class LocationsTest(TestCase):
 
         # Search for a product in Slough OR Reading
         resp = self.client.get(
-            reverse("api.products:products") + "?locationId=place.17224449158261700&locationId=place.12006143788019830"
+            reverse("api.products:products")
+            + "?locationId=place.17224449158261700&locationId=place.12006143788019830"
         )
         self.assertEqual(len(resp.json()), 2)
 
-        # TODO: boards marked as "global"
-        # TODO: boards marked as "continent"
+    def test_return_all_products_with_no_locations(self):
+        resp = self.client.get(reverse("api.products:products"))
+        self.assertEquals(len(resp.json()), 4)
+
+    def test_results_are_sorted_by_specificity(self):
+        resp = self.client.get(reverse("api.products:products"))
+        products = resp.json()
+
+        self.assertEquals(products[-1]["title"], "Something Global")
+        self.assertEquals(products[-2]["title"], "Something in the whole of the UK")
+
+    def test_products_with_global_locations(self):
+        resp = self.client.get(reverse("api.products:products") + "?locationId=global")
+        self.assertEquals(resp.status_code, 200)
+
+        self.assertEquals(len(resp.json()), 1)
+        self.assertEquals(resp.json()[0]["title"], "Something Global")

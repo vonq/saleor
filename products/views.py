@@ -14,7 +14,7 @@ class LocationSearchViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         text = self.request.query_params.get('text')
         if not text:
-            return None
+            return []
         response = Geocoder.geocode(text)
         location = Location.from_mapbox_response(response)
         return location
@@ -30,11 +30,7 @@ class ProductsListView(ListAPIView):
         return Product.objects.all()
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
         locations = self.request.query_params.getlist('locationId')
-
-        if locations:
-            queryset = queryset.by_location_ids(locations)
-
+        queryset = self.get_queryset().by_location_ids(locations)
         serializer = ProductSerializer(queryset[:10], many=True)
         return Response(serializer.data)
