@@ -132,3 +132,11 @@ class LocationsTest(TestCase):
 
         self.assertEquals(len(resp.json()), 1)
         self.assertEquals(resp.json()[0]["title"], "Something Global")
+
+    def test_search_parameter_should_work_with_arrays_or_list(self):
+        resp_one = self.client.get(reverse("api.products:products") + "?locationId=place.12006143788019830,place.17224449158261700")
+
+        resp_two = self.client.get(
+            reverse("api.products:products") + "?locationId=place.12006143788019830&locationId=place.17224449158261700")
+
+        self.assertListEqual(resp_one.json(), resp_two.json())
