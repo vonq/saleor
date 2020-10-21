@@ -1,6 +1,7 @@
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import QuerySet, Q, Func, F
+from django_pg_bulk_update import bulk_update_or_create
 
 
 class Industry(models.Model):
@@ -32,6 +33,23 @@ class JobTitle(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class MapboxLocation(models.Model):
+    mapbox_id = models.CharField(name='mapbox_id', max_length=200, primary_key=True)
+    mapbox_data = models.JSONField(name='mapbox_data')
+
+
+def save_mapbox_response(func):
+    def wrapper(*args, **kwargs):
+        mapbox_locations = args[1]
+        res = bulk_update_or_create(MapboxLocation,
+                                    [{'mapbox_id': location['id'], 'mapbox_data': location}
+                                     for location in mapbox_locations],
+                                    key_fields='mapbox_id')
+        print("results: {}".format(res))
+        return func(*args, **kwargs)
+    return wrapper
 
 
 class Location(models.Model):
@@ -78,6 +96,7 @@ class Location(models.Model):
         return str(self.canonical_name)
 
     @classmethod
+    @save_mapbox_response
     def from_mapbox_response(cls, mapbox_response: list):
         locations = []
         for result in mapbox_response:
