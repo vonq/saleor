@@ -2,7 +2,7 @@ import itertools
 
 from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
-from rest_framework import viewsets
+from rest_framework import viewsets, mixins
 from rest_framework.response import Response
 
 from api.products.geocoder import Geocoder
@@ -11,20 +11,30 @@ from api.products.paginators import StandardResultsSetPagination
 from api.products.serializers import ProductSerializer, LocationSerializer
 
 
-class LocationSearchViewSet(viewsets.ModelViewSet):
+class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     http_method_names = ("get",)
-    models = Location
+    serializer_class = LocationSerializer
+    search_parameters = [
+        openapi.Parameter(
+            'text',
+            in_=openapi.IN_QUERY,
+            description='Search text for a location name',
+            type=openapi.TYPE_STRING,
+            required=True
+        ),
+    ]
 
     def get_queryset(self):
+        return None
+
+    @swagger_auto_schema(manual_parameters=search_parameters)
+    def list(self, request, *args, **kwargs):
         text = self.request.query_params.get('text')
         if not text:
             return []
         response = Geocoder.geocode(text)
         location = Location.from_mapbox_response(response)
         return location
-
-    def get_serializer_class(self):
-        return LocationSerializer
 
 
 class ProductsViewSet(viewsets.ModelViewSet):

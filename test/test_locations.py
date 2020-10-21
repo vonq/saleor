@@ -86,7 +86,7 @@ class LocationsTest(TestCase):
     def test_can_get_nested_locations(self):
         # Search for a product within Reading
         resp = self.client.get(
-            reverse("api.products:products") + "?locationId=place.12006143788019830"
+            reverse("api.products:products-list") + "?locationId=place.12006143788019830"
         )
 
         self.assertEquals(resp.status_code, 200)
@@ -95,7 +95,7 @@ class LocationsTest(TestCase):
 
         # Search for a product in England
         resp = self.client.get(
-            reverse("api.products:products") + "?locationId=region.13483278848453920"
+            reverse("api.products:products-list") + "?locationId=region.13483278848453920"
         )
 
         self.assertEquals(resp.status_code, 200)
@@ -103,50 +103,50 @@ class LocationsTest(TestCase):
 
         # Search for a product in UK
         resp = self.client.get(
-            reverse("api.products:products") + "?locationId=country.12405201072814600"
+            reverse("api.products:products-list") + "?locationId=country.12405201072814600"
         )
         self.assertEquals(resp.status_code, 200)
         self.assertEqual(len(resp.json()['results']), 3)
 
         # Search for a product in Slough OR Reading
         resp = self.client.get(
-            reverse("api.products:products")
+            reverse("api.products:products-list")
             + "?locationId=place.17224449158261700&locationId=place.12006143788019830"
         )
         self.assertEqual(len(resp.json()['results']), 2)
 
     def test_return_all_products_with_no_locations(self):
-        resp = self.client.get(reverse("api.products:products"))
+        resp = self.client.get(reverse("api.products:products-list"))
         self.assertEquals(len(resp.json()['results']), 4)
 
     def test_results_are_sorted_by_specificity(self):
-        resp = self.client.get(reverse("api.products:products"))
+        resp = self.client.get(reverse("api.products:products-list"))
         products = resp.json()['results']
 
         self.assertEquals(products[-1]["title"], "Something Global")
         self.assertEquals(products[-2]["title"], "Something in the whole of the UK")
 
     def test_products_with_global_locations(self):
-        resp = self.client.get(reverse("api.products:products") + "?locationId=global")
+        resp = self.client.get(reverse("api.products:products-list") + "?locationId=global")
         self.assertEquals(resp.status_code, 200)
 
         self.assertEquals(len(resp.json()['results']), 1)
         self.assertEquals(resp.json()['results'][0]["title"], "Something Global")
 
     def test_search_parameter_should_work_with_arrays_or_list(self):
-        resp_one = self.client.get(reverse("api.products:products") + "?locationId=place.12006143788019830,place.17224449158261700")
+        resp_one = self.client.get(reverse("api.products:products-list") + "?locationId=place.12006143788019830,place.17224449158261700")
 
         resp_two = self.client.get(
-            reverse("api.products:products") + "?locationId=place.12006143788019830&locationId=place.17224449158261700")
+            reverse("api.products:products-list") + "?locationId=place.12006143788019830&locationId=place.17224449158261700")
 
         self.assertListEqual(resp_one.json()['results'], resp_two.json()['results'])
 
     def test_products_can_offset_and_limit(self):
-        resp_one = self.client.get(reverse("api.products:products"))
+        resp_one = self.client.get(reverse("api.products:products-list"))
 
-        resp_two = self.client.get(reverse("api.products:products") + "?limit=1")
+        resp_two = self.client.get(reverse("api.products:products-list") + "?limit=1")
 
-        resp_three = self.client.get(reverse("api.products:products") + "?limit=1&offset=2")
+        resp_three = self.client.get(reverse("api.products:products-list") + "?limit=1&offset=2")
 
         self.assertNotEqual(len(resp_one.json()['results']), 1)
         self.assertEquals(len(resp_two.json()['results']), 1)
