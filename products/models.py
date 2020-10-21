@@ -69,8 +69,7 @@ class Location(models.Model):
     mapbox_text = models.CharField(max_length=100, null=True, blank=True)
     mapbox_placename = models.CharField(max_length=300, null=True, blank=True)
     mapbox_context = ArrayField(base_field=models.CharField(max_length=50, blank=False), default=list)
-
-    mapbox_place_type = models.CharField(max_length=500, null=True, blank=True)  # can be a list
+    mapbox_place_type = ArrayField(base_field=models.CharField(max_length=500, null=True, blank=True), default=list)
     mapbox_shortcode = models.CharField(max_length=10, null=True, blank=True)
     mapbox_within = models.ForeignKey('Location', on_delete=models.CASCADE, null=True, blank=True,
                                       related_name='mapbox_location')  # link up
@@ -86,7 +85,9 @@ class Location(models.Model):
             location.mapbox_id = result['id']
             location.mapbox_placename = result['place_name']
             location.text = result['text']
-            location.mapbox_place_type = result['place_type']
+            location.mapbox_place_type = []
+            for place_type in result['place_type']:
+                location.mapbox_place_type.append(place_type)
             if 'short_code' in result['properties']:
                 location.mapbox_shortcode = result['properties']['short_code']
             if 'context' in result:
