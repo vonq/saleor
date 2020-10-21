@@ -3,7 +3,6 @@ import itertools
 from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins
-from rest_framework.response import Response
 
 from api.products.geocoder import Geocoder
 from api.products.models import Location, Product

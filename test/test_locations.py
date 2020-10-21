@@ -151,5 +151,5 @@ class LocationsTest(TestCase):
         self.assertNotEqual(len(resp_one.json()['results']), 1)
         self.assertEquals(len(resp_two.json()['results']), 1)
         self.assertEquals(len(resp_three.json()['results']), 1)
-        self.assertNotEqual(resp_one.json()['results'][0]['title'], resp_two.json()['results'][0]['title'])
+        self.assertNotEqual(resp_two.json()['results'][0]['title'], resp_three.json()['results'][0]['title'])
 
