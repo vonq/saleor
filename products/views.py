@@ -61,7 +61,8 @@ class ProductsViewSet(viewsets.ModelViewSet):
             [loc.split(',') for loc in self.request.query_params.getlist('locationId')]
         ))
 
-        queryset = self.get_queryset().by_location_ids(locations)
+        locations_and_contexts = locations + Geocoder.list_context_locations_ids(locations)
+        queryset = self.get_queryset().by_location_ids(locations_and_contexts)
 
         page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True)
