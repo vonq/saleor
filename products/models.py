@@ -36,12 +36,10 @@ class JobTitle(models.Model):
 
 class Location(models.Model):
     @property
-    def place_name(self):
+    def fully_qualified_place_name(self):
         return self.mapbox_placename
 
-    @property
-    def place_text(self):
-        return self.mapbox_text
+    canonical_name = models.CharField(max_length=200, null=True)
 
     @property
     def place_type(self):
@@ -78,11 +76,7 @@ class Location(models.Model):
                                       related_name='mapbox_location')  # link up
 
     def __str__(self):
-        if self.mapbox_placename:
-            return "Mapbox name: {}".format(self.mapbox_placename)
-        if self.desq_name_en:
-            return "Desq name: {}".format(self.desq_name_en)
-        return "-Missing name-"
+        return str(self.canonical_name)
 
     @classmethod
     def from_mapbox_response(cls, mapbox_response: list):
@@ -90,8 +84,8 @@ class Location(models.Model):
         for result in mapbox_response:
             location = cls()
             location.geocoder_id = result['id']
-            location.place_name = result['place_name']
-            location.text = result['text']
+            location.fully_qualified_place_name = result['place_name']
+            location.canonical_name = result['text']
             location.place_type = result['place_type']
             if 'short_code' in result['properties']:
                 location.short_code = result['properties']['short_code']
@@ -135,10 +129,10 @@ class LocationIdsQuerySet(models.QuerySet):
 
 
 class Product(models.Model):
-    title = models.CharField(max_length=200)
-    url = models.URLField(max_length=300, unique=True)
+    title = models.CharField(max_length=200, null=True)
+    url = models.URLField(max_length=300, null=True)
     channel = models.ForeignKey(Channel, on_delete=models.SET_NULL, null=True, blank=True)
-    description = models.TextField(default='')
+    description = models.TextField(default='', null=True, blank=True)
     industries = models.ManyToManyField(
         Industry,
         related_name="industries",
@@ -158,7 +152,10 @@ class Product(models.Model):
     is_deleted = models.BooleanField(default=True)
     is_archived = models.BooleanField(default=True)
 
-    product_solution = models.CharField(max_length=20, null=True)
+    available_in_ats = models.BooleanField(default=True)
+    available_in_jmp = models.BooleanField(default=True)
+
+    salesforce_product_category = models.CharField(max_length=20, null=True)
 
     locations = models.ManyToManyField(Location, related_name="locations", blank=True)
 
@@ -174,4 +171,4 @@ class Product(models.Model):
     objects = LocationIdsQuerySet.as_manager()
 
     def __str__(self):
-        return "{}:{}".format(self.title, self.url)
+        return str(self.title) + ' : ' + str(self.url)

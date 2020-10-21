@@ -6,8 +6,8 @@ from api.products.models import Product, Channel, JobTitle, JobFunction, Locatio
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    fields = ['title', 'url', 'channel', 'description', 'industries', 'job_functions', 'is_active', 'product_solution',
-              'locations']
+    fields = ['title', 'url', 'channel', 'description', 'industries', 'job_functions', 'is_active',
+              'salesforce_product_category', 'locations']
     search_fields = ('title', 'description')
 
 
@@ -36,5 +36,5 @@ class JobFunctionAdmin(admin.ModelAdmin):
 
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
-    list_display = ('place_name', 'place_text', 'place_type')
-    search_fields = ('place_name', 'place_text')
+    list_display = ('fully_qualified_place_name', 'canonical_name', 'place_type')
+    search_fields = ('mapbox_placename', 'canonical_name')
