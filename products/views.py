@@ -24,16 +24,16 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     ]
 
     def get_queryset(self):
-        return None
-
-    @swagger_auto_schema(manual_parameters=search_parameters)
-    def list(self, request, *args, **kwargs):
         text = self.request.query_params.get('text')
         if not text:
             return []
         response = Geocoder.geocode(text)
         location = Location.from_mapbox_response(response)
         return location
+
+    @swagger_auto_schema(manual_parameters=search_parameters)
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 
 class ProductsViewSet(viewsets.ModelViewSet):
