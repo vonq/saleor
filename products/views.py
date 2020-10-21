@@ -7,6 +7,7 @@ from rest_framework.response import Response
 
 from api.products.geocoder import Geocoder
 from api.products.models import Location, Product
+from api.products.paginators import StandardResultsSetPagination
 from api.products.serializers import ProductSerializer, LocationSerializer
 
 
@@ -28,6 +29,7 @@ class LocationSearchViewSet(viewsets.ModelViewSet):
 
 class ProductsViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
+    pagination_class = StandardResultsSetPagination
     http_method_names = ("get",)
     search_parameters = [
         openapi.Parameter(
@@ -51,5 +53,7 @@ class ProductsViewSet(viewsets.ModelViewSet):
         ))
 
         queryset = self.get_queryset().by_location_ids(locations)
-        serializer = ProductSerializer(queryset[:10], many=True)
-        return Response(serializer.data)
+
+        page = self.paginate_queryset(queryset)
+        serializer = self.serializer_class(page, many=True)
+        return self.get_paginated_response(serializer.data)
