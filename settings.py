@@ -78,6 +78,8 @@ SWAGGER_SETTINGS = {
     "USE_SESSION_AUTH": True
 }
 
+STATIC_ROOT = 'staticfiles'
+STATIC_URL = '/static/'
 
 TEMPLATES = [
     {

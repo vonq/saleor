@@ -1,6 +1,4 @@
-from django.urls import path
 from rest_framework.routers import DefaultRouter
-
 from api.products.views import LocationSearchViewSet, ProductsViewSet
 
 app_name = "api.products"
