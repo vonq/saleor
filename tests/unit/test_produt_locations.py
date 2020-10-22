@@ -1,10 +1,11 @@
-from django.test import TestCase
+from django.test import TestCase, tag
 from rest_framework.reverse import reverse
 
 from api.products.models import Location, Product
 
 
-class LocationsTest(TestCase):
+@tag('unit')
+class ProductLocationsTest(TestCase):
     def setUp(self) -> None:
 
         united_kingdom = Location(
