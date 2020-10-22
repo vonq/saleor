@@ -1,7 +1,7 @@
 from django.test import TestCase, tag
 from rest_framework.reverse import reverse
 
-from api.products.models import Location, Product
+from api.products.models import Location, Product, MapboxLocation
 
 
 @tag('unit')
@@ -13,7 +13,7 @@ class ProductLocationsTest(TestCase):
             mapbox_text="UK",
             # "continent" here only serves to allow test assertions
             # on sorting to work deterministically here
-            mapbox_context=["continent.europe"],
+            mapbox_context=["continent.europe", "global"],
             # note that there is no "global" context for those...
         )
         united_kingdom.save()
@@ -21,7 +21,7 @@ class ProductLocationsTest(TestCase):
         england = Location(
             mapbox_id="region.13483278848453920",
             mapbox_text="England",
-            mapbox_context=["country.12405201072814600", "continent.europe"],
+            mapbox_context=["country.12405201072814600", "continent.europe", "global"],
         )
         england.save()
 
@@ -33,6 +33,7 @@ class ProductLocationsTest(TestCase):
                 "region.13483278848453920",
                 "country.12405201072814600",
                 "continent.europe",
+                "global",
             ],
         )
         reading.save()
@@ -45,13 +46,16 @@ class ProductLocationsTest(TestCase):
                 "region.13483278848453920",
                 "country.12405201072814600",
                 "continent.europe",
+                "global",
             ],
         )
         slough.save()
 
         global_location = Location(
             # global has a specific name to allow searching just for it
-            mapbox_id="global", mapbox_text="global", mapbox_context=[],
+            mapbox_id="global",
+            mapbox_text="global",
+            mapbox_context=[],
         )
         global_location.save()
 
@@ -87,70 +91,172 @@ class ProductLocationsTest(TestCase):
     def test_can_get_nested_locations(self):
         # Search for a product within Reading
         resp = self.client.get(
-            reverse("api.products:products-list") + "?locationId=place.12006143788019830"
+            reverse("api.products:products-list")
+            + "?locationId=place.12006143788019830"
         )
 
         self.assertEquals(resp.status_code, 200)
-        self.assertEqual(len(resp.json()['results']), 1)
-        self.assertEquals(resp.json()['results'][0]["title"], "Something in Reading")
+        self.assertEqual(len(resp.json()["results"]), 1)
+        self.assertEquals(resp.json()["results"][0]["title"], "Something in Reading")
 
         # Search for a product in England
         resp = self.client.get(
-            reverse("api.products:products-list") + "?locationId=region.13483278848453920"
+            reverse("api.products:products-list")
+            + "?locationId=region.13483278848453920"
         )
 
         self.assertEquals(resp.status_code, 200)
-        self.assertEqual(len(resp.json()['results']), 2)
+        self.assertEqual(len(resp.json()["results"]), 2)
 
         # Search for a product in UK
         resp = self.client.get(
-            reverse("api.products:products-list") + "?locationId=country.12405201072814600"
+            reverse("api.products:products-list")
+            + "?locationId=country.12405201072814600"
         )
         self.assertEquals(resp.status_code, 200)
-        self.assertEqual(len(resp.json()['results']), 3)
+        self.assertEqual(len(resp.json()["results"]), 3)
 
         # Search for a product in Slough OR Reading
         resp = self.client.get(
             reverse("api.products:products-list")
             + "?locationId=place.17224449158261700&locationId=place.12006143788019830"
         )
-        self.assertEqual(len(resp.json()['results']), 2)
+        self.assertEqual(len(resp.json()["results"]), 2)
 
     def test_return_all_products_with_no_locations(self):
         resp = self.client.get(reverse("api.products:products-list"))
-        self.assertEquals(len(resp.json()['results']), 4)
+        self.assertEquals(len(resp.json()["results"]), 4)
 
     def test_results_are_sorted_by_specificity(self):
         resp = self.client.get(reverse("api.products:products-list"))
-        products = resp.json()['results']
+        products = resp.json()["results"]
 
         self.assertEquals(products[-1]["title"], "Something Global")
         self.assertEquals(products[-2]["title"], "Something in the whole of the UK")
 
     def test_products_with_global_locations(self):
-        resp = self.client.get(reverse("api.products:products-list") + "?locationId=global")
-        self.assertEquals(resp.status_code, 200)
+        resp_global = self.client.get(
+            reverse("api.products:products-list") + "?locationId=global"
+        )
+        resp_list_all = self.client.get(reverse("api.products:products-list"))
+        self.assertEquals(resp_global.status_code, 200)
+        self.assertEquals(resp_list_all.status_code, 200)
 
-        self.assertEquals(len(resp.json()['results']), 1)
-        self.assertEquals(resp.json()['results'][0]["title"], "Something Global")
+        self.assertEquals(
+            resp_global.json()["results"][-1]["title"], "Something Global"
+        )
+        self.assertEquals(
+            len(resp_global.json()["results"]), len(resp_list_all.json()["results"])
+        )
 
     def test_search_parameter_should_work_with_arrays_or_list(self):
-        resp_one = self.client.get(reverse("api.products:products-list") + "?locationId=place.12006143788019830,place.17224449158261700")
+        resp_one = self.client.get(
+            reverse("api.products:products-list")
+            + "?locationId=place.12006143788019830,place.17224449158261700"
+        )
 
         resp_two = self.client.get(
-            reverse("api.products:products-list") + "?locationId=place.12006143788019830&locationId=place.17224449158261700")
+            reverse("api.products:products-list")
+            + "?locationId=place.12006143788019830&locationId=place.17224449158261700"
+        )
 
-        self.assertListEqual(resp_one.json()['results'], resp_two.json()['results'])
+        self.assertListEqual(resp_one.json()["results"], resp_two.json()["results"])
 
     def test_products_can_offset_and_limit(self):
         resp_one = self.client.get(reverse("api.products:products-list"))
 
         resp_two = self.client.get(reverse("api.products:products-list") + "?limit=1")
 
-        resp_three = self.client.get(reverse("api.products:products-list") + "?limit=1&offset=2")
+        resp_three = self.client.get(
+            reverse("api.products:products-list") + "?limit=1&offset=2"
+        )
 
-        self.assertNotEqual(len(resp_one.json()['results']), 1)
-        self.assertEquals(len(resp_two.json()['results']), 1)
-        self.assertEquals(len(resp_three.json()['results']), 1)
-        self.assertNotEqual(resp_two.json()['results'][0]['title'], resp_three.json()['results'][0]['title'])
+        self.assertNotEqual(len(resp_one.json()["results"]), 1)
+        self.assertEquals(len(resp_two.json()["results"]), 1)
+        self.assertEquals(len(resp_three.json()["results"]), 1)
+        self.assertNotEqual(
+            resp_two.json()["results"][0]["title"],
+            resp_three.json()["results"][0]["title"],
+        )
+
+
+class GlobalLocationTest(TestCase):
+    def setUp(self) -> None:
+        united_kingdom = Location(
+            mapbox_id="country.12405201072814600",
+            mapbox_text="UK",
+            mapbox_context=["global"],
+        )
+        united_kingdom.save()
+
+        reading = Location(
+            mapbox_id="place.12006143788019830",
+            mapbox_text="Reading",
+            mapbox_context=[
+                "district.17792293837019830",
+                "region.13483278848453920",
+                "country.12405201072814600",
+                "global",
+            ],
+        )
+        reading.save()
+
+        reading_mbl = MapboxLocation(
+            mapbox_id="place.12006143788019830",
+            mapbox_placename="Reading, Reading, England, United Kingdom",
+            mapbox_context=[
+                "district.17792293837019830",
+                "region.13483278848453920",
+                "country.12405201072814600",
+            ],
+            mapbox_data={
+                "id": "place.12006143788019830",
+                "bbox": [-1.248574, 51.328191, -0.771487, 51.5597],
+                "text": "Reading",
+                "type": "Feature",
+                "center": [-0.97306, 51.45417],
+                "context": [
+                    {
+                        "id": "district.17792293837019830",
+                        "text": "Reading",
+                        "wikidata": "Q161491",
+                    },
+                    {
+                        "id": "region.13483278848453920",
+                        "text": "England",
+                        "wikidata": "Q21",
+                        "short_code": "GB-ENG",
+                    },
+                    {
+                        "id": "country.12405201072814600",
+                        "text": "United Kingdom",
+                        "wikidata": "Q145",
+                        "short_code": "gb",
+                    },
+                ],
+                "geometry": {"type": "Point", "coordinates": [-0.97306, 51.45417]},
+                "relevance": 1,
+                "place_name": "Reading, Reading, England, United Kingdom",
+                "place_type": ["place"],
+                "properties": {"wikidata": "Q161491"},
+            },
+        )
+        reading_mbl.save()
+
+        uk_product = Product(
+            title="Something in the whole of the UK",
+            url="https://vonq.com/somethinglkasjdfhg",
+        )
+        uk_product.save()
+        uk_product.locations.add(united_kingdom)
+        uk_product.save()
+
+    def test_specific_query_yield_general_results(self):
+        resp = self.client.get(
+            reverse("api.products:products-list")
+            + "?locationId=place.12006143788019830"
+        )
+        self.assertEqual(len(resp.json()["results"]), 1)
+
+
 

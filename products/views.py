@@ -5,7 +5,7 @@ from drf_yasg2.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins
 
 from api.products.geocoder import Geocoder
-from api.products.models import Location, Product
+from api.products.models import Location, Product, MapboxLocation
 from api.products.paginators import StandardResultsSetPagination
 from api.products.serializers import ProductSerializer, LocationSerializer
 
@@ -22,18 +22,21 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
             required=True
         ),
     ]
+    geocoder_response = []
 
     def get_queryset(self):
         text = self.request.query_params.get('text')
         if not text:
             return []
-        response = Geocoder.geocode(text)
-        location = Location.from_mapbox_response(response)
-        return location
+        self.geocoder_response = Geocoder.geocode(text)
+        locations = Location.from_mapbox_response(self.geocoder_response)
+        return locations
 
     @swagger_auto_schema(manual_parameters=search_parameters)
     def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
+        response = super().list(request, *args, **kwargs)
+        MapboxLocation.save_mapbox_response(*self.geocoder_response)
+        return response
 
 
 class ProductsViewSet(viewsets.ModelViewSet):
@@ -57,11 +60,11 @@ class ProductsViewSet(viewsets.ModelViewSet):
     @swagger_auto_schema(manual_parameters=search_parameters)
     def list(self, request, *args, **kwargs):
         # we need to support both locationId=x&locationId=y and locationId=x,y
-        locations = list(itertools.chain.from_iterable(
+        location_ids = list(itertools.chain.from_iterable(
             [loc.split(',') for loc in self.request.query_params.getlist('locationId')]
         ))
 
-        locations_and_contexts = locations + Geocoder.list_context_locations_ids(locations)
+        locations_and_contexts = location_ids + MapboxLocation.list_context_locations_ids(location_ids)
         queryset = self.get_queryset().by_location_ids(locations_and_contexts)
 
         page = self.paginate_queryset(queryset)

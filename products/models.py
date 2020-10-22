@@ -1,3 +1,6 @@
+import itertools
+from typing import List
+
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import QuerySet, Q, Func, F
@@ -36,20 +39,36 @@ class JobTitle(models.Model):
 
 
 class MapboxLocation(models.Model):
+    mapbox_placename = models.CharField(name="mapbox_placename", max_length=300, null=True, blank=True)
     mapbox_id = models.CharField(name='mapbox_id', max_length=200, primary_key=True)
+    mapbox_context = ArrayField(base_field=models.CharField(max_length=50, blank=False), default=list)
     mapbox_data = models.JSONField(name='mapbox_data')
 
+    def __str__(self):
+        return self.mapbox_placename or self.mapbox_id
 
-def save_mapbox_response(func):
-    def wrapper(*args, **kwargs):
-        mapbox_locations = args[1]
-        res = bulk_update_or_create(MapboxLocation,
-                                    [{'mapbox_id': location['id'], 'mapbox_data': location}
-                                     for location in mapbox_locations],
-                                    key_fields='mapbox_id')
-        print("results: {}".format(res))
-        return func(*args, **kwargs)
-    return wrapper
+    @classmethod
+    def save_mapbox_response(cls, *mapbox_locations: dict) -> int:
+        updated = bulk_update_or_create(
+            cls,
+            [{'mapbox_id': location['id'], 'mapbox_data': location, 'mapbox_placename': location['place_name'],
+              'mapbox_context': [item['id'] for item in location.get('context', [])]}
+             for location in mapbox_locations],
+            key_fields='mapbox_id')
+        return updated
+
+    @classmethod
+    def list_context_locations_ids(cls, location_ids: List[str]) -> List[str]:
+        qs = cls.objects.filter(mapbox_id__in=location_ids)
+
+        if not qs.exists():
+            return []
+
+        return list(
+            itertools.chain.from_iterable(
+                MapboxLocation.objects.all().values_list('mapbox_context', flat=True)
+            )
+        )
 
 
 class Location(models.Model):
@@ -96,7 +115,6 @@ class Location(models.Model):
         return str(self.canonical_name)
 
     @classmethod
-    @save_mapbox_response
     def from_mapbox_response(cls, mapbox_response: list):
         locations = []
         for result in mapbox_response:
