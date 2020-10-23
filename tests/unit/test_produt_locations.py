@@ -179,7 +179,22 @@ class ProductLocationsTest(TestCase):
             resp_three.json()["results"][0]["title"],
         )
 
+    def test_can_narrow_the_list_by_filter_by(self):
+        resp_one = self.client.get(reverse("api.products:products-list") + '?locationId=country.12405201072814600')
+        self.assertEqual(resp_one.json()['count'], 3)
 
+        filtered_response = self.client.get(reverse(
+            "api.products:products-list") + '?locationId=country.12405201072814600&filter_by=place.12006143788019830')
+        self.assertEqual(filtered_response.json()['count'], 1)
+
+        only_filtered_response = self.client.get(reverse(
+            "api.products:products-list") + '?filter_by=place.12006143788019830')
+        self.assertEqual(only_filtered_response.json()['count'], 1)
+
+        self.assertEqual(only_filtered_response.json()['count'], filtered_response.json()['count'])
+
+
+@tag('unit')
 class GlobalLocationTest(TestCase):
     def setUp(self) -> None:
         united_kingdom = Location(
