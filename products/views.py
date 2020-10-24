@@ -56,7 +56,8 @@ class ProductsViewSet(viewsets.ModelViewSet):
             'filter_by',
             in_=openapi.IN_QUERY,
             description='Match for only for products assigned to a location',
-            type=openapi.TYPE_STRING,
+            type=openapi.TYPE_ARRAY,
+            items=openapi.Items(type=openapi.TYPE_STRING),
             required=False
         ),
     ]
@@ -74,9 +75,9 @@ class ProductsViewSet(viewsets.ModelViewSet):
         locations_and_contexts = location_ids + MapboxLocation.list_context_locations_ids(location_ids)
         queryset = self.get_queryset().by_location_ids(locations_and_contexts)
 
-        filter_by_parameter = self.request.query_params.get('filter_by')
-        if filter_by_parameter:
-            queryset = queryset.filter(locations__mapbox_id=filter_by_parameter)
+        filter_by_parameters = self.request.query_params.getlist('filter_by')
+        if filter_by_parameters:
+            queryset = queryset.filter(locations__mapbox_id__in=filter_by_parameters)
 
         page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True)

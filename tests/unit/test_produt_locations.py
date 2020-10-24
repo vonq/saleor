@@ -193,6 +193,12 @@ class ProductLocationsTest(TestCase):
 
         self.assertEqual(only_filtered_response.json()['count'], filtered_response.json()['count'])
 
+        multiple_filtered_response = self.client.get(reverse(
+            "api.products:products-list") + '?locationId=country.12405201072814600'
+                                            '&filter_by=place.12006143788019830'
+                                            '&filter_by=place.17224449158261700')
+        self.assertEqual(multiple_filtered_response.json()['count'], 2)
+
 
 @tag('unit')
 class GlobalLocationTest(TestCase):
