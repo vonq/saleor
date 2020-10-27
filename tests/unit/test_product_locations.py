@@ -92,7 +92,7 @@ class ProductLocationsTest(TestCase):
         # Search for a product within Reading
         resp = self.client.get(
             reverse("api.products:products-list")
-            + "?locationId=place.12006143788019830"
+            + "?includeLocationId=place.12006143788019830"
         )
 
         self.assertEquals(resp.status_code, 200)
@@ -102,7 +102,7 @@ class ProductLocationsTest(TestCase):
         # Search for a product in England
         resp = self.client.get(
             reverse("api.products:products-list")
-            + "?locationId=region.13483278848453920"
+            + "?includeLocationId=region.13483278848453920"
         )
 
         self.assertEquals(resp.status_code, 200)
@@ -111,7 +111,7 @@ class ProductLocationsTest(TestCase):
         # Search for a product in UK
         resp = self.client.get(
             reverse("api.products:products-list")
-            + "?locationId=country.12405201072814600"
+            + "?includeLocationId=country.12405201072814600"
         )
         self.assertEquals(resp.status_code, 200)
         self.assertEqual(len(resp.json()["results"]), 3)
@@ -119,7 +119,7 @@ class ProductLocationsTest(TestCase):
         # Search for a product in Slough OR Reading
         resp = self.client.get(
             reverse("api.products:products-list")
-            + "?locationId=place.17224449158261700&locationId=place.12006143788019830"
+            + "?includeLocationId=place.17224449158261700,place.12006143788019830"
         )
         self.assertEqual(len(resp.json()["results"]), 2)
 
@@ -136,7 +136,7 @@ class ProductLocationsTest(TestCase):
 
     def test_products_with_global_locations(self):
         resp_global = self.client.get(
-            reverse("api.products:products-list") + "?locationId=global"
+            reverse("api.products:products-list") + "?includeLocationId=global"
         )
         resp_list_all = self.client.get(reverse("api.products:products-list"))
         self.assertEquals(resp_global.status_code, 200)
@@ -148,19 +148,6 @@ class ProductLocationsTest(TestCase):
         self.assertEquals(
             len(resp_global.json()["results"]), len(resp_list_all.json()["results"])
         )
-
-    def test_search_parameter_should_work_with_arrays_or_list(self):
-        resp_one = self.client.get(
-            reverse("api.products:products-list")
-            + "?locationId=place.12006143788019830,place.17224449158261700"
-        )
-
-        resp_two = self.client.get(
-            reverse("api.products:products-list")
-            + "?locationId=place.12006143788019830&locationId=place.17224449158261700"
-        )
-
-        self.assertListEqual(resp_one.json()["results"], resp_two.json()["results"])
 
     def test_products_can_offset_and_limit(self):
         resp_one = self.client.get(reverse("api.products:products-list"))
@@ -180,23 +167,22 @@ class ProductLocationsTest(TestCase):
         )
 
     def test_can_narrow_the_list_by_filter_by(self):
-        resp_one = self.client.get(reverse("api.products:products-list") + '?locationId=country.12405201072814600')
+        resp_one = self.client.get(reverse("api.products:products-list") + '?includeLocationId=country.12405201072814600')
         self.assertEqual(resp_one.json()['count'], 3)
 
         filtered_response = self.client.get(reverse(
-            "api.products:products-list") + '?locationId=country.12405201072814600&filter_by=place.12006143788019830')
+            "api.products:products-list") + '?includeLocationId=country.12405201072814600&exactLocationId=place.12006143788019830')
         self.assertEqual(filtered_response.json()['count'], 1)
 
         only_filtered_response = self.client.get(reverse(
-            "api.products:products-list") + '?filter_by=place.12006143788019830')
+            "api.products:products-list") + '?exactLocationId=place.12006143788019830')
         self.assertEqual(only_filtered_response.json()['count'], 1)
 
         self.assertEqual(only_filtered_response.json()['count'], filtered_response.json()['count'])
 
         multiple_filtered_response = self.client.get(reverse(
-            "api.products:products-list") + '?locationId=country.12405201072814600'
-                                            '&filter_by=place.12006143788019830'
-                                            '&filter_by=place.17224449158261700')
+            "api.products:products-list") + '?includeLocationId=country.12405201072814600'
+                                            '&exactLocationId=place.12006143788019830,place.17224449158261700')
         self.assertEqual(multiple_filtered_response.json()['count'], 2)
 
 
@@ -275,7 +261,7 @@ class GlobalLocationTest(TestCase):
     def test_specific_query_yield_general_results(self):
         resp = self.client.get(
             reverse("api.products:products-list")
-            + "?locationId=place.12006143788019830"
+            + "?includeLocationId=place.12006143788019830"
         )
         self.assertEqual(len(resp.json()["results"]), 1)
 

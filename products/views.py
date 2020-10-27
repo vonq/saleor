@@ -1,9 +1,14 @@
-import itertools
-
 from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins
 
+from api.products.filters import (
+    ExactLocationIdFilter,
+    IncludeLocationIdFilter,
+    OrderByCardinalityFilter,
+    JobFunctionsTitleFilter,
+    FiltersContainer,
+)
 from api.products.geocoder import Geocoder
 from api.products.models import Location, Product, MapboxLocation
 from api.products.paginators import StandardResultsSetPagination
@@ -15,17 +20,17 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     serializer_class = LocationSerializer
     search_parameters = [
         openapi.Parameter(
-            'text',
+            "text",
             in_=openapi.IN_QUERY,
-            description='Search text for a location name',
+            description="Search text for a location name",
             type=openapi.TYPE_STRING,
-            required=True
+            required=True,
         ),
     ]
     geocoder_response = []
 
     def get_queryset(self):
-        text = self.request.query_params.get('text')
+        text = self.request.query_params.get("text")
         if not text:
             return []
         self.geocoder_response = Geocoder.geocode(text)
@@ -43,42 +48,17 @@ class ProductsViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     pagination_class = StandardResultsSetPagination
     http_method_names = ("get",)
-    search_parameters = [
-        openapi.Parameter(
-            'locationId',
-            in_=openapi.IN_QUERY,
-            description='Id for a location. Optionally, a (comma-separated) array of values can be passed.',
-            type=openapi.TYPE_ARRAY,
-            items=openapi.Items(type=openapi.TYPE_STRING),
-            required=True
-        ),
-        openapi.Parameter(
-            'filter_by',
-            in_=openapi.IN_QUERY,
-            description='Match for only for products assigned to a location',
-            type=openapi.TYPE_ARRAY,
-            items=openapi.Items(type=openapi.TYPE_STRING),
-            required=False
-        ),
-    ]
+    filter_backends = FiltersContainer(
+        IncludeLocationIdFilter,
+        ExactLocationIdFilter,
+        JobFunctionsTitleFilter,
+        OrderByCardinalityFilter,
+    )
+    queryset = Product.objects.all()
 
-    def get_queryset(self):
-        return Product.objects.all()
-
-    @swagger_auto_schema(manual_parameters=search_parameters)
+    @swagger_auto_schema(manual_parameters=filter_backends.get_schema_parameters())
     def list(self, request, *args, **kwargs):
-        # we need to support both locationId=x&locationId=y and locationId=x,y
-        location_ids = list(itertools.chain.from_iterable(
-            [loc.split(',') for loc in self.request.query_params.getlist('locationId')]
-        ))
-
-        locations_and_contexts = location_ids + MapboxLocation.list_context_locations_ids(location_ids)
-        queryset = self.get_queryset().by_location_ids(locations_and_contexts)
-
-        filter_by_parameters = self.request.query_params.getlist('filter_by')
-        if filter_by_parameters:
-            queryset = queryset.filter(locations__mapbox_id__in=filter_by_parameters)
-
+        queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True)
         return self.get_paginated_response(serializer.data)

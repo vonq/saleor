@@ -3,7 +3,6 @@ from typing import List
 
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models import QuerySet, Q, Func, F
 from django_pg_bulk_update import bulk_update_or_create
 
 
@@ -150,22 +149,6 @@ class Channel(models.Model):
         return str(self.name)
 
 
-class LocationIdsQuerySet(models.QuerySet):
-    def by_location_ids(self, location_ids: list) -> QuerySet:
-        qs = self
-        if location_ids:
-            qs = qs.filter(
-                Q(locations__mapbox_context__overlap=location_ids) |
-                Q(locations__mapbox_id__in=location_ids)
-            )
-        qs = qs.annotate(
-            # the more specific a location, the longer its context (['place', 'district', 'country'...)
-            # so we'll sort by descending cardinality to put most location-specific products first
-            locations_cardinality=Func(F('locations__mapbox_context'), function='CARDINALITY')
-        ).order_by('-locations_cardinality')
-        return qs
-
-
 class Product(models.Model):
     title = models.CharField(max_length=200, null=True)
     url = models.URLField(max_length=300, null=True)
@@ -203,8 +186,6 @@ class Product(models.Model):
 
     similarweb_estimated_monthly_visits = models.CharField(max_length=300, null=True, blank=True, default=None)
     similarweb_top_country_shares = models.TextField(null=True, blank=True, default=None)
-
-    objects = LocationIdsQuerySet.as_manager()
 
     def __str__(self):
         return str(self.title) + ' : ' + str(self.url)
