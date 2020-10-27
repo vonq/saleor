@@ -40,6 +40,7 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'modeltranslation',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -142,6 +143,15 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
+
+LANGUAGES = (
+    ('en', 'English'),
+    ('de', 'German'),
+    ('nl', 'Dutch'),
+)
+
+MODELTRANSLATION_LANGUAGES = ('en', 'de', 'nl')
+MODELTRANSLATION_FALLBACK_LANGUAGES = ('en', 'de', 'nl')
 
 USE_L10N = True
 

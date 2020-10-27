@@ -1,13 +1,46 @@
 import itertools
 from typing import List
 
+from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
+from django.core.exceptions import FieldError
 from django.db import models
+from django.db.models import QuerySet, Q
 from django_pg_bulk_update import bulk_update_or_create
+from modeltranslation.fields import TranslationFieldDescriptor
+
+
+class AcrossLanguagesQuerySet(QuerySet):
+    def filter_across_languages(self, **kwargs):
+        """
+        A convenience method to allow querying translated fields
+        for every available translation.
+        """
+
+        query = Q()
+
+        # split the filter string
+        for k, v in kwargs.items():
+            field, *q_type = k.split("__")
+
+            # is this field a multi language field?
+            if not isinstance(getattr(self.model, field), TranslationFieldDescriptor):
+                raise FieldError(f"Field {field} is not a TranslationField")
+
+            # do we have a query type?
+            query_type = f"{'__'}{q_type[0]}" if q_type else ""
+
+            # explicitly set a postfix language according to the supported languages
+            for language in settings.LANGUAGES:
+                query |= Q(**{f"{field}_{language[0]}{query_type}": v})
+
+        return self.filter(query)
 
 
 class Industry(models.Model):
     name = models.CharField(max_length=100)
+
+    objects = AcrossLanguagesQuerySet.as_manager()
 
     def __str__(self):
         return self.name
@@ -19,6 +52,8 @@ class Industry(models.Model):
 class JobFunction(models.Model):
     name = models.CharField(max_length=100)
     parent = models.ForeignKey('JobFunction', on_delete=models.CASCADE, null=True, blank=True)
+
+    objects = AcrossLanguagesQuerySet.as_manager()
 
     def __str__(self):
         return self.name
@@ -32,6 +67,8 @@ class JobTitle(models.Model):
     canonical = models.BooleanField(default=True)
     alias_of = models.ForeignKey('JobTitle', on_delete=models.CASCADE, null=True, blank=True)
     active = models.BooleanField(default=True)
+
+    objects = AcrossLanguagesQuerySet.as_manager()
 
     def __str__(self):
         return self.name
@@ -186,6 +223,8 @@ class Product(models.Model):
 
     similarweb_estimated_monthly_visits = models.CharField(max_length=300, null=True, blank=True, default=None)
     similarweb_top_country_shares = models.TextField(null=True, blank=True, default=None)
+
+    objects = AcrossLanguagesQuerySet.as_manager()
 
     def __str__(self):
         return str(self.title) + ' : ' + str(self.url)
