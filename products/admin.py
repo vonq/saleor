@@ -3,7 +3,7 @@ from django.contrib import admin
 # Register your models here.
 from modeltranslation.admin import TranslationAdmin
 
-from api.products.models import Product, Channel, JobTitle, JobFunction, Location
+from api.products.models import Product, Channel, JobTitle, JobFunction, Location, Industry
 
 
 @admin.register(Product)
@@ -40,3 +40,8 @@ class JobFunctionAdmin(TranslationAdmin):
 class LocationAdmin(admin.ModelAdmin):
     list_display = ('fully_qualified_place_name', 'canonical_name', 'place_type')
     search_fields = ('mapbox_placename', 'canonical_name')
+
+
+@admin.register(Industry)
+class IndustryAdmin(admin.ModelAdmin):
+    pass

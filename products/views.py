@@ -10,11 +10,12 @@ from api.products.filters import (
     OrderByCardinalityFilter,
     JobFunctionsTitleFilter,
     FiltersContainer,
+    IndustryFilter,
 )
 from api.products.geocoder import Geocoder
-from api.products.models import Location, Product, MapboxLocation, JobTitle, JobFunction
+from api.products.models import Location, Product, MapboxLocation, JobTitle, JobFunction, Industry
 from api.products.paginators import StandardResultsSetPagination, AutocompleteResultsSetPagination
-from api.products.serializers import ProductSerializer, LocationSerializer, JobTitleSerializer, JobFunctionSerializer
+from api.products.serializers import ProductSerializer, LocationSerializer, JobTitleSerializer, JobFunctionSerializer, IndustrySerializer
 
 
 class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
@@ -59,6 +60,7 @@ class ProductsViewSet(viewsets.ModelViewSet):
         IncludeLocationIdFilter,
         ExactLocationIdFilter,
         JobFunctionsTitleFilter,
+        IndustryFilter,
         OrderByCardinalityFilter,
     )
     queryset = Product.objects.all()
@@ -76,6 +78,13 @@ class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     serializer_class = JobTitleSerializer
     pagination_class = AutocompleteResultsSetPagination
     search_parameters = [
+        openapi.Parameter(
+            "Accept-Language",
+            in_=openapi.IN_HEADER,
+            type=openapi.TYPE_STRING,
+            format="language tag",
+            required=False,
+        ),
         openapi.Parameter(
             "text",
             in_=openapi.IN_QUERY,
@@ -102,9 +111,42 @@ class JobFunctionsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     http_method_names = ("get",)
     queryset = JobFunction.objects.all()
 
-    @swagger_auto_schema()
+    search_parameters = [
+        openapi.Parameter(
+            "Accept-Language",
+            in_=openapi.IN_HEADER,
+            type=openapi.TYPE_STRING,
+            format="language tag",
+            required=False,
+        ),
+    ]
+
+    @swagger_auto_schema(manual_parameters=search_parameters)
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True)
         return self.get_paginated_response(serializer.data)
+
+
+class IndustriesViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+    serializer_class = IndustrySerializer
+    pagination_class = StandardResultsSetPagination
+    http_method_names = ("get",)
+
+    search_parameters = [
+        openapi.Parameter(
+            "Accept-Language",
+            in_=openapi.IN_HEADER,
+            type=openapi.TYPE_STRING,
+            format="language tag",
+            required=False,
+        ),
+    ]
+
+    def get_queryset(self):
+        return Industry.objects.all()
+
+    @swagger_auto_schema(manual_parameters=search_parameters)
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)

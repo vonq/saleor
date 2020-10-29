@@ -75,7 +75,7 @@ class IncludeLocationIdFilter(filters.BaseFilterBackend, FilterParametersMixin):
         return queryset.filter(
             Q(locations__mapbox_context__overlap=locations_and_contexts)
             | Q(locations__mapbox_id__in=locations_and_contexts)
-        )
+        ).distinct()
 
 
 class JobFunctionsTitleFilter(filters.BaseFilterBackend, FilterParametersMixin):
@@ -112,6 +112,29 @@ class JobFunctionsTitleFilter(filters.BaseFilterBackend, FilterParametersMixin):
         return queryset
 
 
+class IndustryFilter(filters.BaseFilterBackend, FilterParametersMixin):
+    parameters = [
+        openapi.Parameter(
+            "industryId",
+            in_=openapi.IN_QUERY,
+            description="Industry Id",
+            type=openapi.TYPE_ARRAY,
+            items=openapi.Items(type=openapi.TYPE_STRING),
+            required=False,
+            explode=False,
+        ),
+    ]
+
+    def filter_queryset(self, request, queryset, view):
+        industry_id_param = request.query_params.get("industryId")
+        if not industry_id_param:
+            return queryset
+
+        industry_ids = industry_id_param.split(",")
+
+        return queryset.filter(industries__id__in=industry_ids).distinct()
+
+
 class OrderByCardinalityFilter(filters.BaseFilterBackend, FilterParametersMixin):
     def filter_queryset(self, request, queryset, view):
         return queryset.annotate(
@@ -120,4 +143,4 @@ class OrderByCardinalityFilter(filters.BaseFilterBackend, FilterParametersMixin)
             locations_cardinality=Func(
                 F("locations__mapbox_context"), function="CARDINALITY"
             )
-        ).order_by("-locations_cardinality")
+        ).order_by("-locations_cardinality").distinct()

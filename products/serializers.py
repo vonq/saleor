@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from api.products.models import Product, Location, JobFunction, JobTitle
+from api.products.models import Product, Location, JobFunction, JobTitle, Industry
 
 
 class LocationSerializer(serializers.ModelSerializer):
@@ -27,10 +27,16 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ("title", "locations", "job_functions")
+        fields = ("title", "locations", "job_functions", "industries",)
 
 
 class JobTitleSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobTitle
         fields = ('id', 'name')
+
+
+class IndustrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Industry
+        fields = ("id", "name",)
