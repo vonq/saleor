@@ -10,11 +10,12 @@ from api.products.models import Product, Channel, JobTitle, JobFunction, Locatio
 class ProductAdmin(TranslationAdmin):
     fields = ['title', 'url', 'channel', 'description', 'industries', 'job_functions', 'is_active',
               'salesforce_product_category', 'locations']
+    filter_horizontal = ('industries', 'job_functions', 'locations')
     search_fields = ('title', 'description')
 
 
 @admin.register(Channel)
-class ChannelAdmin(admin.ModelAdmin):
+class ChannelAdmin(TranslationAdmin):
     fields = ['name', 'url', 'type']
     list_display = ('name', 'url', 'type')
     list_filter = ('type',)
@@ -23,10 +24,11 @@ class ChannelAdmin(admin.ModelAdmin):
 
 @admin.register(JobTitle)
 class JobTitleAdmin(TranslationAdmin):
-    fields = ['name', 'jobFunction', 'industry', 'canonical', 'alias_of', 'active']
-    list_display = ('name', 'jobFunction', 'industry', 'canonical', 'alias_of', 'active')
-    list_filter = ('jobFunction', 'canonical', 'active')
+    fields = ['name', 'job_function', 'industry', 'canonical', 'alias_of', 'active']
+    list_display = ('name', 'job_function', 'industry', 'canonical', 'alias_of', 'active', 'frequency')
+    list_filter = ('job_function', 'canonical', 'active')
     search_fields = ('name',)
+    ordering = ('-frequency',)
 
 
 @admin.register(JobFunction)
@@ -37,11 +39,13 @@ class JobFunctionAdmin(TranslationAdmin):
 
 
 @admin.register(Location)
-class LocationAdmin(admin.ModelAdmin):
-    list_display = ('fully_qualified_place_name', 'canonical_name', 'place_type')
+class LocationAdmin(TranslationAdmin):
+    fields = ('within', 'place_type')
+    list_display = ('fully_qualified_place_name', 'canonical_name', 'within', 'place_type')
     search_fields = ('mapbox_placename', 'canonical_name')
 
 
 @admin.register(Industry)
-class IndustryAdmin(admin.ModelAdmin):
-    pass
+class IndustryAdmin(TranslationAdmin):
+    list_display = ('name',)
+    search_fields = ('name',)

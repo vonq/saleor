@@ -63,7 +63,7 @@ class JobFunction(models.Model):
 
 class JobTitle(models.Model):
     name = models.CharField(max_length=100)
-    jobFunction = models.ForeignKey('JobFunction', on_delete=models.CASCADE, null=True, blank=True)
+    job_function = models.ForeignKey('JobFunction', on_delete=models.CASCADE, null=True, blank=True)
     industry = models.ForeignKey('Industry', on_delete=models.CASCADE, null=True, blank=True)
     frequency = models.IntegerField(default=0, null=True, blank=True)
     canonical = models.BooleanField(default=True)

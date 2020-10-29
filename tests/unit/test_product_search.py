@@ -16,13 +16,13 @@ class ProductJobTitleSearchTestCase(TestCase):
         self.software_engineering_id = software_engineering.id
 
         python_developer = JobTitle(
-            name="Python Developer", jobFunction_id=software_engineering.id
+            name="Python Developer", job_function_id=software_engineering.id
         )
         python_developer.save()
         self.python_developer_id = python_developer.id
 
         java_developer = JobTitle(
-            name="Java Developer", jobFunction_id=software_engineering.id
+            name="Java Developer", job_function_id=software_engineering.id
         )
         java_developer.save()
         self.java_developer_id = java_developer.id
