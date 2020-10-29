@@ -12,9 +12,9 @@ from api.products.filters import (
     FiltersContainer,
 )
 from api.products.geocoder import Geocoder
-from api.products.models import Location, Product, MapboxLocation, JobTitle
+from api.products.models import Location, Product, MapboxLocation, JobTitle, JobFunction
 from api.products.paginators import StandardResultsSetPagination, AutocompleteResultsSetPagination
-from api.products.serializers import ProductSerializer, LocationSerializer, JobTitleSerializer
+from api.products.serializers import ProductSerializer, LocationSerializer, JobTitleSerializer, JobFunctionSerializer
 
 
 class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
@@ -94,3 +94,17 @@ class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     @swagger_auto_schema(manual_parameters=search_parameters)
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+
+
+class JobFunctionsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+    serializer_class = JobFunctionSerializer
+    pagination_class = StandardResultsSetPagination
+    http_method_names = ("get",)
+    queryset = JobFunction.objects.all()
+
+    @swagger_auto_schema()
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        serializer = self.serializer_class(page, many=True)
+        return self.get_paginated_response(serializer.data)

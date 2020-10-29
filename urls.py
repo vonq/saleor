@@ -20,7 +20,7 @@ from drf_yasg2 import openapi
 from drf_yasg2.views import get_schema_view
 from rest_framework import permissions
 
-from api.products.views import LocationSearchViewSet, JobTitleSearchViewSet
+from api.products.views import LocationSearchViewSet, JobTitleSearchViewSet, JobFunctionsViewSet
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -36,6 +36,7 @@ urlpatterns = [
     re_path('health/?$', include('health_check.urls')),
     path(r"locations/", LocationSearchViewSet.as_view({'get': 'list'}), name="locations"),
     path('products/', include('api.products.urls', namespace="products")),
+    path(r"job-functions/", JobFunctionsViewSet.as_view({'get': 'list'}), name="job-functions"),
     path(r"job-titles/", JobTitleSearchViewSet.as_view({'get': 'list'}), name="job-titles"),
     path(
         r"docs/",
