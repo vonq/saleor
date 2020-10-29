@@ -1,11 +1,13 @@
 from django.contrib import admin
 
 # Register your models here.
+from modeltranslation.admin import TranslationAdmin
+
 from api.products.models import Product, Channel, JobTitle, JobFunction, Location
 
 
 @admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
+class ProductAdmin(TranslationAdmin):
     fields = ['title', 'url', 'channel', 'description', 'industries', 'job_functions', 'is_active',
               'salesforce_product_category', 'locations']
     search_fields = ('title', 'description')
@@ -20,7 +22,7 @@ class ChannelAdmin(admin.ModelAdmin):
 
 
 @admin.register(JobTitle)
-class JobTitleAdmin(admin.ModelAdmin):
+class JobTitleAdmin(TranslationAdmin):
     fields = ['name', 'jobFunction', 'industry', 'canonical', 'alias_of', 'active']
     list_display = ('name', 'jobFunction', 'industry', 'canonical', 'alias_of', 'active')
     list_filter = ('jobFunction', 'canonical', 'active')
@@ -28,7 +30,7 @@ class JobTitleAdmin(admin.ModelAdmin):
 
 
 @admin.register(JobFunction)
-class JobFunctionAdmin(admin.ModelAdmin):
+class JobFunctionAdmin(TranslationAdmin):
     fields = ['name', 'parent']
     list_display = ('name', 'parent')
     search_fields = ('name',)
