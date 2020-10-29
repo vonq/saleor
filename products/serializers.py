@@ -8,10 +8,11 @@ class LocationSerializer(serializers.ModelSerializer):
     fully_qualified_place_name = serializers.CharField()
     canonical_name = serializers.CharField(allow_null=True)
     within = serializers.CharField(allow_null=True)
+    context = serializers.ListField(child=serializers.CharField(), allow_empty=True)
 
     class Meta:
         model = Location
-        fields = ("id", "fully_qualified_place_name", "canonical_name", "place_type", "within")
+        fields = ("id", "fully_qualified_place_name", "canonical_name", "place_type", "within", "context")
 
 
 class ProductSerializer(serializers.ModelSerializer):

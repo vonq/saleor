@@ -9,6 +9,8 @@ from django.db.models import QuerySet, Q
 from django_pg_bulk_update import bulk_update_or_create
 from modeltranslation.fields import TranslationFieldDescriptor
 
+from api.products.geocoder import Geocoder
+
 
 class AcrossLanguagesQuerySet(QuerySet):
     def filter_across_languages(self, **kwargs):
@@ -164,7 +166,10 @@ class Location(models.Model):
             if 'short_code' in result['properties']:
                 location.mapbox_shortcode = result['properties']['short_code']
             if 'context' in result:
-                location.mapbox_context = result['context']
+                country = result['place_name'].split(',')[-1].strip()
+                continent = Geocoder.get_continent_for_country(country)
+                location.mapbox_context = [place['id'] for place in result['context']]
+                location.mapbox_context.extend([f"continent.{continent}", "world"])
 
             locations.append(location)
         return locations

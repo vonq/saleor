@@ -1,3 +1,5 @@
+import itertools
+
 from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins
@@ -33,9 +35,14 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         text = self.request.query_params.get("text")
         if not text:
             return []
+
+        # first attempt to match on continents
+        continents = Geocoder.get_continents(text)
+
         self.geocoder_response = Geocoder.geocode(text)
         locations = Location.from_mapbox_response(self.geocoder_response)
-        return locations
+
+        return list(itertools.chain(continents, locations))
 
     @swagger_auto_schema(manual_parameters=search_parameters)
     def list(self, request, *args, **kwargs):
