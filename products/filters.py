@@ -1,8 +1,9 @@
 import itertools
 from typing import Type
 
-from django.db.models import Q, Func, F, Max
-from django.contrib.postgres.fields.jsonb import KeyTextTransform
+from django.db.models.fields.json import KeyTransform
+from django.db.models import Q, Func, F, Max, IntegerField
+from django.db.models.functions import Cast
 from drf_yasg2 import openapi
 from rest_framework import filters
 from rest_framework.exceptions import ValidationError
@@ -162,4 +163,9 @@ class OrderByLocationTrafficShare(filters.BaseFilterBackend, FilterParametersMix
         # get the mapbox location we saved as part of the autocomplete
         country_code = MapboxLocation.objects.get(mapbox_id=location_id).country_code
 
-        return queryset.annotate(popularity=KeyTextTransform(country_code, 'similarweb_top_country_shares')).order_by('popularity')
+        return queryset.annotate(
+            popularity=Cast(
+                KeyTransform(country_code, 'similarweb_top_country_shares'),
+                IntegerField()
+            )
+        ).order_by('-popularity')
