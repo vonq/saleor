@@ -2,6 +2,7 @@ import itertools
 from typing import Type
 
 from django.db.models import Q, Func, F, Max
+from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from drf_yasg2 import openapi
 from rest_framework import filters
 from rest_framework.exceptions import ValidationError
@@ -137,6 +138,8 @@ class IndustryFilter(filters.BaseFilterBackend, FilterParametersMixin):
 
 class OrderByCardinalityFilter(filters.BaseFilterBackend, FilterParametersMixin):
     def filter_queryset(self, request, queryset, view):
+        # TODO: this shouldn't run if we're applying OrderByLocationTrafficShare
+        # TODO: find an elegant way to express this logic
         return (
             queryset.annotate(
                 # the more specific a location, the longer its context (['place', 'district', 'country'...)
@@ -148,3 +151,15 @@ class OrderByCardinalityFilter(filters.BaseFilterBackend, FilterParametersMixin)
             .order_by("-locations_cardinality")
             .distinct()
         )
+
+
+class OrderByLocationTrafficShare(filters.BaseFilterBackend, FilterParametersMixin):
+    def filter_queryset(self, request, queryset, view):
+        location_id = request.query_params.get('includeLocationId')
+        if not location_id or not MapboxLocation.objects.filter(mapbox_id=location_id).exists():
+            return queryset
+
+        # get the mapbox location we saved as part of the autocomplete
+        country_code = MapboxLocation.objects.get(mapbox_id=location_id).country_code
+
+        return queryset.annotate(popularity=KeyTextTransform(country_code, 'similarweb_top_country_shares')).order_by('popularity')
