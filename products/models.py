@@ -81,15 +81,24 @@ class MapboxLocation(models.Model):
     mapbox_id = models.CharField(name='mapbox_id', max_length=200, primary_key=True)
     mapbox_context = ArrayField(base_field=models.CharField(max_length=50, blank=False), default=list)
     mapbox_data = models.JSONField(name='mapbox_data')
+    country_code = models.CharField(max_length=10, null=True, blank=True)
 
     def __str__(self):
         return self.mapbox_placename or self.mapbox_id
+
+    @staticmethod
+    def get_country_short_code(location: dict):
+        # is it a country?
+        if location['id'].startswith('country.'):
+            return location['properties']['short_code']
+        return location['context'][-1]['short_code']
 
     @classmethod
     def save_mapbox_response(cls, *mapbox_locations: dict) -> int:
         updated = bulk_update_or_create(
             cls,
             [{'mapbox_id': location['id'], 'mapbox_data': location, 'mapbox_placename': location['place_name'],
+              'country_code': cls.get_country_short_code(location),
               'mapbox_context': [item['id'] for item in location.get('context', [])]}
              for location in mapbox_locations],
             key_fields='mapbox_id')
@@ -227,7 +236,17 @@ class Product(models.Model):
     desq_product_id = models.BigIntegerField(null=True)
 
     similarweb_estimated_monthly_visits = models.CharField(max_length=300, null=True, blank=True, default=None)
-    similarweb_top_country_shares = models.TextField(null=True, blank=True, default=None)
+    similarweb_top_country_shares = models.JSONField(null=True, blank=True, default=dict)
+
+    # similarweb_top_country_shares contains a dictionary of countries (in short alpha_2 format)
+    # and the share of traffic that comes from that country, like so:
+    # {
+    #     'de': 94,
+    #     'fr': 1,
+    #     'ph': 0,
+    #     'rs': 0,
+    #     'za': 0
+    # }
 
     objects = AcrossLanguagesQuerySet.as_manager()
 
