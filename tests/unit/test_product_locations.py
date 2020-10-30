@@ -274,4 +274,45 @@ class GlobalLocationTest(TestCase):
         self.assertEqual(len(resp.json()["results"]), 1)
 
 
+class LocationCardinalityFilterTestCase(TestCase):
+    def setUp(self) -> None:
+        united_kingdom = Location(
+            mapbox_id="country.12405201072814600",
+            mapbox_text="UK",
+            # "continent" here only serves to allow test assertions
+            # on sorting to work deterministically here
+            mapbox_context=["continent.europe", "global"],
+            # note that there is no "global" context for those...
+        )
+        united_kingdom.save()
 
+        england = Location(
+            mapbox_id="region.13483278848453920",
+            mapbox_text="England",
+            mapbox_context=["country.12405201072814600", "continent.europe", "global"],
+        )
+        england.save()
+
+        reading = Location(
+            mapbox_id="place.12006143788019830",
+            mapbox_text="Reading",
+            mapbox_context=[
+                "district.17792293837019830",
+                "region.13483278848453920",
+                "country.12405201072814600",
+                "continent.europe",
+                "global",
+            ],
+        )
+        reading.save()
+
+        board_one = Product(
+            title="Multi-place board"
+        )
+        board_one.save()
+        board_one.locations.set([united_kingdom, england, reading])
+        board_one.save()
+
+    def test_only_returns_one_board(self):
+        resp = self.client.get(reverse('api.products:products-list'))
+        self.assertEqual(resp.json()['count'], 1)

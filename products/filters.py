@@ -1,7 +1,7 @@
 import itertools
 from typing import Type
 
-from django.db.models import Q, Func, F
+from django.db.models import Q, Func, F, Max
 from drf_yasg2 import openapi
 from rest_framework import filters
 from rest_framework.exceptions import ValidationError
@@ -75,7 +75,7 @@ class IncludeLocationIdFilter(filters.BaseFilterBackend, FilterParametersMixin):
         return queryset.filter(
             Q(locations__mapbox_context__overlap=locations_and_contexts)
             | Q(locations__mapbox_id__in=locations_and_contexts)
-        ).distinct()
+        )
 
 
 class JobFunctionsTitleFilter(filters.BaseFilterBackend, FilterParametersMixin):
@@ -132,15 +132,19 @@ class IndustryFilter(filters.BaseFilterBackend, FilterParametersMixin):
 
         industry_ids = industry_id_param.split(",")
 
-        return queryset.filter(industries__id__in=industry_ids).distinct()
+        return queryset.filter(industries__id__in=industry_ids)
 
 
 class OrderByCardinalityFilter(filters.BaseFilterBackend, FilterParametersMixin):
     def filter_queryset(self, request, queryset, view):
-        return queryset.annotate(
-            # the more specific a location, the longer its context (['place', 'district', 'country'...)
-            # so we'll sort by descending cardinality to put most location-specific products first
-            locations_cardinality=Func(
-                F("locations__mapbox_context"), function="CARDINALITY"
+        return (
+            queryset.annotate(
+                # the more specific a location, the longer its context (['place', 'district', 'country'...)
+                # so we'll sort by descending cardinality to put most location-specific products first
+                locations_cardinality=Max(
+                    Func(F("locations__mapbox_context"), function="CARDINALITY")
+                )
             )
-        ).order_by("-locations_cardinality").distinct()
+            .order_by("-locations_cardinality")
+            .distinct()
+        )
