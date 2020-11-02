@@ -113,7 +113,7 @@ class MapboxLocation(models.Model):
 
         return list(
             itertools.chain.from_iterable(
-                MapboxLocation.objects.all().values_list('mapbox_context', flat=True)
+                qs.values_list('mapbox_context', flat=True)
             )
         )
 
@@ -159,7 +159,7 @@ class Location(models.Model):
                                       related_name='mapbox_location')  # link up
 
     def __str__(self):
-        return str(self.canonical_name)
+        return self.canonical_name or self.geocoder_id
 
     @classmethod
     def from_mapbox_response(cls, mapbox_response: list):

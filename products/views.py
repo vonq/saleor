@@ -11,6 +11,7 @@ from api.products.filters import (
     JobFunctionsTitleFilter,
     FiltersContainer,
     IndustryFilter,
+    OrderByLocationTrafficShare,
 )
 from api.products.geocoder import Geocoder
 from api.products.models import Location, Product, MapboxLocation, JobTitle, JobFunction, Industry
@@ -62,6 +63,7 @@ class ProductsViewSet(viewsets.ModelViewSet):
         JobFunctionsTitleFilter,
         IndustryFilter,
         OrderByCardinalityFilter,
+        OrderByLocationTrafficShare,
     )
     queryset = Product.objects.all()
 

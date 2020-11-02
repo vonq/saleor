@@ -1,9 +1,9 @@
 import itertools
 from typing import Type
 
+from django.db.models import Q, Func, F, Max, IntegerField, Value
 from django.db.models.fields.json import KeyTransform
-from django.db.models import Q, Func, F, Max, IntegerField
-from django.db.models.functions import Cast
+from django.db.models.functions import Cast, Coalesce
 from drf_yasg2 import openapi
 from rest_framework import filters
 from rest_framework.exceptions import ValidationError
@@ -164,8 +164,6 @@ class OrderByLocationTrafficShare(filters.BaseFilterBackend, FilterParametersMix
         country_code = MapboxLocation.objects.get(mapbox_id=location_id).country_code
 
         return queryset.annotate(
-            popularity=Cast(
+            popularity=Coalesce(Cast(
                 KeyTransform(country_code, 'similarweb_top_country_shares'),
-                IntegerField()
-            )
-        ).order_by('-popularity')
+                IntegerField()), Value(0))).order_by('-popularity')
