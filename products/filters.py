@@ -36,7 +36,7 @@ class ExactLocationIdFilter(filters.BaseFilterBackend, FilterParametersMixin):
             description="Match only for products assigned to a location id",
             type=openapi.TYPE_STRING,
             required=False,
-            explode=False
+            explode=False,
         ),
     ]
 
@@ -57,7 +57,7 @@ class IncludeLocationIdFilter(filters.BaseFilterBackend, FilterParametersMixin):
             type=openapi.TYPE_ARRAY,
             items=openapi.Items(type=openapi.TYPE_STRING),
             required=False,
-            explode=False
+            explode=False,
         )
     ]
 
@@ -75,9 +75,9 @@ class IncludeLocationIdFilter(filters.BaseFilterBackend, FilterParametersMixin):
             return queryset
 
         return queryset.filter(
-            Q(locations__mapbox_context__overlap=locations_and_contexts)
+            Q(locations__mapbox_context__contains=locations_and_contexts)
             | Q(locations__mapbox_id__in=locations_and_contexts)
-        )
+        ).distinct()  # a .distinct() call is required when using __contains, as it results in a join across locations
 
 
 class JobFunctionsTitleFilter(filters.BaseFilterBackend, FilterParametersMixin):
@@ -103,7 +103,9 @@ class JobFunctionsTitleFilter(filters.BaseFilterBackend, FilterParametersMixin):
         job_title_id = request.query_params.get("jobTitleId")
 
         if job_function_id and job_title_id:
-            raise ValidationError(detail="Cannot search by both job title and job function. Please use either field.")
+            raise ValidationError(
+                detail="Cannot search by both job title and job function. Please use either field."
+            )
 
         if job_function_id:
             return queryset.filter(job_functions__id=job_function_id)
@@ -156,14 +158,22 @@ class OrderByCardinalityFilter(filters.BaseFilterBackend, FilterParametersMixin)
 
 class OrderByLocationTrafficShare(filters.BaseFilterBackend, FilterParametersMixin):
     def filter_queryset(self, request, queryset, view):
-        location_id = request.query_params.get('includeLocationId')
-        if not location_id or not MapboxLocation.objects.filter(mapbox_id=location_id).exists():
+        location_id = request.query_params.get("includeLocationId")
+        if (
+            not location_id
+            or not MapboxLocation.objects.filter(mapbox_id=location_id).exists()
+        ):
             return queryset
 
         # get the mapbox location we saved as part of the autocomplete
         country_code = MapboxLocation.objects.get(mapbox_id=location_id).country_code
 
         return queryset.annotate(
-            popularity=Coalesce(Cast(
-                KeyTransform(country_code, 'similarweb_top_country_shares'),
-                IntegerField()), Value(0))).order_by('-popularity')
+            popularity=Coalesce(
+                Cast(
+                    KeyTransform(country_code, "similarweb_top_country_shares"),
+                    IntegerField(),
+                ),
+                Value(0),
+            )
+        ).order_by("-popularity")

@@ -96,6 +96,12 @@ class ProductLocationsTest(TestCase):
         global_product.locations.add(global_location)
         global_product.save()
 
+        # populate mapbox locations contexts
+        self.client.get(reverse("locations") + "?text=reading")
+        self.client.get(reverse("locations") + "?text=england")
+        self.client.get(reverse("locations") + "?text=slough")
+        self.client.get(reverse("locations") + "?text=united%20kingdom")
+
     def test_can_get_nested_locations(self):
         # Search for a product within Reading
         resp = self.client.get(
@@ -104,8 +110,10 @@ class ProductLocationsTest(TestCase):
         )
 
         self.assertEquals(resp.status_code, 200)
-        self.assertEqual(len(resp.json()["results"]), 2)
-        self.assertEquals(resp.json()["results"][0]["title"], "Something in Reading")
+
+        # must be 4, as we have product, product2, product4
+        self.assertEqual(len(resp.json()["results"]), 3)
+        self.assertEquals(resp.json()["results"][0]["title"], "Something in the whole of the UK")
 
         # Search for a product in England
         resp = self.client.get(
@@ -114,7 +122,8 @@ class ProductLocationsTest(TestCase):
         )
 
         self.assertEquals(resp.status_code, 200)
-        self.assertEqual(len(resp.json()["results"]), 3)
+        # they're 4, because now there's a "slough only" product
+        self.assertEqual(len(resp.json()["results"]), 4)
 
         # Search for a product in UK
         resp = self.client.get(
@@ -129,7 +138,7 @@ class ProductLocationsTest(TestCase):
             reverse("api.products:products-list")
             + "?includeLocationId=place.17224449158261700,place.12006143788019830"
         )
-        self.assertEqual(len(resp.json()["results"]), 3)
+        self.assertEqual(len(resp.json()["results"]), 4)
 
     def test_return_all_products_with_no_locations(self):
         resp = self.client.get(reverse("api.products:products-list"))
