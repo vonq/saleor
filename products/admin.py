@@ -40,8 +40,8 @@ class JobFunctionAdmin(TranslationAdmin):
 
 @admin.register(Location)
 class LocationAdmin(TranslationAdmin):
-    fields = ('within', 'place_type')
-    list_display = ('fully_qualified_place_name', 'canonical_name', 'within', 'place_type')
+    fields = ('canonical_name', 'mapbox_within', 'mapbox_place_type')
+    list_display = ('fully_qualified_place_name', 'canonical_name', 'mapbox_within', 'mapbox_place_type')
     search_fields = ('mapbox_placename', 'canonical_name')
 
 
