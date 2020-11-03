@@ -27,7 +27,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ("title", "locations", "job_functions", "industries",)
+        fields = ("title", "locations", "job_functions", "industries", "url")
 
 
 class JobTitleSerializer(serializers.ModelSerializer):
