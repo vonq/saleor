@@ -2,7 +2,7 @@ from django.test import TestCase, tag
 from rest_framework.reverse import reverse
 
 from api.products.geocoder import Geocoder
-from api.products.models import MapboxLocation, Product, Location
+from api.products.models import Product, Location
 
 
 @tag("integration")
@@ -102,15 +102,15 @@ class TrafficLocationsDataTestCase(TestCase):
 
     def test_get_country_shortcode_works(self):
         geocoder_response = Geocoder.geocode("reading uk")
-        country_code = MapboxLocation.get_country_short_code(geocoder_response[0])
+        country_code = Location.get_country_short_code(geocoder_response[0])
         self.assertEqual(country_code, "gb")
 
         geocoder_response = Geocoder.geocode("rome italy")
-        country_code = MapboxLocation.get_country_short_code(geocoder_response[0])
+        country_code = Location.get_country_short_code(geocoder_response[0])
         self.assertEqual(country_code, "it")
 
         geocoder_response = Geocoder.geocode("ulaanbaatar")
-        country_code = MapboxLocation.get_country_short_code(geocoder_response[0])
+        country_code = Location.get_country_short_code(geocoder_response[0])
         self.assertEqual(country_code, "mn")
 
     def test_search_flow(self):
@@ -122,7 +122,7 @@ class TrafficLocationsDataTestCase(TestCase):
         )
 
         # we get three results: one for london, two for europe
-        self.assertEqual(len(resp.json()["results"]), 2)
+        self.assertEqual(len(resp.json()["results"]), 3)
 
         # the first result is the one for London (since it gets more traffic from gb)
         self.assertEqual(resp.json()["results"][0]["title"], "Board with London jobs")

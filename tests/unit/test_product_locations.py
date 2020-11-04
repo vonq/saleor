@@ -1,7 +1,7 @@
 from django.test import TestCase, tag
 from rest_framework.reverse import reverse
 
-from api.products.models import Location, Product, MapboxLocation
+from api.products.models import Location, Product
 
 
 @tag('unit')
@@ -17,6 +17,7 @@ class ProductLocationsTest(TestCase):
             # note that there is no "global" context for those...
         )
         united_kingdom.save()
+        self.united_kingdom_id = united_kingdom.id
 
         england = Location(
             mapbox_id="region.13483278848453920",
@@ -24,6 +25,7 @@ class ProductLocationsTest(TestCase):
             mapbox_context=["country.12405201072814600", "continent.europe", "global"],
         )
         england.save()
+        self.england_id = england.id
 
         reading = Location(
             mapbox_id="place.12006143788019830",
@@ -37,6 +39,7 @@ class ProductLocationsTest(TestCase):
             ],
         )
         reading.save()
+        self.reading_id = reading.id
 
         slough = Location(
             mapbox_id="place.17224449158261700",
@@ -50,6 +53,7 @@ class ProductLocationsTest(TestCase):
             ],
         )
         slough.save()
+        self.slough_id = slough.id
 
         global_location = Location(
             # global has a specific name to allow searching just for it
@@ -58,6 +62,7 @@ class ProductLocationsTest(TestCase):
             mapbox_context=[],
         )
         global_location.save()
+        self.global_id = global_location.id
 
         product = Product(
             title="Something in the whole of the UK",
@@ -106,39 +111,39 @@ class ProductLocationsTest(TestCase):
         # Search for a product within Reading
         resp = self.client.get(
             reverse("api.products:products-list")
-            + "?includeLocationId=place.12006143788019830"
+            + f"?includeLocationId={self.reading_id}"
         )
 
         self.assertEquals(resp.status_code, 200)
 
-        # must be 4, as we have product, product2, product4
-        self.assertEqual(len(resp.json()["results"]), 3)
+        # must be 4, as we have product, product2, product4, global
+        self.assertEqual(len(resp.json()["results"]), 4)
         self.assertEquals(resp.json()["results"][0]["title"], "Something in the whole of the UK")
 
         # Search for a product in England
         resp = self.client.get(
             reverse("api.products:products-list")
-            + "?includeLocationId=region.13483278848453920"
+            + f"?includeLocationId={self.england_id}"
         )
 
         self.assertEquals(resp.status_code, 200)
-        # they're 4, because now there's a "slough only" product
-        self.assertEqual(len(resp.json()["results"]), 4)
+        # they're 5, because now there's a "slough only" product
+        self.assertEqual(len(resp.json()["results"]), 5)
 
         # Search for a product in UK
         resp = self.client.get(
             reverse("api.products:products-list")
-            + "?includeLocationId=country.12405201072814600"
+            + f"?includeLocationId={self.united_kingdom_id}"
         )
         self.assertEquals(resp.status_code, 200)
-        self.assertEqual(len(resp.json()["results"]), 4)
+        self.assertEqual(len(resp.json()["results"]), 5)
 
         # Search for a product in Slough OR Reading
         resp = self.client.get(
             reverse("api.products:products-list")
-            + "?includeLocationId=place.17224449158261700,place.12006143788019830"
+            + f"?includeLocationId={self.slough_id},{self.reading_id}"
         )
-        self.assertEqual(len(resp.json()["results"]), 4)
+        self.assertEqual(len(resp.json()["results"]), 5)
 
     def test_return_all_products_with_no_locations(self):
         resp = self.client.get(reverse("api.products:products-list"))
@@ -153,7 +158,7 @@ class ProductLocationsTest(TestCase):
 
     def test_products_with_global_locations(self):
         resp_global = self.client.get(
-            reverse("api.products:products-list") + "?includeLocationId=global"
+            reverse("api.products:products-list") + f"?includeLocationId={self.global_id}"
         )
         resp_list_all = self.client.get(reverse("api.products:products-list"))
         self.assertEquals(resp_global.status_code, 200)
@@ -184,22 +189,23 @@ class ProductLocationsTest(TestCase):
         )
 
     def test_can_narrow_the_list_by_filter_by(self):
-        resp_one = self.client.get(reverse("api.products:products-list") + '?includeLocationId=country.12405201072814600')
-        self.assertEqual(resp_one.json()['count'], 4)
+        resp_one = self.client.get(reverse("api.products:products-list") + f'?includeLocationId={self.united_kingdom_id}')
+        # five products, including global...
+        self.assertEqual(resp_one.json()['count'], 5)
 
         filtered_response = self.client.get(reverse(
-            "api.products:products-list") + '?includeLocationId=country.12405201072814600&exactLocationId=place.12006143788019830')
+            "api.products:products-list") + f'?includeLocationId={self.united_kingdom_id}&exactLocationId={self.reading_id}')
         self.assertEqual(filtered_response.json()['count'], 2)
 
         only_filtered_response = self.client.get(reverse(
-            "api.products:products-list") + '?exactLocationId=place.12006143788019830')
+            "api.products:products-list") + f'?exactLocationId={self.reading_id}')
         self.assertEqual(only_filtered_response.json()['count'], 2)
 
         self.assertEqual(only_filtered_response.json()['count'], filtered_response.json()['count'])
 
         multiple_filtered_response = self.client.get(reverse(
-            "api.products:products-list") + '?includeLocationId=country.12405201072814600'
-                                            '&exactLocationId=place.12006143788019830,place.17224449158261700')
+            "api.products:products-list") + f'?includeLocationId={self.united_kingdom_id}'
+                                            f'&exactLocationId={self.reading_id},{self.slough_id}')
         self.assertEqual(multiple_filtered_response.json()['count'], 3)
 
 
@@ -213,6 +219,7 @@ class GlobalLocationTest(TestCase):
         )
         united_kingdom.save()
 
+
         reading = Location(
             mapbox_id="place.12006143788019830",
             mapbox_text="Reading",
@@ -224,8 +231,9 @@ class GlobalLocationTest(TestCase):
             ],
         )
         reading.save()
+        self.reading_id = reading.id
 
-        reading_mbl = MapboxLocation(
+        reading_mbl = Location(
             mapbox_id="place.12006143788019830",
             mapbox_placename="Reading, Reading, England, United Kingdom",
             mapbox_context=[
@@ -233,37 +241,6 @@ class GlobalLocationTest(TestCase):
                 "region.13483278848453920",
                 "country.12405201072814600",
             ],
-            mapbox_data={
-                "id": "place.12006143788019830",
-                "bbox": [-1.248574, 51.328191, -0.771487, 51.5597],
-                "text": "Reading",
-                "type": "Feature",
-                "center": [-0.97306, 51.45417],
-                "context": [
-                    {
-                        "id": "district.17792293837019830",
-                        "text": "Reading",
-                        "wikidata": "Q161491",
-                    },
-                    {
-                        "id": "region.13483278848453920",
-                        "text": "England",
-                        "wikidata": "Q21",
-                        "short_code": "GB-ENG",
-                    },
-                    {
-                        "id": "country.12405201072814600",
-                        "text": "United Kingdom",
-                        "wikidata": "Q145",
-                        "short_code": "gb",
-                    },
-                ],
-                "geometry": {"type": "Point", "coordinates": [-0.97306, 51.45417]},
-                "relevance": 1,
-                "place_name": "Reading, Reading, England, United Kingdom",
-                "place_type": ["place"],
-                "properties": {"wikidata": "Q161491"},
-            },
         )
         reading_mbl.save()
 
@@ -278,7 +255,7 @@ class GlobalLocationTest(TestCase):
     def test_specific_query_yield_general_results(self):
         resp = self.client.get(
             reverse("api.products:products-list")
-            + "?includeLocationId=place.12006143788019830"
+            + f"?includeLocationId={self.reading_id}"
         )
         self.assertEqual(len(resp.json()["results"]), 1)
 

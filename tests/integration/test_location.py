@@ -2,7 +2,7 @@ from django.test import TestCase, tag
 from rest_framework.reverse import reverse
 
 from api.products.geocoder import Geocoder
-from api.products.models import MapboxLocation, Location
+from api.products.models import Location
 from api.products.serializers import LocationSerializer
 
 
@@ -29,10 +29,10 @@ class LocationsTestCase(TestCase):
 class MapboxLocationsTestCase(TestCase):
     def test_autocomplete_saves_mapbox_locations(self):
         self.client.get(reverse("locations") + "?text=reading")
-        self.assertEqual(MapboxLocation.objects.count(), 5)
+        self.assertEqual(Location.objects.count(), 5)
 
         self.assertListEqual(
-            list(MapboxLocation.objects.all().values_list("mapbox_placename", flat=True)),
+            list(Location.objects.all().values_list("mapbox_placename", flat=True)),
             [
                 "Reading, Reading, England, United Kingdom",
                 "Reading, Pennsylvania, United States",
