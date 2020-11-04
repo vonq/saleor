@@ -6,7 +6,6 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import FieldError
 from django.db import models
 from django.db.models import QuerySet, Q
-from django_pg_bulk_update import bulk_update_or_create
 from modeltranslation.fields import TranslationFieldDescriptor
 
 from api.products.geocoder import Geocoder
@@ -76,48 +75,6 @@ class JobTitle(models.Model):
         return self.name
 
 
-class MapboxLocation(models.Model):
-    mapbox_placename = models.CharField(name="mapbox_placename", max_length=300, null=True, blank=True)
-    mapbox_id = models.CharField(name='mapbox_id', max_length=200, primary_key=True)
-    mapbox_context = ArrayField(base_field=models.CharField(max_length=50, blank=False), default=list)
-    mapbox_data = models.JSONField(name='mapbox_data')
-    country_code = models.CharField(max_length=10, null=True, blank=True)
-
-    def __str__(self):
-        return self.mapbox_placename or self.mapbox_id
-
-    @staticmethod
-    def get_country_short_code(location: dict):
-        # is it a country?
-        if location['id'].startswith('country.'):
-            return location['properties']['short_code']
-        return location['context'][-1]['short_code']
-
-    @classmethod
-    def save_mapbox_response(cls, *mapbox_locations: dict) -> int:
-        updated = bulk_update_or_create(
-            cls,
-            [{'mapbox_id': location['id'], 'mapbox_data': location, 'mapbox_placename': location['place_name'],
-              'country_code': cls.get_country_short_code(location),
-              'mapbox_context': [item['id'] for item in location.get('context', [])]}
-             for location in mapbox_locations],
-            key_fields='mapbox_id')
-        return updated
-
-    @classmethod
-    def list_context_locations_ids(cls, location_ids: List[str]) -> List[str]:
-        qs = cls.objects.filter(mapbox_id__in=location_ids)
-
-        if not qs.exists():
-            return []
-
-        return list(
-            itertools.chain.from_iterable(
-                qs.values_list('mapbox_context', flat=True)
-            )
-        )
-
-
 class Location(models.Model):
     @property
     def fully_qualified_place_name(self):
@@ -148,6 +105,8 @@ class Location(models.Model):
     desq_name_en = models.CharField(max_length=100, null=True)
     desq_country_code = models.CharField(max_length=3, null=True)
 
+    country_code = models.CharField(max_length=10, null=True, blank=True)
+
     # mapbox fields
     mapbox_id = models.CharField(max_length=50, null=True, blank=True)
     mapbox_text = models.CharField(max_length=100, null=True, blank=True)
@@ -162,6 +121,13 @@ class Location(models.Model):
         return self.canonical_name or self.geocoder_id
 
     @classmethod
+    def get_country_short_code(cls, location: dict):
+        # is it a country?
+        if location["id"].startswith("country."):
+            return location["properties"]["short_code"]
+        return location["context"][-1]["short_code"]
+
+    @classmethod
     def from_mapbox_response(cls, mapbox_response: list):
         locations = []
         for result in mapbox_response:
@@ -170,6 +136,7 @@ class Location(models.Model):
             location.mapbox_placename = result['place_name']
             location.text = result['text']
             location.mapbox_place_type = []
+            location.country_code = cls.get_country_short_code(result)
             for place_type in result['place_type']:
                 location.mapbox_place_type.append(place_type)
             if 'short_code' in result['properties']:
@@ -181,7 +148,40 @@ class Location(models.Model):
                 location.mapbox_context.extend([f"continent.{continent}", "world"])
 
             locations.append(location)
-        return locations
+
+        updated = []
+        for location in locations:
+            # we don't have a unique constraint on this table
+            # so a bulk update with ON CONFLICT is impossible
+            # we won't get a lot of locations from mapbox anyway...
+            # FIXME when we agree which field should be used as an unique key
+            matching_locations = cls.objects.filter(mapbox_id=location.mapbox_id)
+            if matching_locations.exists():
+                # since we have some duplicates, let's make sure we only pick one
+                # from the resulting queryset
+                updated.append(matching_locations[0])
+                continue
+
+            location.save()
+            updated.append(location)
+
+        return updated
+
+    @classmethod
+    def list_context_locations_ids(cls, location_ids: List[str]) -> List[str]:
+        qs = cls.objects.filter(id__in=location_ids)
+
+        if not qs.exists():
+            return []
+
+        return list(
+            itertools.chain(
+                qs.values_list("mapbox_id", flat=True),
+                itertools.chain.from_iterable(
+                    qs.values_list("mapbox_context", flat=True)
+                ),
+            )
+        )
 
 
 class Channel(models.Model):
