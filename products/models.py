@@ -149,23 +149,12 @@ class Location(models.Model):
 
             locations.append(location)
 
-        updated = []
-        for location in locations:
-            # we don't have a unique constraint on this table
-            # so a bulk update with ON CONFLICT is impossible
-            # we won't get a lot of locations from mapbox anyway...
-            # FIXME when we agree which field should be used as an unique key
-            matching_locations = cls.objects.filter(mapbox_id=location.mapbox_id)
-            if matching_locations.exists():
-                # since we have some duplicates, let's make sure we only pick one
-                # from the resulting queryset
-                updated.append(matching_locations[0])
-                continue
+        existing = cls.objects.filter(mapbox_id__in=[location.mapbox_id for location in locations])
+        existing_ids = [location.mapbox_id for location in existing]
 
-            location.save()
-            updated.append(location)
+        created = Location.objects.bulk_create(filter(lambda x: x.mapbox_id not in existing_ids, locations))
 
-        return updated
+        return itertools.chain(existing, created)
 
     @classmethod
     def list_context_locations_ids(cls, location_ids: List[str]) -> List[str]:
