@@ -1,6 +1,5 @@
 from django.contrib import admin
 
-# Register your models here.
 from modeltranslation.admin import TranslationAdmin
 
 from api.products.models import Product, Channel, JobTitle, JobFunction, Location, Industry
@@ -9,7 +8,7 @@ from api.products.models import Product, Channel, JobTitle, JobFunction, Locatio
 @admin.register(Product)
 class ProductAdmin(TranslationAdmin):
     fields = ['title', 'url', 'channel', 'description', 'industries', 'job_functions', 'is_active',
-              'salesforce_product_category', 'locations']
+              'salesforce_product_category', 'locations', 'similarweb_top_country_shares']
     filter_horizontal = ('industries', 'job_functions', 'locations')
     search_fields = ('title', 'description')
 
