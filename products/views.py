@@ -14,7 +14,7 @@ from api.products.filters import (
     OrderByLocationTrafficShare,
 )
 from api.products.geocoder import Geocoder
-from api.products.models import Location, Product, MapboxLocation, JobTitle, JobFunction, Industry
+from api.products.models import Location, Product, JobTitle, JobFunction, Industry
 from api.products.paginators import StandardResultsSetPagination, AutocompleteResultsSetPagination
 from api.products.serializers import ProductSerializer, LocationSerializer, JobTitleSerializer, JobFunctionSerializer, IndustrySerializer
 
@@ -32,6 +32,7 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         ),
     ]
     geocoder_response = []
+    locations = []
 
     def get_queryset(self):
         text = self.request.query_params.get("text")
@@ -41,16 +42,18 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         # first attempt to match on continents
         continents = Geocoder.get_continents(text)
 
-        self.geocoder_response = Geocoder.geocode(text)
-        locations = Location.from_mapbox_response(self.geocoder_response)
+        # avoid hitting mapbox or the database again
+        # when serializing a response
+        if not self.geocoder_response:
+            self.geocoder_response = Geocoder.geocode(text)
+        if not self.locations:
+            self.locations = Location.from_mapbox_response(self.geocoder_response)
 
-        return list(itertools.chain(continents, locations))
+        return list(itertools.chain(continents, self.locations))
 
     @swagger_auto_schema(manual_parameters=search_parameters)
     def list(self, request, *args, **kwargs):
-        response = super().list(request, *args, **kwargs)
-        MapboxLocation.save_mapbox_response(*self.geocoder_response)
-        return response
+        return super().list(request, *args, **kwargs)
 
 
 class ProductsViewSet(viewsets.ModelViewSet):

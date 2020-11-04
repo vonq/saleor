@@ -8,7 +8,7 @@ from drf_yasg2 import openapi
 from rest_framework import filters
 from rest_framework.exceptions import ValidationError
 
-from api.products.models import MapboxLocation
+from api.products.models import Location
 
 
 class FilterParametersMixin:
@@ -44,8 +44,9 @@ class ExactLocationIdFilter(filters.BaseFilterBackend, FilterParametersMixin):
         filter_by_query = request.query_params.get("exactLocationId")
         if not filter_by_query:
             return queryset
-        filter_by_parameters = filter_by_query.split(",")
-        return queryset.filter(locations__mapbox_id__in=filter_by_parameters)
+        filter_by_ids = filter_by_query.split(",")
+
+        return queryset.filter(locations__id__in=filter_by_ids)
 
 
 class IncludeLocationIdFilter(filters.BaseFilterBackend, FilterParametersMixin):
@@ -68,9 +69,8 @@ class IncludeLocationIdFilter(filters.BaseFilterBackend, FilterParametersMixin):
 
         location_ids = location_ids.split(",")
 
-        locations_and_contexts = (
-            location_ids + MapboxLocation.list_context_locations_ids(location_ids)
-        )
+        locations_and_contexts = Location.list_context_locations_ids(location_ids)
+
         if not locations_and_contexts:
             return queryset
 
@@ -159,14 +159,17 @@ class OrderByCardinalityFilter(filters.BaseFilterBackend, FilterParametersMixin)
 class OrderByLocationTrafficShare(filters.BaseFilterBackend, FilterParametersMixin):
     def filter_queryset(self, request, queryset, view):
         location_id = request.query_params.get("includeLocationId")
-        if (
-            not location_id
-            or not MapboxLocation.objects.filter(mapbox_id=location_id).exists()
-        ):
+        location_ids = location_id.split(",") if location_id else []
+
+        if len(location_ids) > 1:
+            # FIXME: the sorting behaviour with multiple source of traffic is undefined
             return queryset
 
-        # get the mapbox location we saved as part of the autocomplete
-        country_code = MapboxLocation.objects.get(mapbox_id=location_id).country_code
+        if not location_id or not Location.objects.filter(id=location_id).exists():
+            return queryset
+
+        # get the location we saved as part of the autocomplete
+        country_code = Location.objects.filter(id=location_id).first().country_code
 
         return queryset.annotate(
             popularity=Coalesce(
