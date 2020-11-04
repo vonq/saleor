@@ -34,6 +34,7 @@ DEBUG = True if is_development else False
 ALLOWED_HOSTS = [
                     '.pkb.web-acceptance.vonq-aws.com',
                     '.pkb.web-acceptance.vonq.int',
+                    '.pkb.web-producion.vonq-aws.com',
                     '.vonq.int'  # This will cover nginx host renaming for health check
                 ] + ['localhost'] if is_development else []
 
