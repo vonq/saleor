@@ -171,6 +171,10 @@ class OrderByLocationTrafficShare(filters.BaseFilterBackend, FilterParametersMix
         # get the location we saved as part of the autocomplete
         country_code = Location.objects.filter(id=location_id).first().country_code
 
+        if not country_code:
+            # some stale locations might not have a country code
+            return queryset
+
         return queryset.annotate(
             popularity=Coalesce(
                 Cast(

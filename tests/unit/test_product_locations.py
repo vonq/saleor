@@ -118,7 +118,9 @@ class ProductLocationsTest(TestCase):
 
         # must be 4, as we have product, product2, product4, global
         self.assertEqual(len(resp.json()["results"]), 4)
-        self.assertEquals(resp.json()["results"][0]["title"], "Something in the whole of the UK")
+
+        # the most specific location is at the top
+        self.assertEquals(resp.json()["results"][0]["title"], "Something in Reading")
 
         # Search for a product in England
         resp = self.client.get(
