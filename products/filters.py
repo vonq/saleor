@@ -2,7 +2,7 @@ import itertools
 from typing import Type
 
 from django.db.models import Q, Func, F, Max, IntegerField, Value
-from django.db.models.fields.json import KeyTransform
+from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast, Coalesce
 from drf_yasg2 import openapi
 from rest_framework import filters
@@ -178,7 +178,7 @@ class OrderByLocationTrafficShare(filters.BaseFilterBackend, FilterParametersMix
         return queryset.annotate(
             popularity=Coalesce(
                 Cast(
-                    KeyTransform(country_code, "similarweb_top_country_shares"),
+                    KeyTextTransform(country_code, "similarweb_top_country_shares"),
                     IntegerField(),
                 ),
                 Value(0),
