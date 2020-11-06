@@ -16,7 +16,8 @@ from api.products.filters import (
 from api.products.geocoder import Geocoder
 from api.products.models import Location, Product, JobTitle, JobFunction, Industry
 from api.products.paginators import StandardResultsSetPagination, AutocompleteResultsSetPagination
-from api.products.serializers import ProductSerializer, LocationSerializer, JobTitleSerializer, JobFunctionSerializer, IndustrySerializer
+from api.products.serializers import ProductSerializer, LocationSerializer, JobTitleSerializer, JobFunctionSerializer, \
+    IndustrySerializer
 
 
 class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
@@ -41,6 +42,13 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 
         # first attempt to match on continents
         continents = Geocoder.get_continents(text)
+        world = Location(
+            mapbox_placename="world",
+            canonical_name="world",
+            mapbox_id="world",
+            mapbox_context=[],
+            mapbox_place_type=[],
+        )
 
         # avoid hitting mapbox or the database again
         # when serializing a response
@@ -49,7 +57,7 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         if not self.locations:
             self.locations = Location.from_mapbox_response(self.geocoder_response)
 
-        return list(itertools.chain(continents, self.locations))
+        return list(itertools.chain(continents, self.locations, [world]))
 
     @swagger_auto_schema(manual_parameters=search_parameters)
     def list(self, request, *args, **kwargs):
