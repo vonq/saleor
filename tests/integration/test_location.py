@@ -6,7 +6,7 @@ from api.products.models import Location
 from api.products.serializers import LocationSerializer
 
 
-@tag('integration')
+@tag("integration")
 class LocationsTestCase(TestCase):
     def setUp(self) -> None:
         self.response = self.client.get(reverse("locations") + "?text=georgia")
@@ -21,7 +21,7 @@ class LocationsTestCase(TestCase):
     def test_location_have_only_desired_types(self):
         types = ["country", "region", "place", "district"]
         for result in self.response.data:
-            for place_type in result['place_type']:
+            for place_type in result["place_type"]:
                 self.assertTrue(place_type in types)
 
 
@@ -42,13 +42,16 @@ class MapboxLocationsTestCase(TestCase):
             ],
         )
 
+        self.assertEqual(
+            list(Location.objects.all().values_list("canonical_name", flat=True)),
+            ["Reading", "Reading", "Reading", "Reading", "Readington"],
+        )
+
 
 @tag("integration")
 class ExtendedLocationResultsTestCase(TestCase):
     def test_endpoint_can_produce_extended_results(self):
-        response = self.client.get(
-            reverse("locations") + "?text=london%20uk"
-        )
+        response = self.client.get(reverse("locations") + "?text=london%20uk")
         self.assertEqual(
             response.json()[0]["context"],
             [
@@ -61,9 +64,7 @@ class ExtendedLocationResultsTestCase(TestCase):
         )
 
     def test_endpint_can_match_on_continent_names(self):
-        response = self.client.get(
-            reverse("locations") + "?text=eur"
-        )
+        response = self.client.get(reverse("locations") + "?text=eur")
 
         self.assertEqual(
             response.json()[0]["context"],

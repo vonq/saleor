@@ -25,9 +25,13 @@ class Geocoder:
     @staticmethod
     @lru_cache
     def get_continent_for_country(country: str) -> str:
-        country_code = pc.country_name_to_country_alpha2(
-            country, cn_name_format="default"
-        )
+        try:
+            country_code = pc.country_name_to_country_alpha2(
+                country, cn_name_format="default"
+            )
+        except KeyError as e:
+            return ""
+
         continent_code = pc.country_alpha2_to_continent_code(country_code)
         continent_name = pc.convert_continent_code_to_continent_name(continent_code)
         return continent_name.lower()
@@ -39,7 +43,7 @@ class Geocoder:
             filter(lambda x: re.search(text, x, re.IGNORECASE), CONTINENTS)
         )
         if matching_continent_names:
-            Location = apps.get_model('products', 'Location')
+            Location = apps.get_model("products", "Location")
             return [
                 Location(
                     mapbox_placename=continent_name,

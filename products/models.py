@@ -52,7 +52,9 @@ class Industry(models.Model):
 
 class JobFunction(models.Model):
     name = models.CharField(max_length=100)
-    parent = models.ForeignKey('JobFunction', on_delete=models.CASCADE, null=True, blank=True)
+    parent = models.ForeignKey(
+        "JobFunction", on_delete=models.CASCADE, null=True, blank=True
+    )
 
     objects = AcrossLanguagesQuerySet.as_manager()
 
@@ -62,11 +64,17 @@ class JobFunction(models.Model):
 
 class JobTitle(models.Model):
     name = models.CharField(max_length=100)
-    job_function = models.ForeignKey('JobFunction', on_delete=models.CASCADE, null=True, blank=True)
-    industry = models.ForeignKey('Industry', on_delete=models.CASCADE, null=True, blank=True)
+    job_function = models.ForeignKey(
+        "JobFunction", on_delete=models.CASCADE, null=True, blank=True
+    )
+    industry = models.ForeignKey(
+        "Industry", on_delete=models.CASCADE, null=True, blank=True
+    )
     frequency = models.IntegerField(default=0, null=True, blank=True)
     canonical = models.BooleanField(default=True)
-    alias_of = models.ForeignKey('JobTitle', on_delete=models.CASCADE, null=True, blank=True)
+    alias_of = models.ForeignKey(
+        "JobTitle", on_delete=models.CASCADE, null=True, blank=True
+    )
     active = models.BooleanField(default=True)
 
     objects = AcrossLanguagesQuerySet.as_manager()
@@ -111,11 +119,20 @@ class Location(models.Model):
     mapbox_id = models.CharField(max_length=50, null=True, blank=True)
     mapbox_text = models.CharField(max_length=100, null=True, blank=True)
     mapbox_placename = models.CharField(max_length=300, null=True, blank=True)
-    mapbox_context = ArrayField(base_field=models.CharField(max_length=50, blank=False), default=list)
-    mapbox_place_type = ArrayField(base_field=models.CharField(max_length=500, null=True, blank=True), default=list)
+    mapbox_context = ArrayField(
+        base_field=models.CharField(max_length=50, blank=False), default=list
+    )
+    mapbox_place_type = ArrayField(
+        base_field=models.CharField(max_length=500, null=True, blank=True), default=list
+    )
     mapbox_shortcode = models.CharField(max_length=10, null=True, blank=True)
-    mapbox_within = models.ForeignKey('Location', on_delete=models.CASCADE, null=True, blank=True,
-                                      related_name='mapbox_location')  # link up
+    mapbox_within = models.ForeignKey(
+        "Location",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="mapbox_location",
+    )  # link up
 
     def __str__(self):
         return self.canonical_name or self.geocoder_id
@@ -132,27 +149,32 @@ class Location(models.Model):
         locations = []
         for result in mapbox_response:
             location = cls()
-            location.mapbox_id = result['id']
-            location.mapbox_placename = result['place_name']
-            location.text = result['text']
+            location.mapbox_id = result["id"]
+            location.mapbox_placename = result["place_name"]
+            location.canonical_name = result["text"]
+            location.mapbox_text = result["text"]
             location.mapbox_place_type = []
             location.country_code = cls.get_country_short_code(result)
-            for place_type in result['place_type']:
+            for place_type in result["place_type"]:
                 location.mapbox_place_type.append(place_type)
-            if 'short_code' in result['properties']:
-                location.mapbox_shortcode = result['properties']['short_code']
-            if 'context' in result:
-                country = result['place_name'].split(',')[-1].strip()
+            if "short_code" in result["properties"]:
+                location.mapbox_shortcode = result["properties"]["short_code"]
+            if "context" in result:
+                country = result["place_name"].split(",")[-1].strip()
                 continent = Geocoder.get_continent_for_country(country)
-                location.mapbox_context = [place['id'] for place in result['context']]
+                location.mapbox_context = [place["id"] for place in result["context"]]
                 location.mapbox_context.extend([f"continent.{continent}", "world"])
 
             locations.append(location)
 
-        existing = cls.objects.filter(mapbox_id__in=[location.mapbox_id for location in locations])
+        existing = cls.objects.filter(
+            mapbox_id__in=[location.mapbox_id for location in locations]
+        )
         existing_ids = [location.mapbox_id for location in existing]
 
-        created = Location.objects.bulk_create(filter(lambda x: x.mapbox_id not in existing_ids, locations))
+        created = Location.objects.bulk_create(
+            filter(lambda x: x.mapbox_id not in existing_ids, locations)
+        )
 
         return itertools.chain(existing, created)
 
@@ -177,13 +199,13 @@ class Channel(models.Model):
     name = models.CharField(max_length=200)
     url = models.URLField(max_length=300, unique=True)
     TYPE_CHOICES = [
-        ('job board', 'Job Board'),
-        ('social media', 'Social Media'),
-        ('community', 'Community'),
-        ('publication', 'Publication'),
-        ('aggregator', 'Aggregator')
+        ("job board", "Job Board"),
+        ("social media", "Social Media"),
+        ("community", "Community"),
+        ("publication", "Publication"),
+        ("aggregator", "Aggregator"),
     ]
-    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='job board')
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default="job board")
 
     def __str__(self):
         return str(self.name)
@@ -192,8 +214,10 @@ class Channel(models.Model):
 class Product(models.Model):
     title = models.CharField(max_length=200, null=True)
     url = models.URLField(max_length=300, null=True)
-    channel = models.ForeignKey(Channel, on_delete=models.SET_NULL, null=True, blank=True)
-    description = models.TextField(default='', null=True, blank=True)
+    channel = models.ForeignKey(
+        Channel, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    description = models.TextField(default="", null=True, blank=True)
     industries = models.ManyToManyField(
         Industry,
         related_name="industries",
@@ -218,14 +242,18 @@ class Product(models.Model):
 
     locations = models.ManyToManyField(Location, related_name="locations", blank=True)
 
-    interests = models.CharField(max_length=200, default='', blank=True, null=True)
+    interests = models.CharField(max_length=200, default="", blank=True, null=True)
 
     salesforce_id = models.CharField(max_length=36, null=True)
     salesforce_product_type = models.CharField(max_length=30, null=True)
     desq_product_id = models.BigIntegerField(null=True)
 
-    similarweb_estimated_monthly_visits = models.CharField(max_length=300, null=True, blank=True, default=None)
-    similarweb_top_country_shares = models.JSONField(null=True, blank=True, default=dict)
+    similarweb_estimated_monthly_visits = models.CharField(
+        max_length=300, null=True, blank=True, default=None
+    )
+    similarweb_top_country_shares = models.JSONField(
+        null=True, blank=True, default=dict
+    )
 
     # similarweb_top_country_shares contains a dictionary of countries (in short alpha_2 format)
     # and the share of traffic that comes from that country, like so:
@@ -240,4 +268,4 @@ class Product(models.Model):
     objects = AcrossLanguagesQuerySet.as_manager()
 
     def __str__(self):
-        return str(self.title) + ' : ' + str(self.url)
+        return str(self.title) + " : " + str(self.url)

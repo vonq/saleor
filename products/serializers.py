@@ -12,31 +12,49 @@ class LocationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Location
-        fields = ("id", "fully_qualified_place_name", "canonical_name", "place_type", "within", "context")
+        fields = (
+            "id",
+            "fully_qualified_place_name",
+            "canonical_name",
+            "place_type",
+            "within",
+            "context",
+        )
 
 
 class JobFunctionSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobFunction
-        fields = ('id', 'name', 'parent')
-
-
-class ProductSerializer(serializers.ModelSerializer):
-    locations = LocationSerializer(many=True, read_only=True)
-    job_functions = JobFunctionSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Product
-        fields = ("title", "locations", "job_functions", "industries", "url")
+        fields = ("id", "name", "parent")
 
 
 class JobTitleSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobTitle
-        fields = ('id', 'name')
+        fields = ("id", "name")
 
 
 class IndustrySerializer(serializers.ModelSerializer):
     class Meta:
         model = Industry
-        fields = ("id", "name",)
+        fields = (
+            "id",
+            "name",
+        )
+
+
+class ProductSerializer(serializers.ModelSerializer):
+    locations = LocationSerializer(many=True, read_only=True)
+    job_functions = JobFunctionSerializer(many=True, read_only=True)
+    industries = IndustrySerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Product
+        fields = (
+            "title",
+            "locations",
+            "job_functions",
+            "industries",
+            "url",
+            "description",
+        )

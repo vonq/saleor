@@ -1,5 +1,6 @@
 import itertools
 
+from django.db.models import Q
 from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins
@@ -15,9 +16,17 @@ from api.products.filters import (
 )
 from api.products.geocoder import Geocoder
 from api.products.models import Location, Product, JobTitle, JobFunction, Industry
-from api.products.paginators import StandardResultsSetPagination, AutocompleteResultsSetPagination
-from api.products.serializers import ProductSerializer, LocationSerializer, JobTitleSerializer, JobFunctionSerializer, \
-    IndustrySerializer
+from api.products.paginators import (
+    StandardResultsSetPagination,
+    AutocompleteResultsSetPagination,
+)
+from api.products.serializers import (
+    ProductSerializer,
+    LocationSerializer,
+    JobTitleSerializer,
+    JobFunctionSerializer,
+    IndustrySerializer,
+)
 
 
 class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
@@ -43,8 +52,8 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         # first attempt to match on continents
         continents = Geocoder.get_continents(text)
         world = Location(
-            mapbox_placename="world",
-            canonical_name="world",
+            mapbox_placename="The entire world",
+            canonical_name="Global",
             mapbox_id="world",
             mapbox_context=[],
             mapbox_place_type=[],
@@ -111,7 +120,15 @@ class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         text = self.request.query_params.get("text")
         if not text:
             return []
-        return JobTitle.objects.filter_across_languages(name__icontains=text).order_by("-frequency")
+        # TODO ugly hack until filter_across_languages gets more sophisticated
+        return JobTitle.objects.filter(
+            Q(name_en__icontains=text)
+            | Q(name_nl__icontains=text)
+            | Q(name_de__icontains=text)
+            | Q(alias_of__name_en__icontains=text)
+            | Q(alias_of__name_nl__icontains=text)
+            | Q(alias_of__name_de__icontains=text)
+        ).order_by("-frequency")
 
     @swagger_auto_schema(manual_parameters=search_parameters)
     def list(self, request, *args, **kwargs):
@@ -158,7 +175,7 @@ class IndustriesViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     ]
 
     def get_queryset(self):
-        return Industry.objects.all()
+        return Industry.objects.all().order_by("name")
 
     @swagger_auto_schema(manual_parameters=search_parameters)
     def list(self, request, *args, **kwargs):
