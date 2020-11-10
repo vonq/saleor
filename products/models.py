@@ -238,15 +238,15 @@ class Product(models.Model):
     available_in_ats = models.BooleanField(default=True)
     available_in_jmp = models.BooleanField(default=True)
 
-    salesforce_product_category = models.CharField(max_length=20, null=True)
-
     locations = models.ManyToManyField(Location, related_name="locations", blank=True)
 
     interests = models.CharField(max_length=200, default="", blank=True, null=True)
 
     salesforce_id = models.CharField(max_length=36, null=True)
     salesforce_product_type = models.CharField(max_length=30, null=True)
-    desq_product_id = models.BigIntegerField(null=True)
+    salesforce_product_category = models.CharField(max_length=30, null=True)
+
+    desq_product_id = models.CharField(max_length=10, null=True)
 
     similarweb_estimated_monthly_visits = models.CharField(
         max_length=300, null=True, blank=True, default=None
