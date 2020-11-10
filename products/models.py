@@ -238,6 +238,7 @@ class Product(models.Model):
     available_in_ats = models.BooleanField(default=True)
     available_in_jmp = models.BooleanField(default=True)
 
+
     locations = models.ManyToManyField(Location, related_name="locations", blank=True)
 
     interests = models.CharField(max_length=200, default="", blank=True, null=True)
@@ -245,6 +246,7 @@ class Product(models.Model):
     salesforce_id = models.CharField(max_length=36, null=True)
     salesforce_product_type = models.CharField(max_length=30, null=True)
     salesforce_product_category = models.CharField(max_length=30, null=True)
+    salesforce_industries = ArrayField(base_field=models.CharField(max_length=50, blank=False), default=list)
 
     desq_product_id = models.CharField(max_length=10, null=True)
 

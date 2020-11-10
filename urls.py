@@ -37,11 +37,12 @@ urlpatterns = [
     re_path('health/?$', include('health_check.urls')),
     path(r"locations/", LocationSearchViewSet.as_view({'get': 'list'}), name="locations"),
     path('products/', include('api.products.urls', namespace="products")),
+    path('annotations/', include('annotations.urls', namespace="annotations")),
+
     path(r"job-functions/", JobFunctionsViewSet.as_view({'get': 'list'}), name="job-functions"),
     path(r"job-titles/", JobTitleSearchViewSet.as_view({'get': 'list'}), name="job-titles"),
     path(
         r"docs/",
         schema_view.with_ui("swagger", cache_timeout=0),
         name="schema-swagger-ui",
-    ),
-]
+    )]

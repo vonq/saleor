@@ -23,6 +23,7 @@ class ProductAdmin(TranslationAdmin):
         "job_functions",
         "is_active",
         "salesforce_product_category",
+        "salesforce_industries",
         "locations",
         "similarweb_top_country_shares",
     ]
