@@ -20,29 +20,40 @@ from drf_yasg2 import openapi
 from drf_yasg2.views import get_schema_view
 from rest_framework import permissions
 
-from api.products.views import LocationSearchViewSet, JobTitleSearchViewSet, JobFunctionsViewSet
+from api.products.views import (
+    LocationSearchViewSet,
+    JobTitleSearchViewSet,
+    JobFunctionsViewSet,
+)
 
 schema_view = get_schema_view(
-    openapi.Info(
-        title="VONQ Product Knowledge Base API",
-        default_version='v1'
-    ),
+    openapi.Info(title="VONQ Product Knowledge Base API", default_version="v1"),
     public=True,
     permission_classes=(permissions.AllowAny,),
 )
 
 urlpatterns = [
-    path(r'admin/', include('massadmin.urls')),
-    path('admin/', admin.site.urls),
-    re_path('health/?$', include('health_check.urls')),
-    path(r"locations/", LocationSearchViewSet.as_view({'get': 'list'}), name="locations"),
-    path('products/', include('api.products.urls', namespace="products")),
-    path('annotations/', include('annotations.urls', namespace="annotations")),
-
-    path(r"job-functions/", JobFunctionsViewSet.as_view({'get': 'list'}), name="job-functions"),
-    path(r"job-titles/", JobTitleSearchViewSet.as_view({'get': 'list'}), name="job-titles"),
+    path(r"admin/", include("massadmin.urls")),
+    path("admin/", admin.site.urls),
+    re_path("health/?$", include("health_check.urls")),
+    path(
+        r"locations/", LocationSearchViewSet.as_view({"get": "list"}), name="locations"
+    ),
+    path("products/", include("api.products.urls", namespace="products")),
+    path("annotations/", include("api.annotations.urls", namespace="annotations")),
+    path(
+        r"job-functions/",
+        JobFunctionsViewSet.as_view({"get": "list"}),
+        name="job-functions",
+    ),
+    path(
+        r"job-titles/",
+        JobTitleSearchViewSet.as_view({"get": "list"}),
+        name="job-titles",
+    ),
     path(
         r"docs/",
         schema_view.with_ui("swagger", cache_timeout=0),
         name="schema-swagger-ui",
-    )]
+    ),
+]

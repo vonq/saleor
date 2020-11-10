@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Job Titles</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/main.css">
+</head>
+<body>
+    <div id="titles-app" class="container" v-cloak>
+        <div class="row pb-2">
+            <div class="col-12">
+                <h1>Prototype Title Annotation UI</h1>
+            </div>
+        </div>
+        <div class="row pb-2">
+            <div class="col-6">
+                <h2>Checks</h2>
+                <div v-for="check in checks"><strong>[[ check.label ]]</strong>
+                    <span v-for="title in check.titles">[[ title.name ]]</span>
+                </div>
+            </div>
+            <div class="col-6">
+                <h2>Counts</h2>
+                <div v-for="count in counts"><strong>[[ count.value ]]</strong> [[count.label]]</div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <button v-on:click="previous()"> < </button><button v-on:click="next()"> > </button>
+                <h2 v-bind:class="{'canonical': currentTitle.canonical, 'inactive': !currentTitle.active}">
+                    [[ currentTitle.name ]] <span class="badge badge-pill">&times;[[ currentTitle.frequency ]]</span>
+                </h2>
+                <div class="" v-if="currentTitle.active" v-on:click="deactivate(currentTitle)">deactivate '[[currentTitle.name]]'</div>
+                    <div class="float-right" v-if="!currentTitle.active" v-on:click="activate(currentTitle)">activate '[[currentTitle.name]]'</div>
+            </div>
+
+            <div class="col-6">
+                <h3>Aliases</h3>
+                <p>Key: <span class="canonical">titles that is not as alias of another (canonical)</span></p>
+
+                <div v-for="alias in currentAliases">
+                    <div class="btn btn-sm" title="make THIS the canonical title" v-on:click="rebase(alias)">&uarr;</div>
+                    <span v-on:click="goto(alias)" v-bind:class="{'canonical': alias.canonical, 'inactive': !alias.active}">[[alias.name]]</span>
+                    <span class="badge badge-pill">&times;[[ alias.frequency ]]</span>
+
+                    <div class="btn btn-sm" v-on:click="aliasClick(alias)">&rarr;</div>
+                </div>
+            </div>
+
+            <div class="col-6">
+                <h3>Possible Aliases</h3>
+                <p>Aliases suggested from titles with words in common, excluding: [[ignoredTokens.join(', ')]]</p>
+
+                <div v-for="alias in possibleAliases()" class="my-1">
+                    <div class="btn btn-sm" v-on:click="aliasClick(alias)">&larr;</div>
+                    <span v-on:click="goto(alias)" v-bind:class="{'canonical': alias.canonical, 'inactive': !alias.active}">
+                        [[alias.name]]
+                    </span>
+                    <span class="badge badge-pill">&times;[[ alias.frequency ]]</span>
+                </div>
+            </div>
+         </div>
+    </div>
+    <script src="/static/lodash.min.js"></script>
+    <script src="/static/vue.min.js"></script>
+    <script src="/static/d3.v5.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+
+    <script src="/static/titles_annotation_app.js"></script>
+</body>
+</html>

@@ -63,7 +63,7 @@ INSTALLED_APPS = [
     "drf_yasg2",
     "api",
     "api.products",
-    "annotations"
+    "api.annotations"
 ]
 
 MIDDLEWARE = [
