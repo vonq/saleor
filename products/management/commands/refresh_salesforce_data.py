@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from api.products.models import Product
+from api.products.models import Product, Location
 import json
 
 
@@ -22,7 +22,9 @@ class Command(BaseCommand):
         "desq_product_id": "desq_id",
         "url": "channel_url",
         "salesforce_product_category": "product_category",
-        "logo_url": "product_logo"
+        "logo_url": "product_logo",
+        "salesforce_cross_postings": "cross_postings",
+        "locations": "relevant_location_names"
     }
 
     def add_arguments(self, parser):
@@ -52,11 +54,15 @@ class Command(BaseCommand):
         if product_created_flag:
             self.stdout.write('Creating product {}'.format(new['product_name']))
         for current_field_name, new_field_name in self.fields_to_update_map.items():
-            self.__update_field(current_field_name=current_field_name, current_obj=current,
-                                new_field_name=new_field_name, new_obj=new)
+            if current_field_name == "locations":
+                self.__add_locations(product=current,
+                                     new_field_name=new_field_name, new_product=new)
+            else:
+                self.__update_field(current_field_name=current_field_name, current_obj=current,
+                                    new_field_name=new_field_name, new_obj=new)
         current.save()
 
-    def __update_field(self, current_field_name: str, current_obj: object, new_field_name: str, new_obj: dict):
+    def __update_field(self, current_field_name: str, current_obj, new_field_name: str, new_obj: dict):
         """
         Updates a specific field for a given product
         :param current_field_name: The field to be updated
@@ -67,6 +73,32 @@ class Command(BaseCommand):
         """
         current_value = getattr(current_obj, current_field_name)
         new_value = new_obj.get(new_field_name)
-        if new_value and current_value != new_value:
-            self.stdout.write("Updating {} from {} to {}".format(current_field_name, current_value, new_value))
+        if new_value != "" and new_value is not None and current_value != new_value:
+            self.stdout.write(
+                "Updating {} from '{}' to '{}' (Product id {})".format(current_field_name, current_value, new_value,
+                                                                       current_obj.id))
             setattr(current_obj, current_field_name, new_value)
+
+    def __add_locations(self, product, new_field_name: str, new_product: dict):
+        """
+        Adds locations to a given product.
+        Existing locations will not be replaced/removed.
+        :param product: The product to be updated
+        :param new_field_name: The equivalent location field name
+        :param new_product: The dict containing the new data
+        :return:
+        """
+        # Locations we want to ignore as they're not available on mapbox
+        excluded_names = ["East Midlands", "West Midlands", "Yorkshire & Humberside", "North West", "North East",
+                          "East of England", "South West", "South East", "North"]
+
+        current_locations = [location.desq_name_en for location in product.locations.all()]
+        new_locations = new_product.get(new_field_name, [])
+        for new_location in new_locations:
+            if new_location not in current_locations and new_location not in excluded_names:
+                self.stdout.write(
+                    "Adding location {} to product id {}".format(new_location, product.id))
+                db_location = Location.objects.get(
+                    desq_name_en=new_location  # assuming location names in SF are const and unique
+                )
+                product.locations.add(db_location)  # won't duplicate

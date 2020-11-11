@@ -248,6 +248,10 @@ class Product(models.Model):
     salesforce_product_category = models.CharField(max_length=30, null=True)
     salesforce_industries = ArrayField(base_field=models.CharField(max_length=50, blank=False), default=list)
 
+    salesforce_cross_postings = models.JSONField(
+        null=True, blank=True, default=list
+    )
+
     desq_product_id = models.CharField(max_length=10, null=True)
 
     similarweb_estimated_monthly_visits = models.CharField(
