@@ -3,13 +3,11 @@ from django.test import TestCase, tag
 from api.products.models import Industry
 
 
-@tag('unit')
+@tag("unit")
 class ModelTranslationTestCase(TestCase):
     def setUp(self) -> None:
         industry = Industry(
-            name_en="Construction",
-            name_de="Konstruktion",
-            name_nl="bouw"
+            name_en="Construction", name_de="Konstruktion", name_nl="bouw"
         )
         industry.save()
 
@@ -18,15 +16,17 @@ class ModelTranslationTestCase(TestCase):
 
         self.assertEqual(
             Industry.objects.filter(name_nl__contains="bouw").first().name,
-            "Construction"
+            "Construction",
         )
 
         self.assertEqual(
-            Industry.objects.filter_across_languages(name__contains="bouw").first().name,
-            "Construction"
+            Industry.objects.filter_across_languages(name__contains="bouw")
+            .first()
+            .name,
+            "Construction",
         )
 
         self.assertEqual(
             Industry.objects.filter_across_languages(name="bouw").first().name,
-            "Construction"
+            "Construction",
         )

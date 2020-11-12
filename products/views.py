@@ -1,18 +1,22 @@
 import itertools
+from typing import List
 
+from django.db.models import Case, When
 from django.db.models import Q
 from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins
+from rest_framework.exceptions import ValidationError
 
 from api.products.filters import (
-    ExactLocationIdFilter,
-    IncludeLocationIdFilter,
-    OrderByCardinalityFilter,
-    JobFunctionsTitleFilter,
-    FiltersContainer,
-    IndustryFilter,
-    OrderByLocationTrafficShare,
+    InclusiveLocationIdFacetFilter,
+    FacetFilterCollection,
+    ExactLocationIdFacetFilter,
+    JobFunctionsFacetFilter,
+    JobTitlesFacetFilter,
+    IndustryFacetFilter,
+    PrimarySimilarWebFacetFilter,
+    SecondarySimilarWebFacetFilter,
 )
 from api.products.geocoder import Geocoder
 from api.products.models import Location, Product, JobTitle, JobFunction, Industry
@@ -20,6 +24,7 @@ from api.products.paginators import (
     StandardResultsSetPagination,
     AutocompleteResultsSetPagination,
 )
+from api.products.search import get_facet_filter, search_all_pages, get_results_ids
 from api.products.serializers import (
     ProductSerializer,
     LocationSerializer,
@@ -77,18 +82,54 @@ class ProductsViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     pagination_class = StandardResultsSetPagination
     http_method_names = ("get",)
-    filter_backends = FiltersContainer(
-        IncludeLocationIdFilter,
-        ExactLocationIdFilter,
-        JobFunctionsTitleFilter,
-        IndustryFilter,
-        OrderByCardinalityFilter,
-        OrderByLocationTrafficShare,
-    )
     queryset = Product.objects.all()
+    ids: List[int] = []
 
-    @swagger_auto_schema(manual_parameters=filter_backends.get_schema_parameters())
+    filters = [
+        InclusiveLocationIdFacetFilter,
+        ExactLocationIdFacetFilter,
+        JobFunctionsFacetFilter,
+        JobTitlesFacetFilter,
+        IndustryFacetFilter,
+        PrimarySimilarWebFacetFilter,
+        SecondarySimilarWebFacetFilter,
+    ]
+
+    def validate_query_params(self):
+        # we can't search for both job titles and job functions
+        # TODO: Is it still relevant?
+        if all(
+            x in self.request.query_params
+            for x in [
+                JobTitlesFacetFilter.parameter_name,
+                JobFunctionsFacetFilter.parameter_name,
+            ]
+        ):
+            raise ValidationError(
+                detail="Cannot search by both job title and job function. Please use either field."
+            )
+
+    def get_queryset(self):
+        filter_collection = FacetFilterCollection(
+            *[
+                get_facet_filter(
+                    item, self.request.query_params.get(item.parameter_name)
+                )
+                for item in self.filters
+            ]
+        )
+        if not self.ids:
+            results = search_all_pages(Product, params=filter_collection.query())
+            self.ids = get_results_ids(results)
+        return self.queryset.filter(pk__in=self.ids).order_by(
+            Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(self.ids)])
+        )
+
+    @swagger_auto_schema(
+        manual_parameters=[item.parameter for item in filters if item.parameter]
+    )
     def list(self, request, *args, **kwargs):
+        self.validate_query_params()
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True)

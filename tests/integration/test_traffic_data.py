@@ -1,15 +1,39 @@
-from django.test import TestCase, tag
+import time
+
+from algoliasearch_django import algolia_engine
+from django.test import tag, TestCase, override_settings
 from rest_framework.reverse import reverse
 
 from api.products.geocoder import Geocoder
+from api.products.index import ProductIndex
 from api.products.models import Product, Location
+from django.conf import settings
+
+
+NOW = int(time.time())
+TEST_INDEX_SUFFIX = f"test_{NOW}"
 
 
 @tag("integration")
+@tag("algolia")
 class TrafficLocationsDataTestCase(TestCase):
-    def setUp(self) -> None:
+    @classmethod
+    @override_settings(
+        ALGOLIA={
+            "INDEX_SUFFIX": TEST_INDEX_SUFFIX,
+            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
+            "API_KEY": settings.ALGOLIA["API_KEY"],
+            "AUTO_INDEXING": True,
+        }
+    )
+    def setUpClass(cls):
+        super().setUpClass()
+        algolia_engine.reset(settings.ALGOLIA)
+        if not algolia_engine.is_registered(Product):
+            algolia_engine.register(Product, ProductIndex)
+            algolia_engine.reindex_all(Product)
 
-        self.rome_location = Location(
+        cls.rome_location = Location(
             canonical_name="Rome, Italy",
             mapbox_id="place.9045806458813870",
             mapbox_context=[
@@ -19,9 +43,9 @@ class TrafficLocationsDataTestCase(TestCase):
                 "world",
             ],
         )
-        self.rome_location.save()
+        cls.rome_location.save()
 
-        self.amsterdam_location = Location(
+        cls.amsterdam_location = Location(
             canonical_name="Amsterdam, The Netherlands",
             mapbox_id="place.9718548927723970",
             mapbox_context=[
@@ -31,9 +55,9 @@ class TrafficLocationsDataTestCase(TestCase):
                 "world",
             ],
         )
-        self.amsterdam_location.save()
+        cls.amsterdam_location.save()
 
-        self.london_location = Location(
+        cls.london_location = Location(
             canonical_name="London, United Kingdom",
             mapbox_id="place.8780954591631530",
             mapbox_context=[
@@ -44,61 +68,68 @@ class TrafficLocationsDataTestCase(TestCase):
                 "world",
             ],
         )
-        self.london_location.save()
+        cls.london_location.save()
 
-        self.europe_location = Location(
+        cls.europe_location = Location(
             canonical_name="Europe",
             mapbox_id="continent.europe",
             mapbox_context=["world"],
         )
-        self.europe_location.save()
+        cls.europe_location.save()
 
-        self.rome_board = Product(
+        cls.rome_board = Product(
             title="Product for Rome", similarweb_top_country_shares={"it": 90, "gb": 10}
         )
-        self.rome_board.save()
-        self.rome_board.locations.set([self.rome_location])
-        self.rome_board.save()
+        cls.rome_board.save()
+        cls.rome_board.locations.set([cls.rome_location])
+        cls.rome_board.save()
 
-        self.london_board = Product(
+        cls.london_board = Product(
             title="Board with London jobs",
             similarweb_top_country_shares={"gb": 80, "us": 20},
         )
-        self.london_board.save()
-        self.london_board.locations.set([self.london_location])
-        self.london_board.save()
+        cls.london_board.save()
+        cls.london_board.locations.set([cls.london_location])
+        cls.london_board.save()
 
-        self.germany_location = Location(
+        cls.germany_location = Location(
             mapbox_id="country.11437281100480410",
             mapbox_context=["continent.europe", "world"],
         )
-        self.germany_location.save()
+        cls.germany_location.save()
 
-        self.german_board = Product(
+        cls.german_board = Product(
             title="Board with German jobs (but popular for Polish)",
             similarweb_top_country_shares={"de": 10, "pl": 90},
         )
-        self.german_board.save()
-        self.german_board.locations.set([self.europe_location, self.germany_location])
-        self.german_board.save()
+        cls.german_board.save()
+        cls.german_board.locations.set([cls.europe_location, cls.germany_location])
+        cls.german_board.save()
 
-        self.european_board = Product(
+        cls.european_board = Product(
             title="European Jobs Board",
             similarweb_top_country_shares={"gb": 5, "it": 5, "de": 90},
         )
-        self.european_board.save()
-        self.european_board.locations.set(
-            [self.london_location, self.germany_location, self.europe_location,]
+        cls.european_board.save()
+        cls.european_board.locations.set(
+            [
+                cls.london_location,
+                cls.germany_location,
+                cls.europe_location,
+            ]
         )
-        self.european_board.save()
+        cls.european_board.save()
 
-        self.amsterdam_board = Product(
+        cls.amsterdam_board = Product(
             title="Jobs in Amsterdam",
             similarweb_top_country_shares={"nl": 80, "de": 20},
         )
-        self.amsterdam_board.save()
-        self.amsterdam_board.locations.set([self.amsterdam_location])
-        self.amsterdam_board.save()
+        cls.amsterdam_board.save()
+        cls.amsterdam_board.locations.set([cls.amsterdam_location])
+        cls.amsterdam_board.save()
+
+        # it takes up to four seconds to actually reindex stuff
+        time.sleep(4)
 
     def test_get_country_shortcode_works(self):
         geocoder_response = Geocoder.geocode("reading uk")
@@ -121,11 +152,9 @@ class TrafficLocationsDataTestCase(TestCase):
             + f"?includeLocationId={london_location_id}"
         )
 
-        # we get three results: one for london, two for europe
-        self.assertEqual(len(resp.json()["results"]), 3)
-
-        # the first result is the one for London (since it gets more traffic from gb)
-        self.assertEqual(resp.json()["results"][0]["title"], "Board with London jobs")
+        # the first result is the European jobs board (because it matches the
+        # secondary similarweb location and the most filters)
+        self.assertEqual(resp.json()["results"][0]["title"], "European Jobs Board")
 
         resp = self.client.get(reverse("locations") + "?text=berlin")
         berlin_id = resp.json()[0]["id"]
@@ -133,8 +162,23 @@ class TrafficLocationsDataTestCase(TestCase):
         resp = self.client.get(
             reverse("api.products:products-list") + f"?includeLocationId={berlin_id}"
         )
-        self.assertEqual(len(resp.json()["results"]), 2)
+        self.assertEqual(len(resp.json()["results"]), 5)
 
-        # the first result is the global board (since the local Germany board
-        # actually gets most of its traffic from Poland)
+        # the first result is the European board – since DE is its primary SW location
         self.assertEqual(resp.json()["results"][0]["title"], "European Jobs Board")
+
+    @classmethod
+    @override_settings(
+        ALGOLIA={
+            "INDEX_SUFFIX": "test",
+            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
+            "API_KEY": settings.ALGOLIA["API_KEY"],
+            "AUTO_INDEXING": True,
+        }
+    )
+    def tearDownClass(cls):
+        super().tearDownClass()
+        algolia_engine.client.delete_index(
+            f"{ProductIndex.index_name}_{TEST_INDEX_SUFFIX}"
+        )
+        algolia_engine.reset(settings.ALGOLIA)

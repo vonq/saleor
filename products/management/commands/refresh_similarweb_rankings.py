@@ -39,7 +39,9 @@ class Command(BaseCommand):
         for product in products:
             url = product.url
             if not url:
-                self.stdout.write(self.style.ERROR(f"Product {product.title} has no url"))
+                self.stdout.write(
+                    self.style.ERROR(f"Product {product.title} has no url")
+                )
                 continue
 
             domain = urlparse(url).netloc
@@ -48,9 +50,17 @@ class Command(BaseCommand):
             try:
                 resp = client.get_country_share_for_domain(domain)
             except ApiUnavailableException as e:
-                self.stdout.write(self.style.ERROR(f"Product {product.title} triggered a SW error: {e}"))
+                self.stdout.write(
+                    self.style.ERROR(
+                        f"Product {product.title} triggered a SW error: {e}"
+                    )
+                )
                 continue
             # convert a list of two-keys dicts into a dict of k,v
-            product.similarweb_top_country_shares = {item["country"]: item["share"] for item in resp}
+            product.similarweb_top_country_shares = {
+                item["country"]: item["share"] for item in resp
+            }
             product.save()
-            self.stdout.write(self.style.SUCCESS(f"Product {product.title} successfully updated"))
+            self.stdout.write(
+                self.style.SUCCESS(f"Product {product.title} successfully updated")
+            )

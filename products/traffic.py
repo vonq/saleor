@@ -55,7 +55,7 @@ class SimilarWebApiClient:
         )
 
         if not resp.ok:
-            raise ApiUnavailableException(resp.json()['meta']['error_message'])
+            raise ApiUnavailableException(resp.json()["meta"]["error_message"])
 
         results = []
         for record in resp.json()["records"][:6]:

@@ -1,186 +1,158 @@
 import itertools
 from typing import Type
 
-from django.db.models import Q, Func, F, Max, IntegerField, Value
-from django.db.models.fields.json import KeyTextTransform
-from django.db.models.functions import Cast, Coalesce
 from drf_yasg2 import openapi
-from rest_framework import filters
 from rest_framework.exceptions import ValidationError
 
 from api.products.models import Location
 
 
-class FilterParametersMixin:
-    parameters = []
+class FacetFilter:
+    filter_name: str
+    parameter_name: str
+    filters: str
+    parameter: openapi.Parameter
+    score: int
 
-
-class FiltersContainer:
-    def __init__(self, *filters: Type[FilterParametersMixin]):
-        self._filters = filters
-
-    def __iter__(self):
-        return iter(self._filters)
-
-    def get_schema_parameters(self):
-        return list(
-            itertools.chain.from_iterable([item.parameters for item in self._filters])
+    def __init__(self, *values):
+        self.filters = f" OR ".join(
+            [f"{self.filter_name}:{value}<score={self.score}>" for value in values]
         )
 
 
-class ExactLocationIdFilter(filters.BaseFilterBackend, FilterParametersMixin):
-    parameters = [
-        openapi.Parameter(
-            "exactLocationId",
-            in_=openapi.IN_QUERY,
-            description="Match only for products assigned to a location id",
-            type=openapi.TYPE_STRING,
-            required=False,
-            explode=False,
-        ),
-    ]
+class InclusiveLocationIdFacetFilter(FacetFilter):
+    filter_name = "searchable_locations_context_mapbox_ids"
+    parameter_name = "includeLocationId"
+    parameter = openapi.Parameter(
+        parameter_name,
+        in_=openapi.IN_QUERY,
+        description="Id for a location. Optionally, a (comma-separated) array of values can be passed.",
+        type=openapi.TYPE_ARRAY,
+        items=openapi.Items(type=openapi.TYPE_STRING),
+        required=False,
+        explode=False,
+    )
+    score = 9
 
-    def filter_queryset(self, request, queryset, view):
-        filter_by_query = request.query_params.get("exactLocationId")
-        if not filter_by_query:
-            return queryset
-        filter_by_ids = filter_by_query.split(",")
+    def __init__(self, *values):
+        """
+        Here we're passed a list of location ids, for which we want to
+        retrieve their CONTEXT!
+        """
+        locations_and_contexts = Location.list_context_locations_ids(values)
+        super().__init__(*locations_and_contexts)
 
-        return queryset.filter(locations__id__in=filter_by_ids)
+
+class ExactLocationIdFacetFilter(FacetFilter):
+    filter_name = "searchable_locations_ids"
+    parameter_name = "exactLocationId"
+    parameter = openapi.Parameter(
+        parameter_name,
+        in_=openapi.IN_QUERY,
+        description="Match only for products assigned to a location id",
+        type=openapi.TYPE_STRING,
+        required=False,
+        explode=False,
+    )
+    score = 9
 
 
-class IncludeLocationIdFilter(filters.BaseFilterBackend, FilterParametersMixin):
-    parameters = [
-        openapi.Parameter(
-            "includeLocationId",
-            in_=openapi.IN_QUERY,
-            description="Id for a location. Optionally, a (comma-separated) array of values can be passed.",
-            type=openapi.TYPE_ARRAY,
-            items=openapi.Items(type=openapi.TYPE_STRING),
-            required=False,
-            explode=False,
+class PrimarySimilarWebFacetFilter(FacetFilter):
+    filter_name = "primary_similarweb_location"
+    parameter_name = "includeLocationId"
+    parameter = None
+    score = 9
+
+    def __init__(self, *values):
+        if len(values) > 1:
+            self.filters = ""
+            return
+        country_codes = Location.objects.filter(id__in=values).values_list(
+            "country_code", flat=True
         )
-    ]
-
-    def filter_queryset(self, request, queryset, view):
-        location_ids = request.query_params.get("includeLocationId")
-        if not location_ids:
-            return queryset
-
-        location_ids = location_ids.split(",")
-
-        locations_and_contexts = Location.list_context_locations_ids(location_ids)
-
-        if not locations_and_contexts:
-            return queryset
-
-        return queryset.filter(
-            Q(locations__mapbox_context__contains=locations_and_contexts)
-            | Q(locations__mapbox_id__in=locations_and_contexts)
-        ).distinct()  # a .distinct() call is required when using __contains, as it results in a join across locations
+        super().__init__(*country_codes)
 
 
-class JobFunctionsTitleFilter(filters.BaseFilterBackend, FilterParametersMixin):
-    parameters = [
-        openapi.Parameter(
-            "jobTitleId",
-            in_=openapi.IN_QUERY,
-            description="Job title id",
-            type=openapi.TYPE_STRING,
-            required=False,
-        ),
-        openapi.Parameter(
-            "jobFunctionId",
-            in_=openapi.IN_QUERY,
-            description="Job function id",
-            type=openapi.TYPE_STRING,
-            required=False,
-        ),
-    ]
-
-    def filter_queryset(self, request, queryset, view):
-        job_function_id = request.query_params.get("jobFunctionId")
-        job_title_id = request.query_params.get("jobTitleId")
-
-        if job_function_id and job_title_id:
-            raise ValidationError(
-                detail="Cannot search by both job title and job function. Please use either field."
-            )
-
-        if job_function_id:
-            return queryset.filter(job_functions__id=job_function_id)
-
-        if job_title_id:
-            return queryset.filter(job_functions__jobtitle__id=job_function_id)
-
-        return queryset
+class SecondarySimilarWebFacetFilter(PrimarySimilarWebFacetFilter):
+    filter_name = "secondary_similarweb_location"
+    parameter_name = "includeLocationId"
+    parameter = None
+    score = 7
 
 
-class IndustryFilter(filters.BaseFilterBackend, FilterParametersMixin):
-    parameters = [
-        openapi.Parameter(
-            "industryId",
-            in_=openapi.IN_QUERY,
-            description="Industry Id",
-            type=openapi.TYPE_ARRAY,
-            items=openapi.Items(type=openapi.TYPE_STRING),
-            required=False,
-            explode=False,
-        ),
-    ]
-
-    def filter_queryset(self, request, queryset, view):
-        industry_id_param = request.query_params.get("industryId")
-        if not industry_id_param:
-            return queryset
-
-        industry_ids = industry_id_param.split(",")
-
-        return queryset.filter(industries__id__in=industry_ids)
+class JobFunctionsFacetFilter(FacetFilter):
+    filter_name = "searchable_job_functions_ids"
+    parameter_name = "jobFunctionId"
+    parameter = openapi.Parameter(
+        parameter_name,
+        in_=openapi.IN_QUERY,
+        description="Job title id",
+        type=openapi.TYPE_STRING,
+        required=False,
+    )
+    score = 10
 
 
-class OrderByCardinalityFilter(filters.BaseFilterBackend, FilterParametersMixin):
-    def filter_queryset(self, request, queryset, view):
-        # TODO: this shouldn't run if we're applying OrderByLocationTrafficShare
-        # TODO: find an elegant way to express this logic
-        return (
-            queryset.annotate(
-                # the more specific a location, the longer its context (['place', 'district', 'country'...)
-                # so we'll sort by descending cardinality to put most location-specific products first
-                locations_cardinality=Max(
-                    Func(F("locations__mapbox_context"), function="CARDINALITY")
-                )
-            )
-            .order_by("-locations_cardinality")
-            .distinct()
-        )
+class JobTitlesFacetFilter(FacetFilter):
+    filter_name = "searchable_job_titles_ids"
+    parameter_name = "jobTitleId"
+    parameter = openapi.Parameter(
+        parameter_name,
+        in_=openapi.IN_QUERY,
+        description="Job title id",
+        type=openapi.TYPE_STRING,
+        required=False,
+    )
+    score = 10
+
+    def __init__(self, *values):
+        if len(values) > 1:
+            raise ValidationError(detail="Only one job title allowed per query")
+        super().__init__(*values)
 
 
-class OrderByLocationTrafficShare(filters.BaseFilterBackend, FilterParametersMixin):
-    def filter_queryset(self, request, queryset, view):
-        location_id = request.query_params.get("includeLocationId")
-        location_ids = location_id.split(",") if location_id else []
+class IndustryFacetFilter(FacetFilter):
+    filter_name = "searchable_industries_ids"
+    parameter_name = "industryId"
+    parameter = openapi.Parameter(
+        parameter_name,
+        in_=openapi.IN_QUERY,
+        description="Industry Id",
+        type=openapi.TYPE_ARRAY,
+        items=openapi.Items(type=openapi.TYPE_STRING),
+        required=False,
+        explode=False,
+    )
+    score = 8
 
-        if len(location_ids) > 1:
-            # FIXME: the sorting behaviour with multiple source of traffic is undefined
-            return queryset
 
-        if not location_id or not Location.objects.filter(id=location_id).exists():
-            return queryset
+class FacetFilterCollection:
+    def __init__(self, *facet_filters: FacetFilter):
+        self.facet_filters = facet_filters
 
-        # get the location we saved as part of the autocomplete
-        country_code = Location.objects.filter(id=location_id).first().country_code
-
-        if not country_code:
-            # some stale locations might not have a country code
-            return queryset
-
-        return queryset.annotate(
-            popularity=Coalesce(
-                Cast(
-                    KeyTextTransform(country_code, "similarweb_top_country_shares"),
-                    IntegerField(),
-                ),
-                Value(0),
-            )
-        ).order_by("-popularity")
+    def query(self):
+        return {
+            "getRankingInfo": True,
+            "analytics": False,
+            "enableABTest": False,
+            "attributesToRetrieve": "id",
+            "attributesToSnippet": "*:20",
+            "snippetEllipsisText": "…",
+            "responseFields": "*",
+            "facets": [
+                "*",
+                "searchable_industries_ids",
+                "searchable_job_functions_ids",
+                "searchable_job_titles_ids",
+                "searchable_locations_context_ids",
+                "searchable_locations_ids",
+            ],
+            "filters": " OR ".join(
+                [
+                    facet_filter.filters
+                    for facet_filter in self.facet_filters
+                    if facet_filter.filters
+                ]
+            ),
+            "sumOrFiltersScores": True,
+        }

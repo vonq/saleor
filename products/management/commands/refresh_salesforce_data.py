@@ -28,17 +28,17 @@ class Command(BaseCommand):
     }
 
     def add_arguments(self, parser):
-        parser.add_argument('json_file', type=str, help='The path to the json file')
+        parser.add_argument("json_file", type=str, help="The path to the json file")
 
     def handle(self, *args, **kwargs):
-        json_file = kwargs['json_file']
+        json_file = kwargs["json_file"]
         try:
             with open(json_file) as json_file:
-                self.stdout.write('Refreshing Salesforce data...')
+                self.stdout.write("Refreshing Salesforce data...")
                 for row in json_file:
                     product = json.loads(row)
                     self.__update_product(product)
-            self.stdout.write(self.style.SUCCESS('Success'))
+            self.stdout.write(self.style.SUCCESS("Success"))
 
         except OSError:
             self.stdout.write(self.style.ERROR('Could not open file "%s".' % json_file))
@@ -50,19 +50,30 @@ class Command(BaseCommand):
         :param new: The dict with fields to be updated
         :return:
         """
-        current, product_created_flag = Product.objects.get_or_create(salesforce_id=new['salesforce_id'])
+        current, product_created_flag = Product.objects.get_or_create(
+            salesforce_id=new["salesforce_id"]
+        )
         if product_created_flag:
-            self.stdout.write('Creating product {}'.format(new['product_name']))
+            self.stdout.write("Creating product {}".format(new["product_name"]))
         for current_field_name, new_field_name in self.fields_to_update_map.items():
             if current_field_name == "locations":
                 self.__add_locations(product=current,
                                      new_field_name=new_field_name, new_product=new)
-            else:
-                self.__update_field(current_field_name=current_field_name, current_obj=current,
-                                    new_field_name=new_field_name, new_obj=new)
+            else:self.__update_field(
+                current_field_name=current_field_name,
+                current_obj=current,
+                new_field_name=new_field_name,
+                new_obj=new,
+            )
         current.save()
 
-    def __update_field(self, current_field_name: str, current_obj, new_field_name: str, new_obj: dict):
+    def __update_field(
+        self,
+        current_field_name: str,
+        current_obj,
+        new_field_name: str,
+        new_obj: dict,
+    ):
         """
         Updates a specific field for a given product
         :param current_field_name: The field to be updated

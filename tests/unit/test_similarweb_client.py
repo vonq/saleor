@@ -7,7 +7,7 @@ from django.test import TestCase, tag
 from api.products.traffic import SimilarWebApiClient
 
 
-@tag('unit')
+@tag("unit")
 class SimilarWebTrafficTestCase(TestCase):
     def setUp(self) -> None:
         self.json_sw_response = open(

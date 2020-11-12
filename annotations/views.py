@@ -169,7 +169,7 @@ def add_categorisation(request):
     try:
         payload = json.loads(request.body)
     except TypeError:
-        return JsonResponse({'error':'Request body cannot be parsed as a JSON'})
+        return JsonResponse({"error": "Request body cannot be parsed as a JSON"})
 
     board = Product.objects.get(pk=payload["id"])
     field = getattr(board, payload["field"])

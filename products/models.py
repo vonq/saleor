@@ -1,11 +1,12 @@
 import itertools
-from typing import List
+from typing import List, Iterable
 
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import FieldError
 from django.db import models
-from django.db.models import QuerySet, Q
+from django.db.models import QuerySet, Q, Max, Func, F
+from django.db.models.functions import Cast
 from modeltranslation.fields import TranslationFieldDescriptor
 
 from api.products.geocoder import Geocoder
@@ -179,7 +180,7 @@ class Location(models.Model):
         return itertools.chain(existing, created)
 
     @classmethod
-    def list_context_locations_ids(cls, location_ids: List[str]) -> List[str]:
+    def list_context_locations_ids(cls, location_ids: Iterable[str]) -> List[str]:
         qs = cls.objects.filter(id__in=location_ids)
 
         if not qs.exists():
@@ -211,7 +212,156 @@ class Channel(models.Model):
         return str(self.name)
 
 
-class Product(models.Model):
+class IndexSearchableProductMixin:
+    industries: QuerySet
+    job_functions: QuerySet
+    locations: QuerySet
+    similarweb_top_country_shares: dict
+
+    @property
+    def all_industries(self) -> Iterable["Industry"]:
+        return self.industries.all()
+
+    @property
+    def all_job_functions(self) -> Iterable["JobFunction"]:
+        return self.job_functions.all()
+
+    @property
+    def all_locations(self) -> Iterable["Location"]:
+        return self.locations.all()
+
+    @property
+    def searchable_industries_ids(self):
+        return [industry.id for industry in self.all_industries]
+
+    @property
+    def searchable_industries_names(self):
+        return [industry.name for industry in self.all_industries]
+
+    @property
+    def searchable_job_functions_ids(self):
+        return [function.id for function in self.all_job_functions]
+
+    @property
+    def searchable_job_functions_names(self):
+        return [function.name for function in self.all_job_functions]
+
+    @property
+    def searchable_job_titles_ids(self):
+        return [
+            jobtitle.id
+            for jobtitle in itertools.chain.from_iterable(
+                [function.jobtitle_set.all() for function in self.all_job_functions]
+            )
+        ]
+
+    @property
+    def searchable_job_titles_names(self) -> List[str]:
+        return [
+            jobtitle.name
+            for jobtitle in itertools.chain.from_iterable(
+                [function.jobtitle_set.all() for function in self.all_job_functions]
+            )
+        ]
+
+    @property
+    def searchable_locations_ids(self):
+        return [location.id for location in self.all_locations]
+
+    @property
+    def searchable_locations_names(self):
+        return [location.fully_qualified_place_name for location in self.all_locations]
+
+    @property
+    def searchable_locations_context_ids(self):
+        def location_id_from_mapbox_id(mapbox_id):
+            location_for_mapbox_id = Location.objects.filter(mapbox_id=mapbox_id)
+            if not location_for_mapbox_id.exists():
+                return
+
+            # Remember: we might have duplicates here...
+            # FIXME with a UNIQUE constraint on mapbox_id for Locations table
+            location = location_for_mapbox_id[0]
+            return location.id
+
+        return list(
+            itertools.chain.from_iterable(
+                [
+                    [
+                        location_id_from_mapbox_id(location_id)
+                        for location_id in location.mapbox_context
+                    ]
+                    for location in self.all_locations
+                ]
+            )
+        )
+
+    @property
+    def searchable_locations_context_mapbox_ids(self):
+        mapbox_context_ids = itertools.chain.from_iterable(
+            [
+                [mapbox_id for mapbox_id in location.mapbox_context]
+                for location in self.all_locations
+            ]
+        )
+
+        mapbox_ids = [location.mapbox_id for location in self.all_locations]
+
+        return list(itertools.chain(mapbox_context_ids, mapbox_ids))
+
+    @property
+    def searchable_locations_context_names(self):
+        def fully_qualified_place_name_from_mapbox_id(mapbox_id):
+            location_for_mapbox_id = Location.objects.filter(mapbox_id=mapbox_id)
+            if not location_for_mapbox_id.exists():
+                return
+
+            # Remember: we might have duplicates here...
+            # FIXME with a UNIQUE constraint on mapbox_id for Locations table
+            location = location_for_mapbox_id[0]
+            return location.fully_qualified_place_name or location.mapbox_placename
+
+        return list(
+            itertools.chain.from_iterable(
+                [
+                    [
+                        fully_qualified_place_name_from_mapbox_id(location_id)
+                        for location_id in location.mapbox_context
+                    ]
+                    for location in self.all_locations
+                ]
+            )
+        )
+
+    @property
+    def primary_similarweb_location(self):
+        top_country_shares = self.similarweb_top_country_shares
+        if not top_country_shares:
+            return
+
+        return sorted(top_country_shares, key=top_country_shares.get, reverse=True)[0]
+
+    @property
+    def secondary_similarweb_location(self):
+        top_country_shares = self.similarweb_top_country_shares
+        if not top_country_shares or len(top_country_shares) < 2:
+            return
+
+        return sorted(top_country_shares, key=top_country_shares.get, reverse=True)[1]
+
+    @property
+    def maximum_locations_cardinality(self):
+        if self.locations.count() == 0:
+            return 0
+        return self.locations.annotate(
+            locations_cardinality=Cast(
+                Max(Func(F("mapbox_context"), function="CARDINALITY")),
+                models.IntegerField(),
+            )
+        ).values_list("locations_cardinality", flat=True)[0]
+
+
+class Product(models.Model, IndexSearchableProductMixin):
     title = models.CharField(max_length=200, null=True)
     url = models.URLField(max_length=300, null=True)
     channel = models.ForeignKey(
@@ -219,10 +369,7 @@ class Product(models.Model):
     )
     description = models.TextField(default="", null=True, blank=True)
     industries = models.ManyToManyField(
-        Industry,
-        related_name="industries",
-        related_query_name="industry",
-        blank=True,
+        Industry, related_name="industries", related_query_name="industry", blank=True,
     )
     job_functions = models.ManyToManyField(
         JobFunction,
@@ -238,7 +385,6 @@ class Product(models.Model):
     available_in_ats = models.BooleanField(default=True)
     available_in_jmp = models.BooleanField(default=True)
 
-
     locations = models.ManyToManyField(Location, related_name="locations", blank=True)
 
     interests = models.CharField(max_length=200, default="", blank=True, null=True)
@@ -246,7 +392,9 @@ class Product(models.Model):
     salesforce_id = models.CharField(max_length=36, null=True)
     salesforce_product_type = models.CharField(max_length=30, null=True)
     salesforce_product_category = models.CharField(max_length=30, null=True)
-    salesforce_industries = ArrayField(base_field=models.CharField(max_length=50, blank=False), default=list)
+    salesforce_industries = ArrayField(
+        base_field=models.CharField(max_length=50, blank=False), default=list
+    )
 
     salesforce_cross_postings = models.JSONField(
         null=True, blank=True, default=list

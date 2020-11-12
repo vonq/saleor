@@ -48,6 +48,7 @@ ALLOWED_HOSTS = (
 # Application definition
 
 INSTALLED_APPS = [
+    "algoliasearch_django",
     "corsheaders",
     "modeltranslation",
     "massadmin",
@@ -63,8 +64,13 @@ INSTALLED_APPS = [
     "drf_yasg2",
     "api",
     "api.products",
-    "api.annotations"
+    "api.annotations",
 ]
+
+ALGOLIA = {
+    "APPLICATION_ID": os.getenv("ALGOLIA_APPLICATION_ID"),
+    "API_KEY": os.getenv("ALGOLIA_API_KEY"),
+}
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
