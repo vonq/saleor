@@ -385,6 +385,12 @@ class Product(models.Model, IndexSearchableProductMixin):
     available_in_ats = models.BooleanField(default=True)
     available_in_jmp = models.BooleanField(default=True)
 
+    duration = models.IntegerField(null=True, blank=True)
+    time_to_process = models.IntegerField(null=True, blank=True)
+
+    unit_price = models.FloatField(null=True, blank=True)
+    rate_card_price = models.FloatField(null=True, blank=True)
+
     locations = models.ManyToManyField(Location, related_name="locations", blank=True)
 
     interests = models.CharField(max_length=200, default="", blank=True, null=True)
@@ -392,9 +398,8 @@ class Product(models.Model, IndexSearchableProductMixin):
     salesforce_id = models.CharField(max_length=36, null=True)
     salesforce_product_type = models.CharField(max_length=30, null=True)
     salesforce_product_category = models.CharField(max_length=30, null=True)
-    salesforce_industries = ArrayField(
-        base_field=models.CharField(max_length=50, blank=False), default=list
-    )
+    salesforce_industries = ArrayField(base_field=models.CharField(max_length=80, blank=False), default=list)
+    salesforce_job_categories = ArrayField(base_field=models.CharField(max_length=80, blank=False), default=list)
 
     salesforce_cross_postings = models.JSONField(
         null=True, blank=True, default=list

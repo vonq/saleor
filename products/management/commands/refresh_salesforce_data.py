@@ -24,7 +24,17 @@ class Command(BaseCommand):
         "salesforce_product_category": "product_category",
         "logo_url": "product_logo",
         "salesforce_cross_postings": "cross_postings",
-        "locations": "relevant_location_names"
+        "locations": "relevant_location_names",
+        "salesforce_industries": "industries",
+        "salesforce_job_categories": "job_categories",
+        "duration": "duration",
+        "time_to_process": "time_to_process",
+        "unit_price": "unit_price",
+        "rate_card_price": "rate_card_price",
+        "description_nl": "description_nl",
+        "description_de": "description_de",
+        "title_nl": "product_name_nl",
+        "title_de": "product_name_de"
     }
 
     def add_arguments(self, parser):
@@ -59,20 +69,21 @@ class Command(BaseCommand):
             if current_field_name == "locations":
                 self.__add_locations(product=current,
                                      new_field_name=new_field_name, new_product=new)
-            else:self.__update_field(
-                current_field_name=current_field_name,
-                current_obj=current,
-                new_field_name=new_field_name,
-                new_obj=new,
-            )
+            else:
+                self.__update_field(
+                    current_field_name=current_field_name,
+                    current_obj=current,
+                    new_field_name=new_field_name,
+                    new_obj=new,
+                )
         current.save()
 
     def __update_field(
-        self,
-        current_field_name: str,
-        current_obj,
-        new_field_name: str,
-        new_obj: dict,
+            self,
+            current_field_name: str,
+            current_obj,
+            new_field_name: str,
+            new_obj: dict,
     ):
         """
         Updates a specific field for a given product
