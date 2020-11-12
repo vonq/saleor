@@ -12,11 +12,13 @@ var titlesApp = new Vue({
         filterModel: {'text': '', 'job_function': ''},
         filteredTitles: [],
         titleIndex: 0,
-        ignoredTokens: ['consultant', 'manager', 'assistant', 'executive', 'developer']
+        ignoredTokens: ['consultant', 'manager', 'assistant', 'executive', 'developer'],
+        skipDeactivated: true,
+        skipAliases: true,
     },
     mounted:  function() {
         d3.json('/annotations/get-titles').then(data=>{
-            this.titles = data.titles
+            this.titles = data.titles.sort((a, b) => { return b.frequency - a.frequency})
             d3.selectAll('input').attr('disabled', null)
         })
 
@@ -87,14 +89,34 @@ var titlesApp = new Vue({
             },
         next: function() {
             if(this.titles.length) {
-                this.titleIndex++;
-                if (this.titleIndex >= this.titles.length) this.titleIndex = 0;
+                let skip
+                do {
+                    skip = false
+                    this.titleIndex++;
+                    if (this.titleIndex >= this.titles.length) this.titleIndex = 0;
+                    if(
+                        this.titles[this.titleIndex].active == false && this.skipDeactivated ||
+                        this.titles[this.titleIndex].alias_of__id !== null && this.skipAliases
+                    ) {
+                        skip = true
+                    }
+                } while(skip)
             }
         },
         previous: function() {
             if(this.titles.length) {
-                this.titleIndex--;
-                if (this.titleIndex < 0) this.titleIndex = this.titles.length - 1;
+                let skip
+                do {
+                    skip = false
+                    this.titleIndex--;
+                    if (this.titleIndex < 0) this.titleIndex = this.titles.length - 1;
+                    if(
+                        this.titles[this.titleIndex].active == false && this.skipDeactivated ||
+                        this.titles[this.titleIndex].alias_of__id !== null && this.skipAliases
+                    ) {
+                        skip = true
+                    }
+                } while(skip)
             }
         },
         canonify: function(title) {
@@ -161,6 +183,11 @@ var titlesApp = new Vue({
         goto: function(title) {
             this.titleIndex = this.titles.findIndex(t => t == title)
         },
+
+        gotoId: function(id) {
+            this.titleIndex = this.titles.findIndex(t => t.id == id)
+        },
+
 
         rebase: function(title) { // better names invited - means swapping this title with its canonical form, taking thier aliases
             canonical = this.titles.find(t => t.id == title.alias_of__id)

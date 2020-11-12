@@ -34,7 +34,7 @@ def product_annotation(request):
     )  # want to be reading this from model choices directly
 
 
-@permission_required("annotations.view_title")
+@permission_required("annotations.view_product")
 def titles_annotation(request):
     titles = JobTitle.objects.all()
     return render(

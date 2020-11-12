@@ -17,8 +17,8 @@ var ProductAnnotationApp = new Vue({
         sfIndustryPlaceHolder: ''
     },
     mounted:  function() {
-        d3.json('/static/boards.json').then(data=>{
-        // d3.json('/annotations/update-boards').then(data=>{
+        // d3.json('/static/boards.json').then(data=>{
+        d3.json('/annotations/update-boards').then(data=>{
             this.boards = data.boards;
             d3.selectAll('input').attr('disabled', null)
         })

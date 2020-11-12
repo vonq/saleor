@@ -73,7 +73,7 @@
             </div>
         </div>
 
-        <div  class="row board mb-1" v-for="board in filteredBoards">
+        <div v-if="annotationMode=='filter'" class="row board mb-1" v-for="board in filteredBoards">
             <div class="col-8">
                 <h3>[[ board.title]]<br><small>[[ board.url ]]</small></h3>
                 <p class="small">[[ board.description ]]</p>

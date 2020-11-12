@@ -28,9 +28,15 @@
 
         <div class="row">
             <div class="col-12">
-                <button v-on:click="previous()"> < </button><button v-on:click="next()"> > </button>
+                <button v-on:click="previous()"> < </button>
+                <input type="number" min="0" v-bind:max="titles.length - 1" v-model="titleIndex">
+                <button v-on:click="next()"> > </button>
+                <input type="checkbox" v-model="skipDeactivated" name="skipDeactivatedControl"><label for="skipDeactivatedControl">Skip Deactivated</label>
+                <input type="checkbox" v-model="skipAliases" name="skipAliasesControl"><label for="skipAliasesControl">Skip Aliases</label>
+
                 <h2 v-bind:class="{'canonical': currentTitle.canonical, 'inactive': !currentTitle.active}">
                     [[ currentTitle.name ]] <span class="badge badge-pill">&times;[[ currentTitle.frequency ]]</span>
+                    <span v-if="currentTitle.alias_of__id !== null">alias of <a v-bind:href="'#'+currentTitle.alias_of__id" v-on:click="gotoId(currentTitle.alias_of__id)">[[currentTitle.alias_of__name]]</a></span>
                 </h2>
                 <div class="" v-if="currentTitle.active" v-on:click="deactivate(currentTitle)">deactivate '[[currentTitle.name]]'</div>
                     <div class="float-right" v-if="!currentTitle.active" v-on:click="activate(currentTitle)">activate '[[currentTitle.name]]'</div>
@@ -59,6 +65,14 @@
                         [[alias.name]]
                     </span>
                     <span class="badge badge-pill">&times;[[ alias.frequency ]]</span>
+
+                    <span v-if="alias.alias_of__id !== null">alias of <a v-bind:href="'#'+alias.alias_of__id" v-on:click="gotoId(alias.alias_of__id)">[[alias.alias_of__name]]</a></span>
+
+
+                    <div v-if="alias.active" class="btn btn-sm text-muted" class="activation-control float-right" v-on:click="deactivate(alias)">deactivate</div>
+                    <div v-if="!alias.active" class="btn btn-sm text-muted" class="activation-control float-right" v-on:click="activate(alias)">activate</div>
+
+
                 </div>
             </div>
          </div>
