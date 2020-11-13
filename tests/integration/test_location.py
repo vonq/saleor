@@ -47,6 +47,20 @@ class MapboxLocationsTestCase(TestCase):
             ["Reading", "Reading", "Reading", "Reading", "Readington"],
         )
 
+    def test_autocomplete_returns_mapbox_order(self):
+        self.client.get(reverse("locations") + "?text=london")
+
+        self.assertListEqual(
+            list(Location.objects.all().values_list("mapbox_placename", flat=True))[:5],
+            [
+                "London, Greater London, England, United Kingdom",
+                "London, Ontario, Canada",
+                "Enfield, Greater London, England, United Kingdom",
+                "Londonderry, Derry, Northern Ireland, United Kingdom",
+                "Barnet, Greater London, England, United Kingdom",
+            ],
+        )
+
 
 @tag("integration")
 class ExtendedLocationResultsTestCase(TestCase):

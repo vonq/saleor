@@ -140,10 +140,11 @@ class Location(models.Model):
 
     @classmethod
     def get_country_short_code(cls, location: dict):
-        # is it a country?
-        if location["id"].startswith("country."):
+        if "country" in location["place_type"]:
             return location["properties"]["short_code"]
-        return location["context"][-1]["short_code"]
+        if "context" in location:
+            return location["context"][-1]["short_code"]
+        return None
 
     @classmethod
     def from_mapbox_response(cls, mapbox_response: list):
@@ -177,7 +178,10 @@ class Location(models.Model):
             filter(lambda x: x.mapbox_id not in existing_ids, locations)
         )
 
-        return itertools.chain(existing, created)
+        all_locations = {location.mapbox_id: location for location in list(itertools.chain(existing, created))}
+        all_locations_in_mapbox_order = [all_locations[mapbox_location["id"]] for mapbox_location in mapbox_response]
+
+        return all_locations_in_mapbox_order
 
     @classmethod
     def list_context_locations_ids(cls, location_ids: Iterable[str]) -> List[str]:

@@ -16,7 +16,7 @@ class FacetFilter:
 
     def __init__(self, *values):
         self.filters = f" OR ".join(
-            [f"{self.filter_name}:{value}<score={self.score}>" for value in values]
+            [f"{self.filter_name}:\"{value}\"<score={self.score}>" for value in values]
         )
 
 
