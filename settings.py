@@ -13,6 +13,9 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 from pathlib import Path
 import os
 
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
 from django.contrib import staticfiles
 
 ENV = os.getenv("ENV", "dev")
@@ -188,3 +191,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 SIMILARWEB_API_KEY = os.getenv("SIMILARWEB_API_KEY")
+
+
+if not is_development():
+    sentry_sdk.init(
+        dsn="https://a0ea7b5b249d4181b092b5f627fc2067@o218462.ingest.sentry.io/5514267",
+        integrations=[DjangoIntegration()],
+        environment=ENV,
+        send_default_pii=True,
+    )
