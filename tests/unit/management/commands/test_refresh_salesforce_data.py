@@ -80,4 +80,4 @@ class CommandTests(TestCase):
         management.call_command(self.command, self.fake_path)
         filtered = Product.objects.filter(salesforce_id="5").first()
         locations = [location.desq_name_en for location in filtered.locations.all()]
-        self.assertEquals(locations, ['Brazil', 'Netherlands'])
+        self.assertEquals(locations, ["Brazil", "Netherlands"])

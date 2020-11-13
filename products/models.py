@@ -178,8 +178,13 @@ class Location(models.Model):
             filter(lambda x: x.mapbox_id not in existing_ids, locations)
         )
 
-        all_locations = {location.mapbox_id: location for location in list(itertools.chain(existing, created))}
-        all_locations_in_mapbox_order = [all_locations[mapbox_location["id"]] for mapbox_location in mapbox_response]
+        all_locations = {
+            location.mapbox_id: location
+            for location in list(itertools.chain(existing, created))
+        }
+        all_locations_in_mapbox_order = [
+            all_locations[mapbox_location["id"]] for mapbox_location in mapbox_response
+        ]
 
         return all_locations_in_mapbox_order
 
@@ -373,7 +378,10 @@ class Product(models.Model, IndexSearchableProductMixin):
     )
     description = models.TextField(default="", null=True, blank=True)
     industries = models.ManyToManyField(
-        Industry, related_name="industries", related_query_name="industry", blank=True,
+        Industry,
+        related_name="industries",
+        related_query_name="industry",
+        blank=True,
     )
     job_functions = models.ManyToManyField(
         JobFunction,
@@ -402,12 +410,14 @@ class Product(models.Model, IndexSearchableProductMixin):
     salesforce_id = models.CharField(max_length=36, null=True)
     salesforce_product_type = models.CharField(max_length=30, null=True)
     salesforce_product_category = models.CharField(max_length=30, null=True)
-    salesforce_industries = ArrayField(base_field=models.CharField(max_length=80, blank=False), default=list)
-    salesforce_job_categories = ArrayField(base_field=models.CharField(max_length=80, blank=False), default=list)
-
-    salesforce_cross_postings = models.JSONField(
-        null=True, blank=True, default=list
+    salesforce_industries = ArrayField(
+        base_field=models.CharField(max_length=80, blank=False), default=list
     )
+    salesforce_job_categories = ArrayField(
+        base_field=models.CharField(max_length=80, blank=False), default=list
+    )
+
+    salesforce_cross_postings = models.JSONField(null=True, blank=True, default=list)
 
     desq_product_id = models.CharField(max_length=10, null=True)
 

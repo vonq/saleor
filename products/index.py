@@ -88,8 +88,14 @@ class ProductIndex(AlgoliaIndex):
         "paginationLimitedTo": 1000,
         "attributeForDistinct": None,
         "exactOnSingleWordQuery": "attribute",
-        "ranking": ["filters", "desc(maximum_locations_cardinality)",],
-        "customRanking": ["desc(filters)", "desc(maximum_locations_cardinality)",],
+        "ranking": [
+            "filters",
+            "desc(maximum_locations_cardinality)",
+        ],
+        "customRanking": [
+            "desc(filters)",
+            "desc(maximum_locations_cardinality)",
+        ],
         "separatorsToIndex": "",
         "removeWordsIfNoResults": "lastWords",
         "queryType": "prefixLast",

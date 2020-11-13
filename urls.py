@@ -35,8 +35,7 @@ schema_view = get_schema_view(
 urlpatterns = [
     path(r"admin/", include("massadmin.urls")),
     path("admin/", admin.site.urls),
-    path("health/", include("health_check.urls")),
-    path("health", include("health_check.urls")),
+    re_path(r"health/?", include("health_check.urls")),
     path(
         r"locations/", LocationSearchViewSet.as_view({"get": "list"}), name="locations"
     ),

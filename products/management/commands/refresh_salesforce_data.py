@@ -34,7 +34,7 @@ class Command(BaseCommand):
         "description_nl": "description_nl",
         "description_de": "description_de",
         "title_nl": "product_name_nl",
-        "title_de": "product_name_de"
+        "title_de": "product_name_de",
     }
 
     def add_arguments(self, parser):
@@ -67,8 +67,9 @@ class Command(BaseCommand):
             self.stdout.write("Creating product {}".format(new["product_name"]))
         for current_field_name, new_field_name in self.fields_to_update_map.items():
             if current_field_name == "locations":
-                self.__add_locations(product=current,
-                                     new_field_name=new_field_name, new_product=new)
+                self.__add_locations(
+                    product=current, new_field_name=new_field_name, new_product=new
+                )
             else:
                 self.__update_field(
                     current_field_name=current_field_name,
@@ -79,11 +80,11 @@ class Command(BaseCommand):
         current.save()
 
     def __update_field(
-            self,
-            current_field_name: str,
-            current_obj,
-            new_field_name: str,
-            new_obj: dict,
+        self,
+        current_field_name: str,
+        current_obj,
+        new_field_name: str,
+        new_obj: dict,
     ):
         """
         Updates a specific field for a given product
@@ -97,8 +98,10 @@ class Command(BaseCommand):
         new_value = new_obj.get(new_field_name)
         if new_value != "" and new_value is not None and current_value != new_value:
             self.stdout.write(
-                "Updating {} from '{}' to '{}' (Product id {})".format(current_field_name, current_value, new_value,
-                                                                       current_obj.id))
+                "Updating {} from '{}' to '{}' (Product id {})".format(
+                    current_field_name, current_value, new_value, current_obj.id
+                )
+            )
             setattr(current_obj, current_field_name, new_value)
 
     def __add_locations(self, product, new_field_name: str, new_product: dict):
@@ -111,15 +114,32 @@ class Command(BaseCommand):
         :return:
         """
         # Locations we want to ignore as they're not available on mapbox
-        excluded_names = ["East Midlands", "West Midlands", "Yorkshire & Humberside", "North West", "North East",
-                          "East of England", "South West", "South East", "North"]
+        excluded_names = [
+            "East Midlands",
+            "West Midlands",
+            "Yorkshire & Humberside",
+            "North West",
+            "North East",
+            "East of England",
+            "South West",
+            "South East",
+            "North",
+        ]
 
-        current_locations = [location.desq_name_en for location in product.locations.all()]
+        current_locations = [
+            location.desq_name_en for location in product.locations.all()
+        ]
         new_locations = new_product.get(new_field_name, [])
         for new_location in new_locations:
-            if new_location not in current_locations and new_location not in excluded_names:
+            if (
+                new_location not in current_locations
+                and new_location not in excluded_names
+            ):
                 self.stdout.write(
-                    "Adding location {} to product id {}".format(new_location, product.id))
+                    "Adding location {} to product id {}".format(
+                        new_location, product.id
+                    )
+                )
                 db_location = Location.objects.get(
                     desq_name_en=new_location  # assuming location names in SF are const and unique
                 )

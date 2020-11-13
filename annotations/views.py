@@ -68,11 +68,16 @@ def update_title(request):
         content_type_id=ContentType.objects.get_for_model(JobTitle).pk,
         object_id=title.id,
         object_repr=title.name,
-        action_flag=CHANGE)
+        action_flag=CHANGE,
+    )
 
-    return JsonResponse({"active": title.active,
-                        "canonical": title.canonical,
-                         "alias_of__id": None if title.alias_of is None else title.alias_of.id})
+    return JsonResponse(
+        {
+            "active": title.active,
+            "canonical": title.canonical,
+            "alias_of__id": None if title.alias_of is None else title.alias_of.id,
+        }
+    )
 
 
 def dashboard(request):
