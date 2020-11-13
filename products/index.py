@@ -3,6 +3,8 @@ from algoliasearch_django.decorators import register
 
 from api.products.models import Product
 
+from django.conf import settings as django_settings
+
 
 @register(Product)
 class ProductIndex(AlgoliaIndex):
@@ -98,4 +100,4 @@ class ProductIndex(AlgoliaIndex):
         "indexLanguages": ["en", "nl", "de"],
     }
 
-    index_name = "Product"
+    index_name = f"{django_settings.ENV}_Product"

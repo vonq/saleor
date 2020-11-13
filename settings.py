@@ -15,10 +15,12 @@ import os
 
 from django.contrib import staticfiles
 
+ENV = os.getenv("ENV", "dev")
+
 
 def is_development() -> bool:
     """ Returns true if environment is development """
-    return os.getenv("ENV", "dev") == "dev"
+    return ENV == "dev"
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
