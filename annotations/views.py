@@ -5,6 +5,9 @@ from django.contrib.auth.decorators import (
     user_passes_test,
 )
 
+from django.contrib.admin.models import LogEntry, CHANGE
+from django.contrib.contenttypes.models import ContentType
+
 from api.products.models import Industry, Product, JobFunction, JobTitle, Location
 
 import json
@@ -46,19 +49,30 @@ def titles_annotation(request):
 def update_title(request):
 
     payload = json.loads(request.body)
-
     title = JobTitle.objects.get(pk=payload["id"])
-    title.active = payload["active"]
-    title.canonical = payload["canonical"]
+    if "active" in payload:
+        title.active = payload["active"]
+    if "canonical" in payload:
+        title.canonical = payload["canonical"]
+    if "alias_of__id" in payload:
+        title.alias_of = (
+            None
+            if payload["alias_of__id"] is None
+            else JobTitle.objects.get(pk=payload["alias_of__id"])
+        )
 
-    title.alias_of = (
-        None
-        if payload["alias_of__id"] is None
-        else JobTitle.objects.get(pk=payload["alias_of__id"])
-    )
     title.save()
 
-    return JsonResponse({"active": title.active, "alias_of__id": title.alias_of.id})
+    LogEntry.objects.log_action(
+        user_id=request.user.id,
+        content_type_id=ContentType.objects.get_for_model(JobTitle).pk,
+        object_id=title.id,
+        object_repr=title.name,
+        action_flag=CHANGE)
+
+    return JsonResponse({"active": title.active,
+                        "canonical": title.canonical,
+                         "alias_of__id": None if title.alias_of is None else title.alias_of.id})
 
 
 def dashboard(request):

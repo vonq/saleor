@@ -5,6 +5,8 @@
     <title>Job Titles</title>
     <link rel="stylesheet" href="/static/bootstrap.min.css">
     <link rel="stylesheet" href="/static/main.css">
+    <link rel="stylesheet" href="/static/autocomplete.css">
+
 </head>
 <body>
     <div id="titles-app" class="container" v-cloak>
@@ -28,11 +30,24 @@
 
         <div class="row">
             <div class="col-12">
-                <button v-on:click="previous()"> < </button>
-                <input type="number" min="0" v-bind:max="titles.length - 1" v-model="titleIndex">
-                <button v-on:click="next()"> > </button>
-                <input type="checkbox" v-model="skipDeactivated" name="skipDeactivatedControl"><label for="skipDeactivatedControl">Skip Deactivated</label>
-                <input type="checkbox" v-model="skipAliases" name="skipAliasesControl"><label for="skipAliasesControl">Skip Aliases</label>
+                <form class="form-inline" v-on:submit.prevent="">
+
+                <button class="form-control"v-on:click="previous()"> < </button>
+                <input class="form-control" type="number" min="0" v-bind:max="titles.length - 1" v-model="titleIndex">
+                <button class="form-control" v-on:click="next()"> > </button>
+                <input class="form-check-inline" type="checkbox" v-model="skipDeactivated" name="skipDeactivatedControl">
+                    <label class="form-check-label" for="skipDeactivatedControl">Skip Deactivated</label>
+                <input class="form-check-inline" type="checkbox" v-model="skipAliases" name="skipAliasesControl">
+                    <label class="form-check-label" for="skipAliasesControl">Skip Aliases</label>
+
+                    <div id="autocomplete" class="autocomplete px-2 w-1/4">
+                        <input class="autocomplete-input"
+                        placeholder="Job title" autofocus />
+                        <ul class="autocomplete-result-list"></ul>
+                    </div>
+                    <input class="form-check-inline" type="checkbox" v-model="searchIncludesAliases" name="searchIncludesAliases">
+                    <label class="form-check-label" for="searchIncludesAliases">Include Aliases</label>
+                </form>
 
                 <h2 v-bind:class="{'canonical': currentTitle.canonical, 'inactive': !currentTitle.active}">
                     [[ currentTitle.name ]] <span class="badge badge-pill">&times;[[ currentTitle.frequency ]]</span>
@@ -81,6 +96,9 @@
     <script src="/static/vue.min.js"></script>
     <script src="/static/d3.v5.min.js"></script>
     <script src="https://d3js.org/d3.v5.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+    <script src="/static/autocomplete.min.js"></script>
 
     <script src="/static/titles_annotation_app.js"></script>
 </body>

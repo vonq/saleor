@@ -5,27 +5,42 @@ var titlesApp = new Vue({
         titles: [],
         jobFunctions: [],
         industries: [],
-        // channelTypes: [],
         selectedJobFunction: null,
         selectedIndustry: null,
-        // selectedChannelType: null,
-        filterModel: {'text': '', 'job_function': ''},
-        filteredTitles: [],
         titleIndex: 0,
-        ignoredTokens: ['consultant', 'manager', 'assistant', 'executive', 'developer'],
+        ignoredTokens: ['consultant', 'manager', 'assistant', 'executive', 'developer', 'engineer'],
         skipDeactivated: true,
         skipAliases: true,
+        searchIncludesAliases: true
     },
     mounted:  function() {
-        d3.json('/annotations/get-titles').then(data=>{
-            this.titles = data.titles.sort((a, b) => { return b.frequency - a.frequency})
-            d3.selectAll('input').attr('disabled', null)
-        })
+        d3.json('/annotations/get-titles').then(data=> {
+            this.titles = data.titles.sort((a, b) => {
+                return b.frequency - a.frequency
+            })
 
-        // data below loaded inline
-        // this.jobFunctions = data.jobFunctions.map(d=>d.name).sort()
-        // this.industries = data.industries.map(d=>d.name).sort()
-        // this.channelTypes = data.channelTypes.sort()
+            new Autocomplete('#autocomplete', {
+                search: input => {
+                    return new Promise(resolve => {
+                        if (input.length < 3) {
+                            return resolve([])
+                        }
+                        return resolve(this.titles
+                            .filter(title => this.searchIncludesAliases || title.alias_of__id == null)
+                            .map(title => title.name)
+                            .filter(name => name.toLowerCase().includes(input.toLowerCase()))
+                            .sort())
+                    })
+                },
+                onSubmit: result => {
+                    matchedIndex = this.titles.findIndex(t => t.name == result)
+                    if (matchedIndex > -1) {
+                        this.titleIndex = matchedIndex
+                        $('#autocomplete > input').val('')
+                    }
+                }
+            })
+        })
     },
     methods: {
         getCookie: function(name) {
@@ -58,34 +73,34 @@ var titlesApp = new Vue({
                 )
             }
             return Array.from(new Set(possibles)) // de-duping
+                // sorting by active, alias_of, terms-in-common, frequency respectively
+                .sort((a, b) => {
+                    return b.frequency - a.frequency
+                })
+                .sort((a, b) => {
+                    return a.alias_of__id === null && b.active !== null ? -1 : b - a
+                })
                 .sort((a, b) => {
                     return a.active && !b.active ? -1 : b - a
-                }
-            )
+                })
         },
-          postTitleUpdate: function(title) {
-                let v = this;
+        postUpdate: function(title, change) {
+                change.id = title.id
 
                 d3.json('/annotations/update-title', {
                     method: 'POST',
-                    body: JSON.stringify(title),
+                    body: JSON.stringify(change),
                     headers: {
                         "Content-type": "application/json; charset=UTF-8",
                         "X-CSRFToken": this.getCookie('csrftoken')
                     },
                 }).then(function(data) {
-                   // console.log(data)
-                    title = data
+                    title.alias_of__id = data.alias_of__id
+                    title.canonical = data.canonical
+                    title.active = data.active
                 }, function(d){
-                    console.error(d)
+                    alert('Failed to update: ' + title.name)
                 })
-            },
-        filterTitles: function() {
-                let re = new RegExp(this.filterModel.text, 'gi')
-                this.filteredTitles = this.titles.filter(title => {
-                    return title.name.match(re)
-                })
-                    // .sort((a,b)=>a.jobfunctions.length - b.jobfunctions.length)
             },
         next: function() {
             if(this.titles.length) {
@@ -119,106 +134,90 @@ var titlesApp = new Vue({
                 } while(skip)
             }
         },
-        canonify: function(title) {
-            // need to ensure that given title is not an alias of any other
-            title.canonical = true
-            title.alias_of__id = this.currentTitle.id
-        },
+        // canonify: function(title) {
+        //     // need to ensure that given title is not an alias of any other
+        //     title.canonical = true
+        //     title.alias_of__id = this.currentTitle.id
+        //
+        // },
         decanonify: function(title) {
             // ensure has no aliases to it.
-            title.canonical = false
+            this.postUpdate(title, {'canonical': false})
             this.titles.forEach(t => {
-                    if(t.alias_of__id == title.id) {
-                        t.alias_of__id = null
-                        t.alias_of__name = null // don't think we need name...
-                    }
-                })
+                if(t.alias_of__id == title.id) {
+                    this.postUpdate(t, {'alias_of__id':null, 'alias_of__name':null}) // may not need name...
+                }
+            })
         },
-
         aliasClick: function(alias) {
             if(alias.alias_of__id !== this.currentTitle.id) { // making alias
-                alias.alias_of__id = this.currentTitle.id
-                // alias.alias_of__name = this.currentTitle.name
-                alias.canonical = false
-                this.currentTitle.canonical = true
-                this.currentTitle.active = true
-            } else { // breaking alias
-                alias.alias_of__id = null
-                // alias.alias_of__name = null
-            }
-            this.postTitleUpdate(alias)
-        },
-        currentTitleClick: function() {
-            if(this.currentTitle.canonical) {
-                this.currentTitle.canonical = false
-                // remove any aliases to it
-                this.titles.forEach(t => {
-                    if(t.alias_of__id == this.currentTitle.id) {
-                        t.alias_of__id = null
-                        t.alias_of__name = null // don't think we need name...
-
-                        this.postTitleUpdate(t) // TODO handle the indirect reference
+                let secondaryAliases = this.titles.filter(t => t.alias_of__id == alias.id)
+                if(secondaryAliases.length == 0 || confirm('This title has ' + secondaryAliases.length + ' aliases.  Continue?')) {
+                    this.postUpdate(alias, {
+                        'alias_of__id': this.currentTitle.id,
+                        'canonical': false,
+                        'active': true
+                    })
+                    for (const sa of secondaryAliases) {
+                        this.postUpdate(sa, {
+                            'alias_of__id': this.currentTitle.id,
+                            'canonical': false,
+                            'active': true
+                        })
                     }
-                })
-            } else {
-                this.currentTitle.canonical = true
+                    if (!this.currentTitle.active) { // ensure current title active if creating alias to it
+                        this.postUpdate(this.currentTitle, {'active': true})
+                    }
+                    if (!this.currentTitle.canonical) { // may be deprecated
+                        this.postUpdate(this.currentTitle, {'canonical': true})
+                    }
+                }
+            } else { // breaking alias
+                this.postUpdate(alias, {'alias_of__id': null})
             }
         },
         toggleActive: function(title) {
-            title.active = !title.active;
-            if(!title.active){
-                this.decanonify(title) // includes removing aliases of this title
-            }
-            this.postTitleUpdate(title)
+            if(title.active) this.deactivate(title)
+            else if(!title.active) this.activate(title)
         },
         activate: function(title) {
-            title.active = true
-            this.postTitleUpdate(title)
+            this.postUpdate(title, {'active': true})
         },
-         deactivate: function(title) {
-            title.active = false
-            this.postTitleUpdate(title)
-             this.decanonify(title) // includes removing aliases of this title
+        deactivate: function(title) {
+            this.postUpdate(title, {'active': false})
+            this.decanonify(title) // includes removing aliases of this title
         },
         goto: function(title) {
             this.titleIndex = this.titles.findIndex(t => t == title)
         },
-
         gotoId: function(id) {
             this.titleIndex = this.titles.findIndex(t => t.id == id)
         },
-
-
-        rebase: function(title) { // better names invited - means swapping this title with its canonical form, taking thier aliases
-            canonical = this.titles.find(t => t.id == title.alias_of__id)
+        rebase: function(title) { // better names invited - means swapping this title with its canonical form, taking their aliases
+            let canonical = this.titles.find(t => t.id == title.alias_of__id)
             if(canonical) { // title is alias of another
                 // take other aliases
                 this.titles.forEach(t => {
                     if(t.alias_of__id == canonical.id) {
-                        t.alias_of__id = title.id
-                        this.postTitleUpdate(t)
+                        this.postUpdate(t, {'alias_of__id': title.id})
                     }
                 })
-                canonical.alias_of__id = title.id
-                title.alias_of__id = null
+                this.postUpdate(canonical, {'alias_of__id': title.id})
+                this.postUpdate(title, {'alias_of__id': null})
 
-                this.postTitleUpdate(canonical)
-                this.postTitleUpdate(title)
                 this.titleIndex = this.titles.indexOf(title)
             }
         }
     },
     watch: {
-        filterModel: {
-            handler: _.debounce(function() {
-                this.filterTitles()
-            }, 500),
-            deep: true
-        }
     },
     computed: {
         currentTitle: function(){
-            return this.titles[this.titleIndex]
+            if(this.titles.length) {
+                return this.titles[this.titleIndex]
+            } else {
+                return {'canonical': false, 'active': true, 'name': 'Loading...'}
+            }
         },
         currentAliases: function() {
             return this.titles.filter(t=>t.alias_of__id == this.currentTitle.id)
@@ -226,8 +225,10 @@ var titlesApp = new Vue({
         checks: function() {
             return [
                 {
-                    'titles': this.titles.filter(t => t.canonical && t.alias_of__id !== null),
-                    'label': ' canonicals which are also aliases of other titles'
+                    'titles': this.titles
+                        .filter(t => t.alias_of__id !== null)
+                        .filter(a => this.titles.some(t => t.alias_of__id == a.id)),
+                    'label': ' alias titles which also have aliases'
                 }
             ]
         },
