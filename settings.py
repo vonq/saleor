@@ -155,6 +155,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "https://master.djaiqvf4qskm2.amplifyapp.com"
 ]
 
 # Internationalization
