@@ -19,7 +19,7 @@
             <div class="col-6">
                 <h2>Checks</h2>
                 <div v-for="check in checks"><strong>[[ check.label ]]</strong>
-                    <span v-for="title in check.titles">[[ title.name ]]</span>
+                    <div v-on:click="goto(title)" v-for="title in check.titles">[[ title.name ]]</div>
                 </div>
             </div>
             <div class="col-6">

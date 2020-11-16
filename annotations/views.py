@@ -70,7 +70,6 @@ def update_title(request):
         object_repr=title.name,
         action_flag=CHANGE,
     )
-
     return JsonResponse(
         {
             "active": title.active,

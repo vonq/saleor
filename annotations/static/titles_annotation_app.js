@@ -61,21 +61,30 @@ var titlesApp = new Vue({
         possibleAliases: function() {
             if(!this.currentTitle) return []
             // tokenise, remove stopwords
-            // ideally, sort by words in common
             possibles = [];
             tokens = this.currentTitle.name.toLowerCase().split(' ')
                 .filter(t=>this.ignoredTokens.indexOf(t) == -1)
             for (token of tokens) {
                 possibles = possibles.concat(this.titles
-                    .filter(t=>t.name.toLowerCase().includes(token))
+                    .filter(title=>title.name.toLowerCase().split(' ')
+                        .some(pToken => pToken == token)) // title tokens includes token : count?
                     .filter(t=>this.currentAliases.indexOf(t) == -1)
                     .filter(t=>t.id !== this.currentTitle.id)
                 )
             }
-            return Array.from(new Set(possibles)) // de-duping
-                // sorting by active, alias_of, terms-in-common, frequency respectively
+            let unique = Array.from(new Set(possibles)) // de-duping
+            lexicalMatch = {}
+            for (const u of unique) {
+                lexicalMatch[u.id] = u.name.toLowerCase().split(' ')
+                    .filter(value => tokens.includes(value)).length
+            }
+
+            return unique  // sorting by alphabetical, lexical match, active, alias_of, frequency in that order
                 .sort((a, b) => {
-                    return b.frequency - a.frequency
+                    return a.name < b.name ? 1 : -1;
+                })
+                .sort((a, b) => {
+                    return lexicalMatch[a.id] - lexicalMatch[b.id]
                 })
                 .sort((a, b) => {
                     return a.alias_of__id === null && b.active !== null ? -1 : b - a
