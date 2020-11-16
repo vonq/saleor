@@ -1,4 +1,5 @@
 import itertools
+
 from typing import List, Iterable
 
 from django.conf import settings
@@ -8,7 +9,6 @@ from django.db import models
 from django.db.models import QuerySet, Q, Max, Func, F
 from django.db.models.functions import Cast
 from modeltranslation.fields import TranslationFieldDescriptor
-
 from api.products.geocoder import Geocoder
 
 
@@ -397,7 +397,7 @@ class Product(models.Model, IndexSearchableProductMixin):
     available_in_ats = models.BooleanField(default=True)
     available_in_jmp = models.BooleanField(default=True)
 
-    duration = models.IntegerField(null=True, blank=True)
+    duration_days = models.IntegerField(null=True, blank=True)
     time_to_process = models.IntegerField(null=True, blank=True)
 
     unit_price = models.FloatField(null=True, blank=True)

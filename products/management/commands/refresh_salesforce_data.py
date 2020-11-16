@@ -27,7 +27,7 @@ class Command(BaseCommand):
         "locations": "relevant_location_names",
         "salesforce_industries": "industries",
         "salesforce_job_categories": "job_categories",
-        "duration": "duration",
+        "duration_days": "duration",
         "time_to_process": "time_to_process",
         "unit_price": "unit_price",
         "rate_card_price": "rate_card_price",
