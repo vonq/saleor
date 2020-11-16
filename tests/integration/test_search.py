@@ -167,9 +167,7 @@ class ProductSearchTestCase(TestCase):
         global_product.save()
 
         # populate job functions
-        software_engineering = JobFunction(
-            name="Software Engineering",
-        )
+        software_engineering = JobFunction(name="Software Engineering",)
         software_engineering.save()
 
         construction = JobFunction(name="Construction")
@@ -189,9 +187,7 @@ class ProductSearchTestCase(TestCase):
         java_developer.save()
         cls.java_developer_id = java_developer.id
 
-        product = Product(
-            title="A job board for developers",
-        )
+        product = Product(title="A job board for developers",)
         product.save()
         product.job_functions.add(software_engineering)
         product.save()
@@ -292,25 +288,26 @@ class ProductSearchTestCase(TestCase):
         self.assertEquals(len(resp.json()["results"]), 11)
 
     def test_results_are_sorted_by_specificity(self):
-        resp = self.client.get(reverse("api.products:products-list"))
+        resp = self.client.get(
+            reverse("api.products:products-list")
+            + f"?includeLocationId={self.united_kingdom_id}"
+        )
         products = resp.json()["results"]
         self.assertTrue(len(products) > 1)
 
-        # all these boards have no location context
+        # this is the board with the least context
+        self.assertEqual(
+            products[-1]["title"], "Something Global",
+        )
+        # these are the boards with the most specific context
         self.assertIn(
-            products[-1]["title"],
+            products[0]["title"],
             [
-                "Something Global",
-                "Null",
-                "General",
-                "Engineering Board",
-                "A job board for construction jobs",
-                "A job board for developers",
-                "Construction board",
+                "Something in Reading",
+                "Something in Slough",
+                "Something in Slough and Reading",
             ],
         )
-        # this is the board with the shortest context
-        self.assertIn(products[-8]["title"], ["Something in the whole of the UK"])
 
     def test_products_with_global_locations(self):
         resp_global = self.client.get(
@@ -377,6 +374,32 @@ class ProductSearchTestCase(TestCase):
         # we get all the five results we already got for the UK
         # (since reading and slough are already in that result set)
         self.assertEqual(multiple_filtered_response.json()["count"], 5)
+
+        # sorted ranking:
+        # the most relevant result satisfies filters for both exactLocation
+        self.assertEqual(
+            multiple_filtered_response.json()["results"][0]["title"],
+            "Something in Slough and Reading",
+        )
+        # then we get two results where only one of the exactLocation match
+        self.assertIn(
+            multiple_filtered_response.json()["results"][1]["title"],
+            ["Something in Slough", "Something in Reading"],
+        )
+        self.assertIn(
+            multiple_filtered_response.json()["results"][2]["title"],
+            ["Something in Reading", "Something in Slough"],
+        )
+        # then the results that match for the includeLocation and its context:
+        # first the most specific
+        self.assertEqual(
+            multiple_filtered_response.json()["results"][3]["title"],
+            "Something in the whole of the UK",
+        )
+        # ... and then the least specific
+        self.assertEqual(
+            multiple_filtered_response.json()["results"][4]["title"], "Something Global"
+        )
 
     def test_product_search_can_filter_by_job_function(self):
         resp = self.client.get(

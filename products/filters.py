@@ -1,8 +1,8 @@
-import itertools
-from typing import Type
+from typing import ClassVar, Iterable, Type
 
 from drf_yasg2 import openapi
 from rest_framework.exceptions import ValidationError
+from rest_framework.request import Request
 
 from api.products.models import Location
 
@@ -18,6 +18,13 @@ class FacetFilter:
         self.filters = f" OR ".join(
             [f'{self.filter_name}:"{value}"<score={self.score}>' for value in values]
         )
+
+
+def get_facet_filter(
+    facet_filter_class: ClassVar, parameters: str
+) -> Type[FacetFilter]:
+    parameter_ids = parameters.split(",") if parameters else []
+    return facet_filter_class(*parameter_ids)
 
 
 class InclusiveLocationIdFacetFilter(FacetFilter):
@@ -39,7 +46,7 @@ class InclusiveLocationIdFacetFilter(FacetFilter):
         Here we're passed a list of location ids, for which we want to
         retrieve their CONTEXT!
         """
-        locations_and_contexts = Location.list_context_locations_ids(values)
+        locations_and_contexts = Location.list_context_locations_ids(values) or values
         super().__init__(*locations_and_contexts)
 
 
@@ -64,12 +71,12 @@ class PrimarySimilarWebFacetFilter(FacetFilter):
     score = 9
 
     def __init__(self, *values):
-        if len(values) > 1:
-            self.filters = ""
-            return
-        country_codes = Location.objects.filter(id__in=values).values_list(
+        # filter out null country codes
+        # (for locations that we haven't yet
+        # fully annotated)
+        country_codes = filter(None, Location.objects.filter(id__in=values).values_list(
             "country_code", flat=True
-        )
+        ))
         super().__init__(*country_codes)
 
 
@@ -127,11 +134,13 @@ class IndustryFacetFilter(FacetFilter):
 
 
 class FacetFilterCollection:
-    def __init__(self, *facet_filters: FacetFilter):
+    def __init__(self, *facet_filters: FacetFilter, limit: int = 50, offset: int = 0):
         self.facet_filters = facet_filters
+        self.limit = limit
+        self.offset = offset
 
     def query(self):
-        return {
+        query = {
             "getRankingInfo": True,
             "analytics": False,
             "enableABTest": False,
@@ -155,4 +164,34 @@ class FacetFilterCollection:
                 ]
             ),
             "sumOrFiltersScores": True,
+            "length": self.limit,
+            "offset": self.offset,
         }
+
+        return query
+
+    def __bool__(self):
+        """
+        A "falsy" FacetFilterCollection is a list of filters
+        that don't filter anything. This will happen
+        if you pass a request with no valid query parameters
+        to the factory method.
+        """
+        return bool(self.query()["filters"])
+
+    @classmethod
+    def build_filter_collection_from_request(
+        cls,
+        request: "Request",
+        filters: Iterable[Type[FacetFilter]],
+        limit: int,
+        offset: int,
+    ):
+        return cls(
+            *[
+                get_facet_filter(item, request.query_params.get(item.parameter_name))
+                for item in filters
+            ],
+            limit=limit,
+            offset=offset,
+        )

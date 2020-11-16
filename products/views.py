@@ -6,7 +6,6 @@ from django.db.models import Q
 from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins
-from rest_framework.exceptions import ValidationError
 
 from api.products.filters import (
     InclusiveLocationIdFacetFilter,
@@ -23,14 +22,16 @@ from api.products.models import Location, Product, JobTitle, JobFunction, Indust
 from api.products.paginators import (
     StandardResultsSetPagination,
     AutocompleteResultsSetPagination,
+    SearchResultsPagination,
 )
-from api.products.search import get_facet_filter, search_all_pages, get_results_ids
+from api.products.search import query_search_index, get_results_ids
 from api.products.serializers import (
     ProductSerializer,
     LocationSerializer,
     JobTitleSerializer,
     JobFunctionSerializer,
     IndustrySerializer,
+    ProductSearchSerializer,
 )
 
 
@@ -80,12 +81,13 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 
 class ProductsViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
-    pagination_class = StandardResultsSetPagination
     http_method_names = ("get",)
     queryset = Product.objects.all()
     ids: List[int] = []
 
-    filters = [
+    search_results_count: int = None
+
+    search_filters = (
         InclusiveLocationIdFacetFilter,
         ExactLocationIdFacetFilter,
         JobFunctionsFacetFilter,
@@ -93,43 +95,49 @@ class ProductsViewSet(viewsets.ModelViewSet):
         IndustryFacetFilter,
         PrimarySimilarWebFacetFilter,
         SecondarySimilarWebFacetFilter,
-    ]
+    )
 
-    def validate_query_params(self):
-        # we can't search for both job titles and job functions
-        # TODO: Is it still relevant?
-        if all(
-            x in self.request.query_params
-            for x in [
-                JobTitlesFacetFilter.parameter_name,
-                JobFunctionsFacetFilter.parameter_name,
-            ]
-        ):
-            raise ValidationError(
-                detail="Cannot search by both job title and job function. Please use either field."
+    @property
+    def paginator(self):
+        if not hasattr(self, "_paginator"):
+            self._paginator = (
+                SearchResultsPagination()
+                if self.search_results_count
+                else StandardResultsSetPagination()
             )
+        return self._paginator
 
     def get_queryset(self):
-        filter_collection = FacetFilterCollection(
-            *[
-                get_facet_filter(
-                    item, self.request.query_params.get(item.parameter_name)
-                )
-                for item in self.filters
-            ]
+        filter_collection = FacetFilterCollection.build_filter_collection_from_request(
+            request=self.request,
+            filters=self.search_filters,
+            limit=SearchResultsPagination().get_limit(self.request),
+            offset=SearchResultsPagination().get_offset(self.request),
         )
+
+        if not filter_collection:
+            # a list request doesn't need
+            # to go through algolia
+            # before we can serialise it
+            return self.queryset
+
         if not self.ids:
-            results = search_all_pages(Product, params=filter_collection.query())
+            self.search_results_count, results = query_search_index(
+                Product, params=filter_collection.query()
+            )
             self.ids = get_results_ids(results)
+
         return self.queryset.filter(pk__in=self.ids).order_by(
             Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(self.ids)])
         )
 
     @swagger_auto_schema(
-        manual_parameters=[item.parameter for item in filters if item.parameter]
+        manual_parameters=[item.parameter for item in search_filters if item.parameter]
     )
     def list(self, request, *args, **kwargs):
-        self.validate_query_params()
+        ProductSearchSerializer(data=self.request.query_params).is_valid(
+            raise_exception=True
+        )
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True)

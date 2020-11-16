@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from api.products.models import Product, Location, JobFunction, JobTitle, Industry
 
@@ -115,3 +116,38 @@ class ProductSerializer(serializers.ModelSerializer):
             "type",
             "cross_postings",
         )
+
+
+class ProductSearchSerializer(serializers.Serializer):
+    includeLocationId = serializers.CharField(required=False)
+    exactLocationId = serializers.CharField(required=False)
+    industryId = serializers.CharField(required=False)
+    jobTitleId = serializers.IntegerField(required=False)
+    jobFunctionId = serializers.IntegerField(required=False)
+
+    @staticmethod
+    def is_a_valid_integer_array(value):
+        """
+        Make sure that we're getting a string of comma-separated integers
+        """
+        try:
+            values = list(map(int, value.split(",")))
+        except ValueError:
+            raise ValidationError(detail="Invalid parameter values, must be integer")
+        return values
+
+    def validate_includeLocationId(self, value):
+        return self.is_a_valid_integer_array(value)
+
+    def validate_exactLocationId(self, value):
+        return self.is_a_valid_integer_array(value)
+
+    def validate_industryId(self, value):
+        return self.is_a_valid_integer_array(value)
+
+    def validate(self, attrs):
+        if attrs.get("jobTitleId") and attrs.get("jobFunctionId"):
+            raise ValidationError(
+                detail="Cannot search by both job title and job function. Please use either field."
+            )
+        return attrs
