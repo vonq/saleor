@@ -10,6 +10,7 @@ json_data = """{"salesforce_id": "1", "product_name": "Product 1"}
 {"salesforce_id": "3", "product_name": "Product 3 - I'm new"}
 {"salesforce_id": "4", "is_available_on_jmp": false}
 {"salesforce_id": "5", "relevant_location_names": ["Brazil", "Netherlands"]}
+{"salesforce_id": "6", "desq_id": "5432"}
 """
 
 
@@ -38,6 +39,9 @@ class CommandTests(TestCase):
 
         l2 = Location(desq_name_en="Netherlands")
         l2.save()
+
+        p6 = Product(salesforce_id="6")
+        p6.save()
 
     @patch("algoliasearch_django.registration.AlgoliaEngine.save_record")
     @patch("builtins.open", new_callable=mock_open, read_data=json_data)
@@ -81,3 +85,17 @@ class CommandTests(TestCase):
         filtered = Product.objects.filter(salesforce_id="5").first()
         locations = [location.desq_name_en for location in filtered.locations.all()]
         self.assertEquals(locations, ["Brazil", "Netherlands"])
+
+    @patch("algoliasearch_django.registration.AlgoliaEngine.save_record")
+    @patch("builtins.open", new_callable=mock_open, read_data=json_data)
+    def test_sets_product_id(self, mock_file, mock_save):
+        management.call_command(self.command, self.fake_path)
+        filtered = Product.objects.filter(salesforce_id="5").first()
+        self.assertEquals(filtered.product_id, "5")
+
+    @patch("algoliasearch_django.registration.AlgoliaEngine.save_record")
+    @patch("builtins.open", new_callable=mock_open, read_data=json_data)
+    def test_prioritizes_desq_product_id(self, mock_file, mock_save):
+        management.call_command(self.command, self.fake_path)
+        filtered = Product.objects.filter(salesforce_id="6").first()
+        self.assertEquals(filtered.product_id, "5432")

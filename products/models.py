@@ -10,6 +10,7 @@ from django.db.models import QuerySet, Q, Max, Func, F
 from django.db.models.functions import Cast
 from modeltranslation.fields import TranslationFieldDescriptor
 from api.products.geocoder import Geocoder
+import uuid
 
 
 class AcrossLanguagesQuerySet(QuerySet):
@@ -371,6 +372,20 @@ class IndexSearchableProductMixin:
 
 
 class Product(models.Model, IndexSearchableProductMixin):
+    def set_product_id(self):
+        if self.desq_product_id:
+            product_id = self.desq_product_id
+        elif self.salesforce_id:
+            product_id = self.salesforce_id
+        else:
+            product_id = uuid.uuid4()
+        if product_id != self.product_id:
+            self.product_id = product_id
+
+    def save(self, *args, **kwargs):
+        self.set_product_id()
+        super(Product, self).save(*args, **kwargs)
+
     title = models.CharField(max_length=200, null=True)
     url = models.URLField(max_length=300, null=True)
     channel = models.ForeignKey(
@@ -408,6 +423,12 @@ class Product(models.Model, IndexSearchableProductMixin):
     interests = models.CharField(max_length=200, default="", blank=True, null=True)
 
     salesforce_id = models.CharField(max_length=36, null=True)
+    product_id = models.CharField(
+        max_length=36,
+        unique=True,
+        default=uuid.uuid4,
+    )
+
     salesforce_product_type = models.CharField(max_length=30, null=True)
     salesforce_product_category = models.CharField(max_length=30, null=True)
     salesforce_industries = ArrayField(

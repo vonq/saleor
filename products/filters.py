@@ -74,9 +74,12 @@ class PrimarySimilarWebFacetFilter(FacetFilter):
         # filter out null country codes
         # (for locations that we haven't yet
         # fully annotated)
-        country_codes = filter(None, Location.objects.filter(id__in=values).values_list(
-            "country_code", flat=True
-        ))
+        country_codes = filter(
+            None,
+            Location.objects.filter(id__in=values).values_list(
+                "country_code", flat=True
+            ),
+        )
         super().__init__(*country_codes)
 
 

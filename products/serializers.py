@@ -54,14 +54,6 @@ class ProductSerializer(serializers.ModelSerializer):
         return product.salesforce_product_type
 
     @staticmethod
-    def get_product_id(product):
-        return (
-            product.desq_product_id
-            if product.desq_product_id
-            else product.salesforce_id
-        )
-
-    @staticmethod
     def get_cross_postings(product):
         return product.salesforce_cross_postings
 
@@ -95,11 +87,11 @@ class ProductSerializer(serializers.ModelSerializer):
     cross_postings = serializers.SerializerMethodField()
     homepage = serializers.SerializerMethodField()
     type = serializers.SerializerMethodField()
-    product_id = serializers.SerializerMethodField()
     logo_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
+        lookup_field = "product_id"
         fields = (
             "title",
             "locations",

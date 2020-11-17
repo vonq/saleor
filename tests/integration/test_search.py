@@ -167,7 +167,9 @@ class ProductSearchTestCase(TestCase):
         global_product.save()
 
         # populate job functions
-        software_engineering = JobFunction(name="Software Engineering",)
+        software_engineering = JobFunction(
+            name="Software Engineering",
+        )
         software_engineering.save()
 
         construction = JobFunction(name="Construction")
@@ -187,7 +189,9 @@ class ProductSearchTestCase(TestCase):
         java_developer.save()
         cls.java_developer_id = java_developer.id
 
-        product = Product(title="A job board for developers",)
+        product = Product(
+            title="A job board for developers",
+        )
         product.save()
         product.job_functions.add(software_engineering)
         product.save()
@@ -297,7 +301,8 @@ class ProductSearchTestCase(TestCase):
 
         # this is the board with the least context
         self.assertEqual(
-            products[-1]["title"], "Something Global",
+            products[-1]["title"],
+            "Something Global",
         )
         # these are the boards with the most specific context
         self.assertIn(

@@ -84,6 +84,7 @@ class ProductsViewSet(viewsets.ModelViewSet):
     http_method_names = ("get",)
     queryset = Product.objects.all()
     ids: List[int] = []
+    lookup_field = "product_id"
 
     search_results_count: int = None
 
