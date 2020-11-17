@@ -1,11 +1,13 @@
 import itertools
-from typing import List
+from collections import defaultdict
+from typing import List, Iterable
 
 from django.db.models import Case, When
 from django.db.models import Q
 from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins
+from rest_framework.response import Response
 
 from api.products.filters import (
     InclusiveLocationIdFacetFilter,
@@ -29,7 +31,7 @@ from api.products.serializers import (
     ProductSerializer,
     LocationSerializer,
     JobTitleSerializer,
-    JobFunctionSerializer,
+    JobFunctionTreeSerializer,
     IndustrySerializer,
     ProductSearchSerializer,
 )
@@ -186,8 +188,7 @@ class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 
 
 class JobFunctionsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
-    serializer_class = JobFunctionSerializer
-    pagination_class = StandardResultsSetPagination
+    serializer_class = JobFunctionTreeSerializer
     http_method_names = ("get",)
     queryset = JobFunction.objects.all()
 
@@ -201,12 +202,36 @@ class JobFunctionsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         ),
     ]
 
+    @staticmethod
+    def job_functions_tree_builder(queryset: Iterable[JobFunction]) -> List[dict]:
+        def get_nested_children_functions(inner_item: JobFunction):
+            inner = {"id": inner_item.id, "name": inner_item.name, "children": []}
+            if parent_functions_lookup_table[inner_item.id]:
+                for nested_item in parent_functions_lookup_table[inner_item.id]:
+                    inner_children = get_nested_children_functions(nested_item)
+                    inner["children"].append(inner_children)
+            return inner
+
+        parent_functions_lookup_table = defaultdict(list)
+        for function in queryset:
+            if not function.parent:
+                parent_functions_lookup_table[None].append(function)
+                continue
+            parent_functions_lookup_table[function.parent.id].append(function)
+
+        tree_structure = []
+        for root_function in parent_functions_lookup_table[None]:
+            children_functions = get_nested_children_functions(root_function)
+            tree_structure.append(children_functions)
+
+        return tree_structure
+
     @swagger_auto_schema(manual_parameters=search_parameters)
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
-        page = self.paginate_queryset(queryset)
-        serializer = self.serializer_class(page, many=True)
-        return self.get_paginated_response(serializer.data)
+        job_functions_tree = self.job_functions_tree_builder(queryset)
+        serializer = self.serializer_class(job_functions_tree, many=True)
+        return Response(serializer.data)
 
 
 class IndustriesViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):

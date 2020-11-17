@@ -7,25 +7,119 @@ from api.products.models import JobFunction
 @tag("unit")
 class JobFunctionViewTestCase(TestCase):
     def setUp(self) -> None:
-        engineering = JobFunction(name="Engineering", name_de="Schlangenentwickler")
-        engineering.save()
-        self.engineering = engineering.id
-
-        software_engineering = JobFunction(
-            name="Software Engineering", name_de="Arbeitslos", parent=engineering
+        self.engineering = JobFunction.objects.create(
+            name="Engineering", name_de="Schlangenentwickler"
         )
 
-        self.software_engineering = software_engineering.id
-        software_engineering.save()
+        self.software_engineering = JobFunction.objects.create(
+            name="Software Engineering",
+            name_de="Arbeitslos",
+            parent_id=self.engineering.id,
+        )
 
     def test_can_list_in_default_language(self):
         resp = self.client.get(reverse("job-functions"))
-
         self.assertEqual(resp.status_code, 200)
-        results = resp.json()["results"]
 
-        self.assertEqual(len(results), 2)
-        self.assertEqual(results[0]["name"], "Engineering")
-        self.assertEqual(results[0]["parent"], None)
-        self.assertEqual(results[1]["name"], "Software Engineering")
-        self.assertEqual(results[1]["parent"], self.engineering)
+        self.assertListEqual(
+            resp.json(),
+            [
+                {
+                    "id": self.engineering.id,
+                    "name": "Engineering",
+                    "children": [
+                        {
+                            "id": self.software_engineering.id,
+                            "name": "Software Engineering",
+                            "children": [],
+                        }
+                    ],
+                }
+            ],
+        )
+
+
+@tag("unit")
+class JobFunctionTreeStructureTestCase(TestCase):
+    def setUp(self):
+        self.engineering = JobFunction.objects.create(name="Engineering")
+
+        self.software_development = JobFunction.objects.create(
+            name="Software Engineering", parent_id=self.engineering.id
+        )
+
+        self.civil_engineering = JobFunction.objects.create(
+            name="Civil Engineering", parent_id=self.engineering.id
+        )
+
+        self.java_development = JobFunction.objects.create(
+            name="Java Software Development", parent_id=self.software_development.id
+        )
+
+        self.bad_java_development = JobFunction.objects.create(
+            name="Bad Java Development", parent_id=self.java_development.id
+        )
+
+        self.construction = JobFunction.objects.create(name="Construction")
+
+        self.architect = JobFunction.objects.create(
+            name="Architect", parent_id=self.construction.id
+        )
+
+        self.designer = JobFunction.objects.create(
+            name="Designer", parent_id=self.architect.id
+        )
+
+    def test_list_view_returns_a_nested_structure(self):
+        resp = self.client.get(reverse("job-functions"))
+
+        self.assertListEqual(
+            resp.json(),
+            [
+                {
+                    "id": self.engineering.id,
+                    "name": "Engineering",
+                    "children": [
+                        {
+                            "id": self.software_development.id,
+                            "name": "Software Engineering",
+                            "children": [
+                                {
+                                    "id": self.java_development.id,
+                                    "name": "Java Software Development",
+                                    "children": [
+                                        {
+                                            "id": self.bad_java_development.id,
+                                            "name": "Bad Java Development",
+                                            "children": [],
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            "id": self.civil_engineering.id,
+                            "name": "Civil Engineering",
+                            "children": [],
+                        },
+                    ],
+                },
+                {
+                    "id": self.construction.id,
+                    "name": "Construction",
+                    "children": [
+                        {
+                            "id": self.architect.id,
+                            "name": "Architect",
+                            "children": [
+                                {
+                                    "id": self.designer.id,
+                                    "name": "Designer",
+                                    "children": [],
+                                }
+                            ],
+                        }
+                    ],
+                },
+            ],
+        )

@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from api.products.models import Product, Location, JobFunction, JobTitle, Industry
+from rest_framework_recursive.fields import RecursiveField
 
 
 class LocationSerializer(serializers.ModelSerializer):
@@ -27,6 +28,12 @@ class JobFunctionSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobFunction
         fields = ("id", "name", "parent")
+
+
+class JobFunctionTreeSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    children = serializers.ListField(child=RecursiveField())
 
 
 class JobTitleSerializer(serializers.ModelSerializer):
