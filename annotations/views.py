@@ -44,16 +44,23 @@ def titles_annotation(request):
         request, "titles_annotation.html", {"titles": list(titles.values("name"))}
     )
 
+@permission_required("annotations.view_product")
+def job_title_translation(request):
+    return render(
+        request, "titles_translation.html", {}
+    )
 
 @user_passes_test(lambda u: u.is_superuser)
 def update_title(request):
 
     payload = json.loads(request.body)
     title = JobTitle.objects.get(pk=payload["id"])
-    if "active" in payload:
-        title.active = payload["active"]
-    if "canonical" in payload:
-        title.canonical = payload["canonical"]
+
+    update_fields = ["active", "canonical", "name_de", "name_nl"]
+    for field in update_fields:
+        if field in payload:
+            setattr(title, field, payload[field])
+
     if "alias_of__id" in payload:
         title.alias_of = (
             None
@@ -75,6 +82,8 @@ def update_title(request):
             "active": title.active,
             "canonical": title.canonical,
             "alias_of__id": None if title.alias_of is None else title.alias_of.id,
+            "name_de": None if title.name_de is None else title.name_de,
+            "name_nl": None if title.name_nl is None else title.name_nl
         }
     )
 
@@ -158,6 +167,9 @@ def get_job_titles_json(request):
                     "alias_of__id",
                     "active",
                     "frequency",
+                    "name_en",
+                    "name_de",
+                    "name_nl",
                 )
             )
         }
