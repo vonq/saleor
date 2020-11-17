@@ -141,9 +141,9 @@ class Location(models.Model):
     @classmethod
     def get_country_short_code(cls, location: dict):
         if "country" in location["place_type"]:
-            return location["properties"]["short_code"]
+            return location["properties"].get("short_code")
         if "context" in location:
-            return location["context"][-1]["short_code"]
+            return location["context"][-1].get("short_code")
         return None
 
     @classmethod
