@@ -9,8 +9,7 @@ class LocationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
     fully_qualified_place_name = serializers.CharField()
     canonical_name = serializers.CharField(allow_null=True)
-    within = serializers.CharField(allow_null=True)
-    context = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    within = RecursiveField(allow_null=True)
 
     class Meta:
         model = Location
@@ -20,7 +19,6 @@ class LocationSerializer(serializers.ModelSerializer):
             "canonical_name",
             "place_type",
             "within",
-            "context",
         )
 
 

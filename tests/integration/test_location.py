@@ -67,23 +67,21 @@ class ExtendedLocationResultsTestCase(TestCase):
     def test_endpoint_can_produce_extended_results(self):
         response = self.client.get(reverse("locations") + "?text=london%20uk")
         self.assertEqual(
-            response.json()[0]["context"],
-            [
-                "district.14664713661976620",
-                "region.13483278848453920",
-                "country.12405201072814600",
-                "continent.europe",
-                "world",
-            ],
+            response.json()[0]["place_type"],
+            ["place"],
+        )
+        self.assertEqual(
+            response.json()[1]["place_type"],
+            ["district"],
         )
 
     def test_endpint_can_match_on_continent_names(self):
         response = self.client.get(reverse("locations") + "?text=eur")
 
         self.assertEqual(
-            response.json()[0]["context"],
+            response.json()[0]["place_type"],
             [
-                "world",
+                "continent",
             ],
         )
 
