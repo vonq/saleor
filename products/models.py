@@ -112,6 +112,12 @@ class Location(models.Model):
     def context(self):
         return self.mapbox_context
 
+    @property
+    def full_location_name(self):
+        if self.mapbox_within:
+            return f"{self.canonical_name}, {self.mapbox_within.full_location_name}"
+        return self.canonical_name
+
     desq_name_en = models.CharField(max_length=100, null=True)
     desq_country_code = models.CharField(max_length=3, null=True)
 
@@ -167,6 +173,11 @@ class Location(models.Model):
                 continent = Geocoder.get_continent_for_country(country)
                 location.mapbox_context = [place["id"] for place in result["context"]]
                 location.mapbox_context.extend([f"continent.{continent}", "world"])
+                country_entity = Location.objects.filter(
+                    canonical_name=country, mapbox_place_type=["country"]
+                )
+                if country_entity.exists():
+                    location.mapbox_within_id = country_entity.first().id
 
             locations.append(location)
 
@@ -179,15 +190,12 @@ class Location(models.Model):
             filter(lambda x: x.mapbox_id not in existing_ids, locations)
         )
 
-        all_locations = {
-            location.mapbox_id: location
-            for location in list(itertools.chain(existing, created))
-        }
-        all_locations_in_mapbox_order = [
-            all_locations[mapbox_location["id"]] for mapbox_location in mapbox_response
-        ]
-
-        return all_locations_in_mapbox_order
+        return list(
+            itertools.chain(
+                sorted(existing, key=lambda x: x.products.count(), reverse=True),
+                created,
+            )
+        )
 
     @classmethod
     def list_context_locations_ids(cls, location_ids: Iterable[str]) -> List[str]:
@@ -418,7 +426,7 @@ class Product(models.Model, IndexSearchableProductMixin):
     unit_price = models.FloatField(null=True, blank=True)
     rate_card_price = models.FloatField(null=True, blank=True)
 
-    locations = models.ManyToManyField(Location, related_name="locations", blank=True)
+    locations = models.ManyToManyField(Location, related_name="products", blank=True)
 
     interests = models.CharField(max_length=200, default="", blank=True, null=True)
 

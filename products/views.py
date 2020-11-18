@@ -59,13 +59,6 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 
         # first attempt to match on continents
         continents = Geocoder.get_continents(text)
-        world = Location(
-            mapbox_placename="The entire world",
-            canonical_name="Global",
-            mapbox_id="world",
-            mapbox_context=[],
-            mapbox_place_type=[],
-        )
 
         # avoid hitting mapbox or the database again
         # when serializing a response
@@ -74,7 +67,7 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         if not self.locations:
             self.locations = Location.from_mapbox_response(self.geocoder_response)
 
-        return list(itertools.chain(continents, self.locations, [world]))
+        return list(itertools.chain(continents, self.locations))
 
     @swagger_auto_schema(manual_parameters=search_parameters)
     def list(self, request, *args, **kwargs):

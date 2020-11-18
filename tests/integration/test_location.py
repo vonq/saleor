@@ -64,6 +64,15 @@ class MapboxLocationsTestCase(TestCase):
 
 @tag("integration")
 class ExtendedLocationResultsTestCase(TestCase):
+    def setUp(self) -> None:
+        # we now rely on continent objects to be part
+        # of the database
+        Location.objects.create(
+            mapbox_placename="Europe",
+            mapbox_place_type=["continent"],
+            mapbox_context=["world"],
+        )
+
     def test_endpoint_can_produce_extended_results(self):
         response = self.client.get(reverse("locations") + "?text=london%20uk")
         self.assertEqual(

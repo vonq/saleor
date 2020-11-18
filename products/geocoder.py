@@ -44,14 +44,9 @@ class Geocoder:
         )
         if matching_continent_names:
             Location = apps.get_model("products", "Location")
-            return [
-                Location(
-                    mapbox_placename=continent_name,
-                    canonical_name=continent_name,
-                    mapbox_id=f"continent.{continent_name.lower()}",
-                    mapbox_context=["world"],
-                    mapbox_place_type=["continent"],
-                )
-                for continent_name in matching_continent_names
-            ]
+            return Location.objects.filter(
+                mapbox_placename__in=matching_continent_names,
+                mapbox_place_type=["continent"],
+            )
+
         return []

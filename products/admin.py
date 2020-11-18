@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models import Count
 
 from modeltranslation.admin import TranslationAdmin
 
@@ -67,12 +68,21 @@ class JobFunctionAdmin(TranslationAdmin):
 class LocationAdmin(TranslationAdmin):
     fields = ("canonical_name", "mapbox_within", "mapbox_place_type")
     list_display = (
-        "fully_qualified_place_name",
+        "full_location_name",
         "canonical_name",
         "mapbox_within",
         "mapbox_place_type",
+        "products_count",
     )
     search_fields = ("mapbox_placename", "canonical_name")
+
+    def products_count(self, location):
+        return location.products_count
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset = queryset.annotate(products_count=Count("products"))
+        return queryset
 
 
 @admin.register(Industry)
