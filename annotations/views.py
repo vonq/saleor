@@ -37,7 +37,7 @@ def product_annotation(request):
     )  # want to be reading this from model choices directly
 
 
-@permission_required("annotations.view_product")
+@permission_required("products.view_jobtitle")
 def titles_annotation(request):
     titles = JobTitle.objects.all()
     return render(
@@ -50,7 +50,7 @@ def job_title_translation(request):
         request, "titles_translation.html", {}
     )
 
-@user_passes_test(lambda u: u.is_superuser)
+@permission_required("products.change_jobtitle")
 def update_title(request):
 
     payload = json.loads(request.body)
