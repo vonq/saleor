@@ -49,6 +49,26 @@ class IndustrySerializer(serializers.ModelSerializer):
         )
 
 
+class LimitedLocationSerializer(serializers.Serializer):
+    """
+    A serializer for Location objects that doesn't
+    follow nested relationships
+    """
+
+    id = serializers.IntegerField(read_only=True)
+    canonical_name = serializers.CharField(read_only=True)
+
+
+class LimitedJobFunctionSerializer(serializers.Serializer):
+    """
+    A serializer for JobFunction objects that doesn't
+    follow nested relationships
+    """
+
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(read_only=True)
+
+
 class ProductSerializer(serializers.ModelSerializer):
     @staticmethod
     def get_homepage(product):
@@ -82,8 +102,8 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_time_to_process(product):
         return {"range": "hours", "period": product.time_to_process}
 
-    locations = LocationSerializer(many=True, read_only=True)
-    job_functions = JobFunctionSerializer(many=True, read_only=True)
+    locations = LimitedLocationSerializer(many=True, read_only=True)
+    job_functions = LimitedJobFunctionSerializer(many=True, read_only=True)
     industries = IndustrySerializer(many=True, read_only=True)
     duration = serializers.SerializerMethodField()
     time_to_process = serializers.SerializerMethodField()
@@ -113,6 +133,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "type",
             "cross_postings",
         )
+        read_only_fields = fields
 
 
 class ProductSearchSerializer(serializers.Serializer):

@@ -4,7 +4,7 @@ from api.products.index import ProductIndex
 
 
 class StandardResultsSetPagination(LimitOffsetPagination):
-    default_limit = 50
+    default_limit = 25
     max_limit = 100
 
 
