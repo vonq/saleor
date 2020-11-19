@@ -1,12 +1,13 @@
 import time
 
 from algoliasearch_django import algolia_engine
-from django.test import TestCase, override_settings, tag
 from django.conf import settings
+from django.test import override_settings, tag
 from rest_framework.reverse import reverse
 
 from api.products.index import ProductIndex
 from api.products.models import Product, Industry, Location, JobFunction, JobTitle
+from api.tests import AuthenticatedTestCase
 
 NOW = int(time.time())
 TEST_INDEX_SUFFIX = f"test_{NOW}"
@@ -14,7 +15,7 @@ TEST_INDEX_SUFFIX = f"test_{NOW}"
 
 @tag("algolia")
 @tag("integration")
-class ProductSearchTestCase(TestCase):
+class ProductSearchTestCase(AuthenticatedTestCase):
     """
     We need to gather all the product-search related tests into
     this one class, as we're hitting the live algolia index.
@@ -205,6 +206,7 @@ class ProductSearchTestCase(TestCase):
         time.sleep(4)
 
     def setUp(self) -> None:
+        super().setUp()
         # populate mapbox locations contexts
         self.client.get(reverse("locations") + "?text=reading")
         self.client.get(reverse("locations") + "?text=england")

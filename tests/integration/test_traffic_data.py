@@ -1,14 +1,14 @@
 import time
 
 from algoliasearch_django import algolia_engine
-from django.test import tag, TestCase, override_settings
+from django.conf import settings
+from django.test import tag, override_settings
 from rest_framework.reverse import reverse
 
 from api.products.geocoder import Geocoder
 from api.products.index import ProductIndex
 from api.products.models import Product, Location
-from django.conf import settings
-
+from api.tests import AuthenticatedTestCase
 
 NOW = int(time.time())
 TEST_INDEX_SUFFIX = f"test_{NOW}"
@@ -16,7 +16,7 @@ TEST_INDEX_SUFFIX = f"test_{NOW}"
 
 @tag("integration")
 @tag("algolia")
-class TrafficLocationsDataTestCase(TestCase):
+class TrafficLocationsDataTestCase(AuthenticatedTestCase):
     @classmethod
     @override_settings(
         ALGOLIA={

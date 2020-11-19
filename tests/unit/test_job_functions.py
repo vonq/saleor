@@ -1,12 +1,14 @@
-from django.test import TestCase, tag
+from django.test import tag
 from rest_framework.reverse import reverse
 
 from api.products.models import JobFunction
+from api.tests import AuthenticatedTestCase
 
 
 @tag("unit")
-class JobFunctionViewTestCase(TestCase):
+class JobFunctionViewTestCase(AuthenticatedTestCase):
     def setUp(self) -> None:
+        super().setUp()
         self.engineering = JobFunction.objects.create(
             name="Engineering", name_de="Schlangenentwickler"
         )
@@ -40,8 +42,9 @@ class JobFunctionViewTestCase(TestCase):
 
 
 @tag("unit")
-class JobFunctionTreeStructureTestCase(TestCase):
+class JobFunctionTreeStructureTestCase(AuthenticatedTestCase):
     def setUp(self):
+        super().setUp()
         self.engineering = JobFunction.objects.create(name="Engineering")
 
         self.software_development = JobFunction.objects.create(

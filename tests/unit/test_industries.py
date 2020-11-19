@@ -1,12 +1,14 @@
-from django.test import TestCase, tag
+from django.test import tag
 from rest_framework.reverse import reverse
 
-from api.products.models import Industry, JobFunction
+from api.products.models import Industry
+from api.tests import AuthenticatedTestCase
 
 
 @tag("unit")
-class JobFunctionViewTestCase(TestCase):
+class JobFunctionViewTestCase(AuthenticatedTestCase):
     def setUp(self) -> None:
+        super().setUp()
         i1 = Industry(
             name="B Industry",
         )

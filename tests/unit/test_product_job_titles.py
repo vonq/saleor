@@ -1,13 +1,14 @@
-from django.test import TestCase, tag
+from django.test import tag
 from rest_framework.reverse import reverse
 
 from api.products.models import JobTitle
+from api.tests import AuthenticatedTestCase
 
 
 @tag("unit")
-class JobTitleSearchTestCase(TestCase):
+class JobTitleSearchTestCase(AuthenticatedTestCase):
     def setUp(self) -> None:
-
+        super().setUp()
         python_developer = JobTitle(
             name="Python Developer", name_de="Schlangenentwickler", frequency=1
         )

@@ -8,6 +8,7 @@ from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
 from api.products.filters import (
     InclusiveLocationIdFacetFilter,
@@ -38,6 +39,7 @@ from api.products.serializers import (
 
 
 class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+    permission_classes = [IsAuthenticated]
     http_method_names = ("get",)
     serializer_class = LocationSerializer
     search_parameters = [
@@ -75,6 +77,7 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 
 
 class ProductsViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     serializer_class = ProductSerializer
     http_method_names = ("get",)
     queryset = Product.objects.all()
@@ -141,6 +144,7 @@ class ProductsViewSet(viewsets.ModelViewSet):
 
 
 class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+    permission_classes = [IsAuthenticated]
     http_method_names = ("get",)
     serializer_class = JobTitleSerializer
     pagination_class = AutocompleteResultsSetPagination
@@ -181,6 +185,7 @@ class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 
 
 class JobFunctionsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+    permission_classes = [IsAuthenticated]
     serializer_class = JobFunctionTreeSerializer
     http_method_names = ("get",)
     queryset = JobFunction.objects.all()
@@ -228,6 +233,7 @@ class JobFunctionsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 
 
 class IndustriesViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+    permission_classes = [IsAuthenticated]
     serializer_class = IndustrySerializer
     pagination_class = StandardResultsSetPagination
     http_method_names = ("get",)
