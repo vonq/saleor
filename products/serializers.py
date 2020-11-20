@@ -8,6 +8,9 @@ from rest_framework_recursive.fields import RecursiveField
 class LocationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
     fully_qualified_place_name = serializers.CharField()
+    place_type = serializers.ListField(
+        child=serializers.ChoiceField(choices=Location.TYPE_CHOICES)
+    )
     canonical_name = serializers.CharField(allow_null=True)
     within = RecursiveField(allow_null=True)
 

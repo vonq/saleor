@@ -33,7 +33,7 @@ class InclusiveLocationIdFacetFilter(FacetFilter):
     parameter = openapi.Parameter(
         parameter_name,
         in_=openapi.IN_QUERY,
-        description="Id for a location. Optionally, a (comma-separated) array of values can be passed.",
+        description="Id for a Location to search products against. If no exact matches exist, search will be expanded to the Location's region and country. Optionally, a (comma-separated) array of values can be passed. Passing multiple values increases the number of search results.",
         type=openapi.TYPE_ARRAY,
         items=openapi.Items(type=openapi.TYPE_STRING),
         required=False,
@@ -56,7 +56,7 @@ class ExactLocationIdFacetFilter(FacetFilter):
     parameter = openapi.Parameter(
         parameter_name,
         in_=openapi.IN_QUERY,
-        description="Match only for products assigned to a location id",
+        description="Match only products specifically assigned to a Location.",
         type=openapi.TYPE_STRING,
         required=False,
         explode=False,
@@ -96,7 +96,7 @@ class JobFunctionsFacetFilter(FacetFilter):
     parameter = openapi.Parameter(
         parameter_name,
         in_=openapi.IN_QUERY,
-        description="Job title id",
+        description="Job Title id. Not to be used in conjunction with a Job Function id.",
         type=openapi.TYPE_STRING,
         required=False,
     )

@@ -86,6 +86,16 @@ class JobTitle(models.Model):
 
 
 class Location(models.Model):
+    # https://docs.mapbox.com/api/search/#data-types
+    TYPE_CHOICES = [
+        ("place", "City, town or village"),
+        ("district", "Prefecture or county"),
+        ("region", "State or province"),
+        ("country", "Country"),
+        ("continent", "Continent"),
+        ("world", "International"),
+    ]
+
     @property
     def fully_qualified_place_name(self):
         return self.mapbox_placename
@@ -131,7 +141,10 @@ class Location(models.Model):
         base_field=models.CharField(max_length=50, blank=False), default=list
     )
     mapbox_place_type = ArrayField(
-        base_field=models.CharField(max_length=500, null=True, blank=True), default=list
+        base_field=models.CharField(
+            max_length=500, null=True, blank=True, choices=TYPE_CHOICES
+        ),
+        default=list,
     )
     mapbox_shortcode = models.CharField(max_length=10, null=True, blank=True)
     mapbox_within = models.ForeignKey(

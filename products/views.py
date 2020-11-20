@@ -36,21 +36,25 @@ from api.products.serializers import (
     IndustrySerializer,
     ProductSearchSerializer,
 )
+from api.products.apps import ProductsConfig
+from api.products.docs import CommonParameters
 
 
 class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     permission_classes = [IsAuthenticated]
     http_method_names = ("get",)
     serializer_class = LocationSerializer
-    search_parameters = [
+    search_parameters = (
+        CommonParameters.ACCEPT_LANGUAGE,
         openapi.Parameter(
             "text",
             in_=openapi.IN_QUERY,
-            description="Search text for a location name",
+            description="Search text for a location name in either English, Dutch, German, French and Italian. Partial recognition of 20 other languages.",
             type=openapi.TYPE_STRING,
             required=True,
+            example="Amst",
         ),
-    ]
+    )
     geocoder_response = []
     locations = []
 
@@ -71,7 +75,49 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 
         return list(itertools.chain(continents, self.locations))
 
-    @swagger_auto_schema(manual_parameters=search_parameters)
+    @swagger_auto_schema(
+        operation_id="Locations",
+        operation_summary="Search for any Location by a given text.",
+        operation_description="""
+                        This endpoint takes any text as input and returns a list of Locations matching the query, ordered by popularity.
+                        Each response will include the entire world as a Location, even no Locations match the text query. 
+                        Use the <code>id</code> key of each object in the response to search for a Product.
+                        Supports text input in English, Dutch and German.
+                        """,
+        manual_parameters=search_parameters,
+        tags=[ProductsConfig.verbose_name],
+        responses={
+            200: openapi.Response(
+                schema=serializer_class(many=True),
+                description="In case of a successful request.",
+                examples={
+                    "application/json": [
+                        {
+                            "id": 3088,
+                            "fully_qualified_place_name": "Amsterdam, North Holland, Netherlands",
+                            "canonical_name": "Amsterdam",
+                            "place_type": ["place"],
+                            "within": None,
+                        },
+                        {
+                            "id": 3081,
+                            "fully_qualified_place_name": "Schiphol, North Holland, Netherlands",
+                            "canonical_name": "Schiphol",
+                            "place_type": ["place"],
+                            "within": None,
+                        },
+                        {
+                            "id": 3094,
+                            "fully_qualified_place_name": "International",
+                            "canonical_name": "The entire world",
+                            "place_type": ["global"],
+                            "within": None,
+                        },
+                    ]
+                },
+            )
+        },
+    )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
@@ -131,7 +177,69 @@ class ProductsViewSet(viewsets.ModelViewSet):
         )
 
     @swagger_auto_schema(
+        operation_description="""
+        This endpoint exposes a list of Products with the options to search by Location, Job Title, Job Function and Industry. as it is configured for every Partner individually.
+        Products are ranked by their relevancy to the search terms.
+        Optionally, products can filtered by Location.
+        Values for each parameter can be fetched by calling the other endpoints in this section.
+        Calling this endpoint will guarantee that the Products you see are configured for you as our Partner.
+        """,
+        operation_id="Products Search",
+        operation_summary="Search and filter for products by various criteria.",
         manual_parameters=[item.parameter for item in search_filters if item.parameter]
+        + [CommonParameters.ACCEPT_LANGUAGE],
+        tags=[ProductsConfig.verbose_name],
+        responses={
+            400: openapi.Response(description="In case of a bad request."),
+            200: openapi.Response(
+                schema=serializer_class(many=True),
+                description="In case of a successful search.",
+                examples={
+                    "application/json": {
+                        "count": 286,
+                        "next": "http://host/products/?includeLocationId=2384&limit=1&offset=1",
+                        "previous": None,
+                        "results": [
+                            {
+                                "title": "Job board name - Premium Job",
+                                "locations": [
+                                    {
+                                        "id": 2378,
+                                        "fully_qualified_place_name": "United Kingdom",
+                                        "canonical_name": "United Kingdom",
+                                        "place_type": ["country"],
+                                        "within": {
+                                            "id": 2483,
+                                            "fully_qualified_place_name": "Europe",
+                                            "canonical_name": "Europe",
+                                            "place_type": ["continent"],
+                                            "within": None,
+                                        },
+                                    },
+                                ],
+                                "job_functions": {"id": 36, "name": "Tax", "parent": 9},
+                                "industries": [],
+                                "description": "Description",
+                                "homepage": "https://www.example.com",
+                                "logo_url": [
+                                    {
+                                        "size": "300x200",
+                                        "url": "https://example.com/logo.png",
+                                    }
+                                ],
+                                "duration": {"range": "days", "period": None},
+                                "time_to_process": {"range": "hours", "period": None},
+                                "product_id": "ab379c3b-600d-5592-9f9d-3c4805086364",
+                                "vonq_price": [{"amount": 123, "currency": "EUR"}],
+                                "ratecard_price": [{"amount": 234, "currency": "EUR"}],
+                                "type": None,
+                                "cross_postings": [],
+                            }
+                        ],
+                    }
+                },
+            ),
+        },
     )
     def list(self, request, *args, **kwargs):
         ProductSearchSerializer(data=self.request.query_params).is_valid(
@@ -142,6 +250,16 @@ class ProductsViewSet(viewsets.ModelViewSet):
         serializer = self.serializer_class(page, many=True)
         return self.get_paginated_response(serializer.data)
 
+    @swagger_auto_schema(
+        operation_id="Retrieve Product details",
+        operation_summary="This endpoint retrieves a Product by its id.",
+        operation_description="Sometimes you already have access to the Identification code of any particular Product and you want to retrieve the most up-to-date information about it.",
+        manual_parameters=(CommonParameters.ACCEPT_LANGUAGE,),
+        tags=[ProductsConfig.verbose_name],
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
 
 class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     permission_classes = [IsAuthenticated]
@@ -149,13 +267,7 @@ class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     serializer_class = JobTitleSerializer
     pagination_class = AutocompleteResultsSetPagination
     search_parameters = [
-        openapi.Parameter(
-            "Accept-Language",
-            in_=openapi.IN_HEADER,
-            type=openapi.TYPE_STRING,
-            format="language tag",
-            required=False,
-        ),
+        CommonParameters.ACCEPT_LANGUAGE,
         openapi.Parameter(
             "text",
             in_=openapi.IN_QUERY,
@@ -179,7 +291,35 @@ class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
             | Q(alias_of__name_de__icontains=text)
         ).order_by("-frequency")
 
-    @swagger_auto_schema(manual_parameters=search_parameters)
+    @swagger_auto_schema(
+        operation_description="""
+                    This endpoint takes any text as input and returns a list of supported Job Titles matching the query, ordered by popularity.
+                    Use the <code>id</code> key of each object in the response to search for a Product.
+                    Supports text input in English, Dutch and German.
+                    """,
+        operation_id="Job Titles",
+        operation_summary="Search for a job title.",
+        tags=[ProductsConfig.verbose_name],
+        manual_parameters=search_parameters,
+        responses={
+            200: openapi.Response(
+                schema=serializer_class(many=True),
+                description="In case of a successful request.",
+                examples={
+                    "application/json": {
+                        "count": 787,
+                        "next": "http://host/job-titles/?limit=10&offset=10&text=ent",
+                        "previous": None,
+                        "results": [
+                            {"id": 1, "name": "Recruitment Consultant"},
+                            {"id": 3, "name": "Customer Assistant"},
+                            {"id": 4, "name": "Business Development Manager"},
+                        ],
+                    }
+                },
+            ),
+        },
+    )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
@@ -189,16 +329,6 @@ class JobFunctionsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     serializer_class = JobFunctionTreeSerializer
     http_method_names = ("get",)
     queryset = JobFunction.objects.all()
-
-    search_parameters = [
-        openapi.Parameter(
-            "Accept-Language",
-            in_=openapi.IN_HEADER,
-            type=openapi.TYPE_STRING,
-            format="language tag",
-            required=False,
-        ),
-    ]
 
     @staticmethod
     def job_functions_tree_builder(queryset: Iterable[JobFunction]) -> List[dict]:
@@ -224,7 +354,31 @@ class JobFunctionsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 
         return tree_structure
 
-    @swagger_auto_schema(manual_parameters=search_parameters)
+    @swagger_auto_schema(
+        operation_description="""
+                    This endpoint returns a tree-like structure of supported Job Functions that can be used to search for Products.
+                    Use the <code>id</code> key of any Job Function in the response to search for a Product.
+                    """,
+        operation_id="Job Functions",
+        operation_summary="Search for a Job Function.",
+        tags=[ProductsConfig.verbose_name],
+        manual_parameters=[CommonParameters.ACCEPT_LANGUAGE],
+        responses={
+            200: openapi.Response(
+                schema=serializer_class(many=True),
+                description="In case of a successful request.",
+                examples={
+                    "application/json": [
+                        {
+                            "id": 8,
+                            "name": "Education",
+                            "children": [{"id": 5, "name": "Teaching", "children": []}],
+                        }
+                    ]
+                },
+            )
+        },
+    )
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         job_functions_tree = self.job_functions_tree_builder(queryset)
@@ -251,6 +405,32 @@ class IndustriesViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     def get_queryset(self):
         return Industry.objects.all().order_by("name")
 
-    @swagger_auto_schema(manual_parameters=search_parameters)
+    @swagger_auto_schema(
+        operation_description="""
+                This endpoint returns a list of supported industry names that can be used to search for products. Results are ordered alphabetically.
+                Use the <code>id</code> key of any Industry in the response to search for a product.
+                """,
+        operation_id="Industry names",
+        operation_summary="List all industry names.",
+        tags=[ProductsConfig.verbose_name],
+        manual_parameters=[CommonParameters.ACCEPT_LANGUAGE],
+        responses={
+            200: openapi.Response(
+                schema=serializer_class(many=True),
+                description="In case of a successful request.",
+                examples={
+                    "application/json": {
+                        "count": 2,
+                        "next": None,
+                        "previous": None,
+                        "results": [
+                            {"id": 20, "name": "Accounting"},
+                            {"id": 10, "name": "Advertising"},
+                        ],
+                    }
+                },
+            )
+        },
+    )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
