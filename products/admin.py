@@ -31,6 +31,12 @@ class ProductAdmin(TranslationAdmin):
     filter_horizontal = ("industries", "job_functions", "locations")
     search_fields = ("title", "description")
 
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "locations":
+            # only show Locations marked as "approved" for admin panel selection
+            kwargs["queryset"] = Location.objects.filter(approved=True)
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
+
 
 @admin.register(Channel)
 class ChannelAdmin(TranslationAdmin):
@@ -66,15 +72,17 @@ class JobFunctionAdmin(TranslationAdmin):
 
 @admin.register(Location)
 class LocationAdmin(TranslationAdmin):
-    fields = ("canonical_name", "mapbox_within", "mapbox_place_type")
+    fields = ("canonical_name", "mapbox_within", "mapbox_place_type", "approved")
     list_display = (
         "full_location_name",
+        "approved",
         "canonical_name",
         "mapbox_within",
         "mapbox_place_type",
         "products_count",
     )
     search_fields = ("mapbox_placename", "canonical_name")
+    list_filter = ("approved",)
 
     def products_count(self, location):
         return location.products_count

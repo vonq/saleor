@@ -155,6 +155,8 @@ class Location(models.Model):
         related_name="mapbox_location",
     )  # link up
 
+    approved = models.BooleanField(default=False)
+
     def __str__(self):
         return self.canonical_name or self.geocoder_id
 
