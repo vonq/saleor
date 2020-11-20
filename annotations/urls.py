@@ -14,7 +14,10 @@ urlpatterns = [
     path("get-titles", views.get_job_titles_json, name="get_job_titles_json"),
     path("locations", views.get_locations_json, name="get_locations_json"),
     path("job-functions", views.get_job_functions_json, name="get_job_functions_json"),
+    path("get-products-text", views.get_products_text_json, name="get_products_text_json"),
+    path("get-product/<int:id>", views.get_product_json, name="get_product_json"),
     path("update-boards", views.update_boards, name="update_boards"),
     path("update-title", views.update_title, name="update_title"),
     path("add-categorisation", views.add_categorisation, name="add_categorisation"),
+    path("set-category-values", views.set_category_values, name="set_category_values"),
 ]

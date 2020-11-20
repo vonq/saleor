@@ -44,7 +44,7 @@ def titles_annotation(request):
         request, "titles_annotation.html", {"titles": list(titles.values("name"))}
     )
 
-@permission_required("annotations.view_product")
+@permission_required("products.change_jobtitle")
 def job_title_translation(request):
     return render(
         request, "titles_translation.html", {}
@@ -91,7 +91,7 @@ def update_title(request):
 def dashboard(request):
     return render(request, "dashboard.html")
 
-
+@permission_required("products.view_product")
 def update_boards(request):
     boards = Product.objects.filter().all()
 
@@ -151,7 +151,71 @@ def update_boards(request):
 
     return JsonResponse({"boards": build_output()}, safe=False)
 
+@permission_required("products.view_product")
+def get_products_text_json(request):
+    products = Product.objects.filter()
+    return JsonResponse(
+        {
+            "products_text": list(products.values("id", "title_en", "description_en", "url"))
+        }
+    )
 
+@permission_required("products.view_product")
+def get_product_json(request, id):
+    product = Product.objects.get(pk=id)
+
+    funs = []
+    for fun in product.job_functions.all():
+        funs.append(fun.name)
+
+    inds = list(product.industries.values_list("name", flat=True))
+
+    sf_inds = list(product.salesforce_industries)
+    print(product.salesforce_industries)
+
+    locs = []
+    for loc in product.locations.all():
+        locs.append(loc.fully_qualified_place_name)
+
+    monthlyVisits = (
+        json.loads(product.similarweb_estimated_monthly_visits.replace("'", '"'))
+        if not (
+                product.similarweb_estimated_monthly_visits is None
+                or product.similarweb_estimated_monthly_visits == ""
+        )
+        else []
+    )
+
+    topCountryShares = (
+        json.loads(product.similarweb_top_country_shares.replace("'", '"'))
+        if not (
+                product.similarweb_top_country_shares is None
+                or product.similarweb_top_country_shares == ""
+        )
+        else []
+    )
+
+    return JsonResponse(
+        {
+            "product": {
+            "id": product.id,
+            "title": product.title,
+            "description": product.description,
+            "jobfunctions": funs,
+            "industries": inds,
+            "salesforce_industries": sf_inds,
+            "url": product.url,
+            "logo_url": product.logo_url,
+            "channel_type": "missing",  # board.channel.objects.first().type,
+            "location": locs,
+            "interests": product.interests,
+            "similarweb_estimated_monthly_visits": monthlyVisits,
+            # ) if not board.similarweb_estimated_monthly_visits is None else {},
+            "similarweb_top_country_shares": topCountryShares,
+        }
+    })
+
+@permission_required("products.view_jobtitle")
 def get_job_titles_json(request):
     titles = JobTitle.objects.filter()
     return JsonResponse(
@@ -175,26 +239,27 @@ def get_job_titles_json(request):
         }
     )
 
-
+@permission_required("products.view_jobfunction")
 def get_job_functions_json(request):
     functions = JobFunction.objects  # .filter(active=True)
     return JsonResponse(
         {"jobFunctions": list(functions.values("name", "parent__name"))}
     )
 
-
+@permission_required("products.view_location")
 def get_locations_json(request):
     locations = Location.objects.filter()
     return JsonResponse({"locations": list(locations.values("name", "within__name"))})
 
 
+@permission_required("products.view_jobtitle")
 def autocomplete(request):
     q = request.GET["q"]
     titles = JobTitle.objects.filter(name__icontains=q).filter().order_by("-freq").all()
     return HttpResponse([name["name"] + "\n" for name in titles.values("name")])
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@permission_required("products.change_product")
 def add_categorisation(request):
     try:
         payload = json.loads(request.body)
@@ -216,6 +281,37 @@ def add_categorisation(request):
     if payload["field"] == "channel_type":
         # simple value rather than a relation
         board.channel_type = payload["categoryName"]
+        board.save()
+
+    return JsonResponse(
+        {
+            "industry": list(board.industries.all().values_list("name", flat=True)),
+            "jobFunctions": list(
+                board.job_functions.all().values_list("name", flat=True)
+            ),
+            "channelType": "",
+        }
+    )
+
+@permission_required("products.change_product")
+def set_category_values(request):
+    try:
+        payload = json.loads(request.body)
+    except TypeError:
+        return JsonResponse({"error": "Request body cannot be parsed as a JSON"})
+
+    board = Product.objects.get(pk=payload["id"])
+    # field = getattr(board, payload["field"])
+    if payload["field"] == "jobfunctions":
+        func_names = payload["categoryNames"]#.split(',')
+        board.job_functions.clear()
+        for func_name in func_names:
+            try:
+                func = JobFunction.objects.get(name=func_name)
+                board.job_functions.add(func)
+            except:
+                print('Cannot find job function called: ' + func_name)
+
         board.save()
 
     return JsonResponse(

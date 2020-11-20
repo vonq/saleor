@@ -1,3 +1,5 @@
+Vue.component('treeselect', VueTreeselect.Treeselect)
+
 var ProductAnnotationApp = new Vue({
     delimiters: ['[[', ']]'],
     el: '#product-annotation-app',
@@ -11,15 +13,20 @@ var ProductAnnotationApp = new Vue({
         selectedChannelType: null,
         filterModel: {'text': '', 'job_function': ''},
         filteredBoards: [],
-        annotationMode: 'filter', // 'filter' or 'iterate'
+        annotationMode: 'iterate', // 'filter' or 'iterate'
         boardIndex: 0, // for when we want to iterate through boards
         industryMapping: null,
-        sfIndustryPlaceHolder: ''
+        industryToAdd: '',
+        jobFunctionTree: {},
     },
     mounted:  function() {
-        // d3.json('/static/boards.json').then(data=>{
-        d3.json('/annotations/update-boards').then(data=>{
-            this.boards = data.boards;
+        d3.json('/annotations/get-products-text').then(data=>{
+            data.products_text.forEach(product => {
+                product.location = []
+                product.industries = []
+                product.jobfunctions = []
+            })
+            this.boards = data.products_text;
             d3.selectAll('input').attr('disabled', null)
         })
 
@@ -31,6 +38,9 @@ var ProductAnnotationApp = new Vue({
         this.jobFunctions = data.jobFunctions.map(d=>d.name).sort()
         this.industries = data.industries.map(d=>d.name).sort()
         this.channelTypes = data.channelTypes.sort()
+
+        // set up trees
+        this.getJobFunctionTree()
     },
     methods: {
         getCookie: function(name) {
@@ -63,10 +73,10 @@ var ProductAnnotationApp = new Vue({
                         "X-CSRFToken": this.getCookie('csrftoken')
                     },
                 }).then(function(data) {
+                    // set back here to confirm done
                     let board = v.boards.filter(b=>b.id == id)[0]
                     board.industries = data['industry']
                     board.jobfunctions = data['jobFunctions']
-                    // set back here to confirm done
                     board.channel_type = data['channelType']
 
                 }, function(d){
@@ -76,8 +86,8 @@ var ProductAnnotationApp = new Vue({
         filterBoards: function() {
                 let re = new RegExp(this.filterModel.text, 'gi')
                 this.filteredBoards = this.boards.filter(board => {
-                    return board.description.match(re)
-                }).sort((a,b)=>a.jobfunctions.length - b.jobfunctions.length)
+                    return board.description_en !== null && board.description_en.match(re)
+                })//.sort((a,b)=>a.jobfunctions.length - b.jobfunctions.length)
             },
         next: function() {
             if(this.boards.length == 0) return;
@@ -85,9 +95,66 @@ var ProductAnnotationApp = new Vue({
             this.boardIndex += 1
             if(this.boardIndex == this.boards.length) this.boardIndex = 0
         },
-        takeIndustry: function(industryName) {
-            console.log('taking industry: ' + industryName)
-        }
+        addIndustry: function(industryName) {
+            this.postCategorisation(this.focusBoard.id, 'industries', industryName)
+            this.industryToAdd = ''
+        },
+        suggestedIndustries: function() {
+            return this.focusBoard.salesforce_industries
+                .map(industry => this.industryMapping[industry])
+                .filter(industry => industry !== null)
+                .flat()
+                .filter(industry => !this.focusBoard.industries.includes(industry))
+        },
+         getJobFunctionTree: function () {
+            // helper functions
+            const fix = function(tree) {
+                tree.label = tree.data.name
+                tree.tally = tree.data.tally
+              // delete tree.name
+              if(tree.children) {
+                tree.children.forEach(fix)
+              }
+            }
+
+            d3.json('/annotations/job-functions').then(
+                data => {
+                    console.log(data)
+                    funcs = data.jobFunctions
+                    funcs.forEach(l => {
+                        if (l.parent__name == null) l.parent__name = 'All'
+                    })
+                    funcs.push({name:"All"})
+                    this.jobFunctionTree = d3.stratify()
+                        .id(function (d) {
+                            return d.name;
+                        })
+                        .parentId(function (d) {
+                            return d.parent__name;
+                        })(funcs);
+                    fix(this.jobFunctionTree)
+                })
+        },
+         setCategories: function(field) { // for multiple values
+                let board = this.focusBoard // in case it changes during request
+
+                d3.json('/annotations/set-category-values', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        id: board.id,
+                        field: field,
+                        categoryNames: board.jobfunctions
+                    }),
+                    headers: {
+                        "Content-type": "application/json; charset=UTF-8",
+                        "X-CSRFToken": this.getCookie('csrftoken')
+                    },
+                }).then(function(data) {
+                    // should set back here to confirm done
+                }, function(d){
+                    console.error(d)
+                })
+            }
     },
     watch: {
         filterModel: {
@@ -95,15 +162,22 @@ var ProductAnnotationApp = new Vue({
                 this.filterBoards()
             }, 500),
             deep: true
+        },
+
+        focusBoard: function() {
+            console.log('focus board changed')
         }
     },
     computed: {
         focusBoard: function() {
-            return this.boards[this.boardIndex]
+            let board = this.boards[this.boardIndex]
+            d3.json('/annotations/get-product/' + board.id).then(data=>{
+                board.location = data.product.location
+                board.industries = data.product.industries
+                board.salesforce_industries = data.product.salesforce_industries
+                board.jobfunctions = data.product.jobfunctions
+            })
+            return board
         },
-        suggestedIndustry: function() {
-            // return this.industryMapping[this.focusBoard.salesforceIndustry]
-            return this.sfIndustryPlaceHolder ? this.industryMapping[this.sfIndustryPlaceHolder] : ""
-        }
     }
 })

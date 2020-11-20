@@ -6,8 +6,7 @@
     <link rel="stylesheet" href="/static/bootstrap.min.css">
     <link rel="stylesheet" href="/static/main.css">
     <link rel="stylesheet" href="/static/autocomplete.css">
-
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@riophae/vue-treeselect@^0.4.0/dist/vue-treeselect.min.css">
 </head>
 <body>
     <div id="product-annotation-app" class="container" v-cloak>
@@ -26,13 +25,13 @@
                             <div class="form-row">
                                 <div  class="col-12">
                                     <label></label>
-                                    <input id="search-text" v-model="filterModel.text" placeholder="search in description"
+                                    <input id="filter-search-text" v-model="filterModel.text" placeholder="search in description"
                                            disabled="disabled" class="form-control">
                                 </div>
 
                                 <div  v-if="annotationMode=='iterate'" class="col-4">
                                     <label></label>
-                                    <input id="search-text" type="number" v-model="boardIndex"
+                                    <input id="iterate-search-text" type="number" v-model="boardIndex"
                                            disabled="disabled" class="form-control">
                                 </div>
                             </div>
@@ -60,7 +59,6 @@
                         </form>
                     </div>
                 </div>
-
                 <div v-if="annotationMode=='iterate'" class="row">
                     <form class="form-inline" v-on:submit.prevent="">
                         <div class="col-12">
@@ -78,14 +76,14 @@
 
         <div v-if="annotationMode=='filter'" class="row board mb-1" v-for="board in filteredBoards">
             <div class="col-8">
-                <h3>[[ board.title]]<br><small>[[ board.url ]]</small></h3>
-                <p class="small">[[ board.description ]]</p>
+                <h3>[[ board.title]]<br><small><a href="board.url">[[ board.url ]]</a></small></h3>
+                <p class="">[[ board.description_en ]]</p>
                 <div>Locations: [[ board.location.join(', ')  ]]</div>
             </div>
             <div class="col-4">
-                <div>Job functions: [[ board.jobfunctions.join(', ') ]]</div>
+{#                <div>Job functions: [[ board.jobfunctions.join(', ') ]]</div>#}
                 <div>Industries: [[ board.industries.join(', ')  ]]</div>
-                <div>Channel type: [[ board.channel_type  ]]</div>
+{#                <div>Channel type: [[ board.channel_type  ]]</div>#}
 
                 <button v-if="selectedJobFunction && !board.jobfunctions.includes(selectedJobFunction)"
                         @click="postCategorisation(board.id, 'job_functions', selectedJobFunction)"
@@ -101,13 +99,13 @@
         <div v-if="annotationMode=='filter'" class="row board mb-1" v-for="board in filteredBoards">
             <div class="col-8">
                 <h3>[[ board.title]]<br><small>[[ board.url ]]</small></h3>
-                <p class="small">[[ board.description ]]</p>
+                <p class="small">[[ board.description_en ]]</p>
                 <div>Locations: [[ board.location.join(', ')  ]]</div>
             </div>
             <div class="col-4">
-                <div>Job functions: [[ board.jobfunctions.join(', ') ]]</div>
+{#                <div>Job functions: [[ board.jobfunctions.join(', ') ]]</div>#}
                 <div>Industries: [[ board.industries.join(', ')  ]]</div>
-                <div>Channel type: [[ board.channel_type  ]]</div>
+{#                <div>Channel type: [[ board.channel_type  ]]</div>#}
 
                 <button v-if="selectedJobFunction && !board.jobfunctions.includes(selectedJobFunction)"
                         @click="postCategorisation(board.id, 'job_functions', selectedJobFunction)"
@@ -122,19 +120,36 @@
 
         <div v-if="annotationMode=='iterate'" class="row board mb-1">
             <div class="col-8">
-                <h3><span class="text-muted">#[[ boardIndex ]]</span> [[ focusBoard.title]]<br><small>[[ focusBoard.url ]]</small></h3>
-                <p class="small">[[ focusBoard.description ]]</p>
+                <h3><span class="text-muted">#[[ boardIndex ]]</span> [[ focusBoard.title_en]]<br>
+                    <small><a :href="focusBoard.url">[[ focusBoard.url ]]</a></small>
+                </h3>
+                <p class="">[[ focusBoard.description_en ]]</p>
                 <div>Locations: [[ focusBoard.location.join(', ')  ]]</div>
             </div>
             <div class="col-4">
-                <div>Job functions: [[ focusBoard.jobfunctions.join(', ') ]]</div>
-                <div>Industries: [[ focusBoard.industries.join(', ')  ]]</div>
-                <div> Suggested by SF Industry mapping
-                    <input class="form-control" v-model="sfIndustryPlaceHolder">
-                    <button class="btn btn-block" v-for="industry in suggestedIndustry" v-on:click="takeIndustry(industry)">
-                        [[ industry ]]
-                    </button>
-                </div>
+                <form v-on:submit.prevent="" class="form-inline">
+                    <h2>Industries</h2>
+                    <p style="clear:left">
+                        <div class="btn btn-sm btn-outline-secondary w-100 mb-1" v-for="industry in focusBoard.industries">[[ industry ]]</div>
+                    </p>
+                    <select class="form-control" v-model="industryToAdd">
+                        <option v-for="industry in industries" :value="industry">[[industry]]</option>
+                    </select>
+                    <button class="btn" @click="addIndustry(industryToAdd)">Add it</button>
+
+                    <div v-if="suggestedIndustries().length">
+                        Suggested by SF Industry mapping <abbr v-bind:title="[[ focusBoard.salesforce_industries ]]">values</abbr>
+                        <button class="btn btn-sm btn-block" v-for="industry in suggestedIndustries()" v-on:click="addIndustry(industry)">
+                            + [[ industry ]]
+                        </button>
+                    </div>
+                </form>
+
+                <h2>Job Functions</h2>
+                <treeselect v-model="focusBoard.jobfunctions" :multiple="true" :options="jobFunctionTree.children"
+                            :search-change="setCategories('jobfunctions')" :max-height="800"
+                            placeholder="Job Functions" :alwaysOpen="true" :default-expand-level=1 :should-show-count="true"/>
+
                 <div>Channel type: [[ focusBoard.channel_type  ]]</div>
 
                 <button v-if="selectedJobFunction && !bofocusBoardard.jobfunctions.includes(selectedJobFunction)"
@@ -154,10 +169,10 @@
     <script src="/static/lodash.min.js"></script>
     <script src="/static/vue.min.js"></script>
     <script src="/static/d3.v5.min.js"></script>
-{#    <script src="https://d3js.org/d3.v5.min.js"></script>#}
-
     <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="/static/vue-treeselect.umd.min.js"></script>
 
 
+    <script src="/static/product_annotation_app.js"></script>
 </body>
 </html>
