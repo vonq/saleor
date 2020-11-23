@@ -100,11 +100,13 @@ var ProductAnnotationApp = new Vue({
             this.industryToAdd = ''
         },
         suggestedIndustries: function() {
-            return this.focusBoard.salesforce_industries
-                .map(industry => this.industryMapping[industry])
-                .filter(industry => industry !== null)
-                .flat()
-                .filter(industry => !this.focusBoard.industries.includes(industry))
+            if(this.focusBoard.salesforce_industries) {
+                return this.focusBoard.salesforce_industries
+                    .map(industry => this.industryMapping[industry])
+                    .filter(industry => industry !== null)
+                    .flat()
+                    .filter(industry => !this.focusBoard.industries.includes(industry))
+            } else return []
         },
          getJobFunctionTree: function () {
             // helper functions

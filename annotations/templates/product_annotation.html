@@ -10,7 +10,7 @@
 </head>
 <body>
     <div id="product-annotation-app" class="container" v-cloak>
-        <div class="row top-bar pb-2">
+        <div class="row pb-2">
             <div class="col-12">
                 <h1>Product Annotator</h1>
                 <form class="form-inline">
@@ -125,6 +125,9 @@
                 </h3>
                 <p class="">[[ focusBoard.description_en ]]</p>
                 <div>Locations: [[ focusBoard.location.join(', ')  ]]</div>
+
+
+
             </div>
             <div class="col-4">
                 <form v-on:submit.prevent="" class="form-inline">
@@ -160,6 +163,12 @@
                 <button v-if="selectedIndustry && !focusBoard.industries.includes(selectedIndustry)"
                         @click="postCategorisation(focusBoard.id, 'industries', selectedIndustry)"
                         class="btn btn-block btn-outline-primary">Change to <strong>[[selectedIndustry]]</strong>function</button>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <iframe :src="focusBoard.url" class="w-100" style="height:400px; border:0"></iframe>
             </div>
         </div>
     </div>

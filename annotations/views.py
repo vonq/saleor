@@ -112,20 +112,18 @@ def update_boards(request):
             for loc in board.locations.all():
                 locs.append(loc.fully_qualified_place_name)
 
-            monthlyVisits = (
-                json.loads(board.similarweb_estimated_monthly_visits.replace("'", '"'))
-                if not (
-                    board.similarweb_estimated_monthly_visits is None
-                    or board.similarweb_estimated_monthly_visits == ""
+            monthly_visits = (
+                board.similarweb_estimated_monthly_visits
+                if (
+                    board.similarweb_estimated_monthly_visits is not None
                 )
                 else []
             )
 
-            topCountryShares = (
-                json.loads(board.similarweb_top_country_shares.replace("'", '"'))
+            top_country_shares = (
+                board.similarweb_top_country_shares
                 if not (
-                    board.similarweb_top_country_shares is None
-                    or board.similarweb_top_country_shares == ""
+                    board.similarweb_top_country_shares is not None
                 )
                 else []
             )
@@ -140,11 +138,11 @@ def update_boards(request):
                     "salesforce_industries": sf_inds,
                     "url": board.url,
                     "logo_url": board.logo_url,
-                    "channel_type": "missing",  # board.channel.objects.first().type,
+                    "channel_type": "missing",
                     "location": locs,
                     "interests": board.interests,
-                    "similarweb_estimated_monthly_visits": monthlyVisits,  # ) if not board.similarweb_estimated_monthly_visits is None else {},
-                    "similarweb_top_country_shares": topCountryShares,
+                    "similarweb_estimated_monthly_visits": monthly_visits,
+                    "similarweb_top_country_shares": top_country_shares,
                 }
             )
         return output
