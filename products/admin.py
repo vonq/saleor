@@ -48,11 +48,10 @@ class ChannelAdmin(TranslationAdmin):
 
 @admin.register(JobTitle)
 class JobTitleAdmin(TranslationAdmin):
-    fields = ["name", "job_function", "industry", "canonical", "alias_of", "active"]
+    fields = ["name", "job_function", "canonical", "alias_of", "active"]
     list_display = (
         "name",
         "job_function",
-        "industry",
         "canonical",
         "alias_of",
         "active",

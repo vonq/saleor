@@ -1,7 +1,7 @@
 from django.test import tag
 from rest_framework.reverse import reverse
 
-from api.products.models import JobTitle
+from api.products.models import JobFunction, JobTitle
 from api.tests import AuthenticatedTestCase
 
 
@@ -9,6 +9,11 @@ from api.tests import AuthenticatedTestCase
 class JobTitleSearchTestCase(AuthenticatedTestCase):
     def setUp(self) -> None:
         super().setUp()
+
+        software_development = JobFunction(name="Software Development")
+        software_development.save()
+        self.software_development_id = software_development.id
+
         python_developer = JobTitle(
             name="Python Developer", name_de="Schlangenentwickler", frequency=1
         )
@@ -19,6 +24,7 @@ class JobTitleSearchTestCase(AuthenticatedTestCase):
         snake_tamer.save()
         self.snake_tamer_id = snake_tamer.id
 
+        snake_tamer.job_function = software_development
         snake_tamer.alias_of = python_developer
         snake_tamer.save()
 
@@ -63,3 +69,16 @@ class JobTitleSearchTestCase(AuthenticatedTestCase):
         self.assertEqual(len(resp.json()["results"]), 2)
         self.assertEqual(resp.json()["results"][0]["name"], "Python Developer")
         self.assertEqual(resp.json()["results"][1]["name"], "Snake tamer")
+
+    def test_includes_job_function_where_available(self):
+        resp = self.client.get(reverse("job-titles") + f"?text=python")
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.json()["results"]), 2)
+
+        self.assertEqual(
+            resp.json()["results"][1]["job_function"]["id"],
+            self.software_development_id,
+        )
+
+        self.assertIsNone(resp.json()["results"][0]["job_function"], None)

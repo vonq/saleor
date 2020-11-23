@@ -37,12 +37,6 @@ class JobFunctionTreeSerializer(serializers.Serializer):
     children = serializers.ListField(child=RecursiveField())
 
 
-class JobTitleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = JobTitle
-        fields = ("id", "name")
-
-
 class IndustrySerializer(serializers.ModelSerializer):
     class Meta:
         model = Industry
@@ -70,6 +64,14 @@ class LimitedJobFunctionSerializer(serializers.Serializer):
 
     id = serializers.IntegerField(read_only=True)
     name = serializers.CharField(read_only=True)
+
+
+class JobTitleSerializer(serializers.ModelSerializer):
+    job_function = LimitedJobFunctionSerializer(read_only=True, many=False)
+
+    class Meta:
+        model = JobTitle
+        fields = ("id", "name", "job_function")
 
 
 class ProductSerializer(serializers.ModelSerializer):

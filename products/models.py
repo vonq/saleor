@@ -69,9 +69,6 @@ class JobTitle(models.Model):
     job_function = models.ForeignKey(
         "JobFunction", on_delete=models.CASCADE, null=True, blank=True
     )
-    industry = models.ForeignKey(
-        "Industry", on_delete=models.CASCADE, null=True, blank=True
-    )
     frequency = models.IntegerField(default=0, null=True, blank=True)
     canonical = models.BooleanField(default=True)
     alias_of = models.ForeignKey(
