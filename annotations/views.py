@@ -169,26 +169,23 @@ def get_product_json(request, id):
     inds = list(product.industries.values_list("name", flat=True))
 
     sf_inds = list(product.salesforce_industries)
-    print(product.salesforce_industries)
 
     locs = []
     for loc in product.locations.all():
         locs.append(loc.fully_qualified_place_name)
 
-    monthlyVisits = (
-        json.loads(product.similarweb_estimated_monthly_visits.replace("'", '"'))
-        if not (
-                product.similarweb_estimated_monthly_visits is None
-                or product.similarweb_estimated_monthly_visits == ""
+    monthly_visits = (
+        product.similarweb_estimated_monthly_visits
+        if (
+                product.similarweb_estimated_monthly_visits is not None
         )
         else []
     )
 
-    topCountryShares = (
-        json.loads(product.similarweb_top_country_shares.replace("'", '"'))
+    top_country_shares = (
+        product.similarweb_top_country_shares
         if not (
-                product.similarweb_top_country_shares is None
-                or product.similarweb_top_country_shares == ""
+                product.similarweb_top_country_shares is not None
         )
         else []
     )
@@ -204,12 +201,11 @@ def get_product_json(request, id):
             "salesforce_industries": sf_inds,
             "url": product.url,
             "logo_url": product.logo_url,
-            "channel_type": "missing",  # board.channel.objects.first().type,
+            "channel_type": "missing",
             "location": locs,
             "interests": product.interests,
-            "similarweb_estimated_monthly_visits": monthlyVisits,
-            # ) if not board.similarweb_estimated_monthly_visits is None else {},
-            "similarweb_top_country_shares": topCountryShares,
+            "similarweb_estimated_monthly_visits": monthly_visits,
+            "similarweb_top_country_shares": top_country_shares,
         }
     })
 
