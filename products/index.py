@@ -34,6 +34,7 @@ class ProductIndex(AlgoliaIndex):
         "primary_similarweb_location",
         "secondary_similarweb_location",
         "maximum_locations_cardinality",
+        "status",
     )
     settings = {
         "minWordSizefor1Typo": 4,
@@ -62,6 +63,7 @@ class ProductIndex(AlgoliaIndex):
             "unordered(searchable_locations_context_names)",
             "unordered(primary_similarweb_location)",
             "unordered(secondary_similarweb_location)",
+            "unordered(status)",
         ],
         "numericAttributesToIndex": ["maximum_locations_cardinality"],
         "attributesToRetrieve": None,

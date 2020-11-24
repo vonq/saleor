@@ -442,6 +442,20 @@ class Product(models.Model, IndexSearchableProductMixin):
 
     interests = models.CharField(max_length=200, default="", blank=True, null=True)
 
+    status = models.CharField(
+        max_length=12,
+        choices=[
+            ("Blacklisted", "Blacklisted"),
+            ("Disabled", "Disabled"),
+            ("Negotiated", "Negotiated"),
+            ("Trial", "Trial"),
+            (None, "--None--"),
+        ],
+        default=None,
+        blank=True,
+        null=True,
+    )
+
     salesforce_id = models.CharField(max_length=36, null=True)
     product_id = models.CharField(
         max_length=36,

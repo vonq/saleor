@@ -27,6 +27,7 @@ class ProductAdmin(TranslationAdmin):
         "salesforce_industries",
         "locations",
         "similarweb_top_country_shares",
+        "status",
     ]
     filter_horizontal = ("industries", "job_functions", "locations")
     search_fields = ("title", "description")

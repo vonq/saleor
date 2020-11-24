@@ -35,6 +35,7 @@ class Command(BaseCommand):
         "description_de": "description_de",
         "title_nl": "product_name_nl",
         "title_de": "product_name_de",
+        "status": "status",
     }
 
     def add_arguments(self, parser):

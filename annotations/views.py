@@ -44,11 +44,11 @@ def titles_annotation(request):
         request, "titles_annotation.html", {"titles": list(titles.values("name"))}
     )
 
+
 @permission_required("products.change_jobtitle")
 def job_title_translation(request):
-    return render(
-        request, "titles_translation.html", {}
-    )
+    return render(request, "titles_translation.html", {})
+
 
 @permission_required("products.change_jobtitle")
 def update_title(request):
@@ -83,13 +83,14 @@ def update_title(request):
             "canonical": title.canonical,
             "alias_of__id": None if title.alias_of is None else title.alias_of.id,
             "name_de": None if title.name_de is None else title.name_de,
-            "name_nl": None if title.name_nl is None else title.name_nl
+            "name_nl": None if title.name_nl is None else title.name_nl,
         }
     )
 
 
 def dashboard(request):
     return render(request, "dashboard.html")
+
 
 @permission_required("products.view_product")
 def update_boards(request):
@@ -114,17 +115,13 @@ def update_boards(request):
 
             monthly_visits = (
                 board.similarweb_estimated_monthly_visits
-                if (
-                    board.similarweb_estimated_monthly_visits is not None
-                )
+                if (board.similarweb_estimated_monthly_visits is not None)
                 else []
             )
 
             top_country_shares = (
                 board.similarweb_top_country_shares
-                if not (
-                    board.similarweb_top_country_shares is not None
-                )
+                if not (board.similarweb_top_country_shares is not None)
                 else []
             )
 
@@ -149,14 +146,18 @@ def update_boards(request):
 
     return JsonResponse({"boards": build_output()}, safe=False)
 
+
 @permission_required("products.view_product")
 def get_products_text_json(request):
     products = Product.objects.filter()
     return JsonResponse(
         {
-            "products_text": list(products.values("id", "title_en", "description_en", "url"))
+            "products_text": list(
+                products.values("id", "title_en", "description_en", "url")
+            )
         }
     )
+
 
 @permission_required("products.view_product")
 def get_product_json(request, id):
@@ -176,38 +177,36 @@ def get_product_json(request, id):
 
     monthly_visits = (
         product.similarweb_estimated_monthly_visits
-        if (
-                product.similarweb_estimated_monthly_visits is not None
-        )
+        if (product.similarweb_estimated_monthly_visits is not None)
         else []
     )
 
     top_country_shares = (
         product.similarweb_top_country_shares
-        if not (
-                product.similarweb_top_country_shares is not None
-        )
+        if not (product.similarweb_top_country_shares is not None)
         else []
     )
 
     return JsonResponse(
         {
             "product": {
-            "id": product.id,
-            "title": product.title,
-            "description": product.description,
-            "jobfunctions": funs,
-            "industries": inds,
-            "salesforce_industries": sf_inds,
-            "url": product.url,
-            "logo_url": product.logo_url,
-            "channel_type": "missing",
-            "location": locs,
-            "interests": product.interests,
-            "similarweb_estimated_monthly_visits": monthly_visits,
-            "similarweb_top_country_shares": top_country_shares,
+                "id": product.id,
+                "title": product.title,
+                "description": product.description,
+                "jobfunctions": funs,
+                "industries": inds,
+                "salesforce_industries": sf_inds,
+                "url": product.url,
+                "logo_url": product.logo_url,
+                "channel_type": "missing",
+                "location": locs,
+                "interests": product.interests,
+                "similarweb_estimated_monthly_visits": monthly_visits,
+                "similarweb_top_country_shares": top_country_shares,
+            }
         }
-    })
+    )
+
 
 @permission_required("products.view_jobtitle")
 def get_job_titles_json(request):
@@ -233,12 +232,14 @@ def get_job_titles_json(request):
         }
     )
 
+
 @permission_required("products.view_jobfunction")
 def get_job_functions_json(request):
     functions = JobFunction.objects  # .filter(active=True)
     return JsonResponse(
         {"jobFunctions": list(functions.values("name", "parent__name"))}
     )
+
 
 @permission_required("products.view_location")
 def get_locations_json(request):
@@ -287,6 +288,7 @@ def add_categorisation(request):
         }
     )
 
+
 @permission_required("products.change_product")
 def set_category_values(request):
     try:
@@ -297,14 +299,14 @@ def set_category_values(request):
     board = Product.objects.get(pk=payload["id"])
     # field = getattr(board, payload["field"])
     if payload["field"] == "jobfunctions":
-        func_names = payload["categoryNames"]#.split(',')
+        func_names = payload["categoryNames"]  # .split(',')
         board.job_functions.clear()
         for func_name in func_names:
             try:
                 func = JobFunction.objects.get(name=func_name)
                 board.job_functions.add(func)
             except:
-                print('Cannot find job function called: ' + func_name)
+                print("Cannot find job function called: " + func_name)
 
         board.save()
 
