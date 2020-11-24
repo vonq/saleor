@@ -6,6 +6,7 @@ from django import forms
 from modeltranslation.admin import TranslationAdmin
 from rest_framework.utils import json
 
+from api.field_permissions.admin import PermissionBasedFieldsMixin
 from api.products.models import (
     Product,
     Channel,
@@ -17,7 +18,7 @@ from api.products.models import (
 
 
 @admin.register(Product)
-class ProductAdmin(TranslationAdmin):
+class ProductAdmin(PermissionBasedFieldsMixin, TranslationAdmin):
     fields = [
         "title",
         "url",

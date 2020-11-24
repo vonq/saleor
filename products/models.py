@@ -1,5 +1,5 @@
 import itertools
-
+import uuid
 from typing import List, Iterable
 
 from django.conf import settings
@@ -9,8 +9,9 @@ from django.db import models
 from django.db.models import QuerySet, Q, Max, Func, F
 from django.db.models.functions import Cast
 from modeltranslation.fields import TranslationFieldDescriptor
+
+from api.field_permissions.models import FieldPermissionModelMixin
 from api.products.geocoder import Geocoder
-import uuid
 
 
 class AcrossLanguagesQuerySet(QuerySet):
@@ -394,7 +395,7 @@ class IndexSearchableProductMixin:
         ).values_list("locations_cardinality", flat=True)[0]
 
 
-class Product(models.Model, IndexSearchableProductMixin):
+class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMixin):
     def set_product_id(self):
         if self.desq_product_id:
             product_id = self.desq_product_id
@@ -408,6 +409,20 @@ class Product(models.Model, IndexSearchableProductMixin):
     def save(self, *args, **kwargs):
         self.set_product_id()
         super(Product, self).save(*args, **kwargs)
+
+    class Meta:
+        permissions = (
+            # field level permissions, formatted as "can_{view|change}_{modelname}_{fieldname}"
+            # Used to further restrict the ability of a user
+            # to make changes to a model from the admin panel.
+            # This will only apply to users/groups who can already change a model, and only
+            # for fields explicitly declared in these permission field
+            # https://docs.djangoproject.com/en/3.1/ref/models/options/#permissions
+            ("can_view_product_industries", "Can view product industries"),
+            ("can_change_product_industries", "Can change product industries"),
+            ("can_view_product_job_functions", "Can view product job functions"),
+            ("can_change_product_job_functions", "Can change product job functions"),
+        )
 
     title = models.CharField(max_length=200, null=True)
     url = models.URLField(max_length=300, null=True)

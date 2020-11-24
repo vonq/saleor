@@ -1,0 +1,95 @@
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group, Permission
+from django.test import TestCase, tag
+
+from api.products.models import Product, Industry, JobFunction
+
+User = get_user_model()
+
+
+@tag("unit")
+class AdminTestCase(TestCase):
+    def setUp(self) -> None:
+
+        base_perms = Permission.objects.filter(
+            name__in=[
+                "Can change product",
+                "Can view product",
+            ]
+        )
+
+        self.procurement_group = Group.objects.create(name="Procurement")
+        self.procurement_group.permissions.set(base_perms)
+        self.procurement_group.save()
+
+        self.user = User.objects.create(
+            username="procurement", password="password", is_staff=True
+        )
+        self.user.groups.add(self.procurement_group)
+        self.user.save()
+
+        self.product = Product.objects.create(
+            title="Example product",
+        )
+
+        ind = Industry.objects.create(name="Something")
+        jf = JobFunction.objects.create(name="Something else")
+        self.product.industries.add(ind)
+        self.product.job_functions.add(jf)
+        self.product.save()
+
+    def test_user_cannot_see_industries_and_functions(self):
+        self.client.force_login(self.user)
+
+        resp = self.client.get(f"/admin/products/product/{self.product.id}/change/")
+
+        self.assertEqual(200, resp.status_code)
+        self.assertNotIn(b'class="form-row field-industries"', resp.content)
+        self.assertNotIn(b'class="form-row field-job_functions"', resp.content)
+
+    def test_can_see_industries_and_functions_but_not_edit(self):
+        self.client.force_login(self.user)
+        view_perms = Permission.objects.filter(
+            name__in=[
+                "Can view product job functions",
+                "Can view product industries",
+            ]
+        )
+        self.procurement_group.permissions.add(*view_perms)
+        self.procurement_group.save()
+
+        resp = self.client.get(f"/admin/products/product/{self.product.id}/change/")
+        self.assertEqual(200, resp.status_code)
+        self.assertIn(b'class="form-row field-industries"', resp.content)
+        self.assertIn(b'class="form-row field-job_functions"', resp.content)
+        self.assertNotIn(
+            b'<p id="id_job_functions_filter" class="selector-filter">', resp.content
+        )
+        self.assertNotIn(
+            b'<p id="id_industries_filter" class="selector-filter">', resp.content
+        )
+
+    def test_can_edit_industries_and_functions(self):
+        self.client.force_login(self.user)
+        view_perms = Permission.objects.filter(
+            name__in=[
+                "Can change product job functions",
+                "Can change product industries",
+            ]
+        )
+        self.procurement_group.permissions.add(*view_perms)
+        self.procurement_group.save()
+
+        resp = self.client.get(f"/admin/products/product/{self.product.id}/change/")
+
+        self.assertEqual(200, resp.status_code)
+        self.assertIn(b'class="form-row field-industries"', resp.content)
+        self.assertIn(b'class="form-row field-job_functions"', resp.content)
+        self.assertIn(
+            b'<select name="job_functions" id="id_job_functions" multiple class="selectfilter"',
+            resp.content,
+        )
+        self.assertIn(
+            b'<select name="industries" id="id_industries" multiple class="selectfilter',
+            resp.content,
+        )
