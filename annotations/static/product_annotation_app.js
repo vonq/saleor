@@ -26,7 +26,7 @@ var ProductAnnotationApp = new Vue({
                 product.industries = []
                 product.jobfunctions = []
             })
-            this.boards = data.products_text;
+            this.boards = data.products_text.sort((a, b)=>a.id - b.id);
             d3.selectAll('input').attr('disabled', null)
         })
 
@@ -92,8 +92,15 @@ var ProductAnnotationApp = new Vue({
         next: function() {
             if(this.boards.length == 0) return;
 
-            this.boardIndex += 1
+            this.boardIndex = parseInt(this.boardIndex) + 1
             if(this.boardIndex == this.boards.length) this.boardIndex = 0
+        },
+        prev: function() {
+            if(this.boards.length == 0) return;
+
+            this.boardIndex = parseInt(this.boardIndex) - 1
+            if(this.boardIndex == -1) this.boardIndex = this.boards.length - 1
+
         },
         addIndustry: function(industryName) {
             this.postCategorisation(this.focusBoard.id, 'industries', industryName)
@@ -121,7 +128,6 @@ var ProductAnnotationApp = new Vue({
 
             d3.json('/annotations/job-functions').then(
                 data => {
-                    console.log(data)
                     funcs = data.jobFunctions
                     funcs.forEach(l => {
                         if (l.parent__name == null) l.parent__name = 'All'
@@ -135,6 +141,7 @@ var ProductAnnotationApp = new Vue({
                             return d.parent__name;
                         })(funcs);
                     fix(this.jobFunctionTree)
+                    this.jobFunctionTree.children.sort((a, b)=>{return a.label > b.label ? 1 : -1})
                 })
         },
          setCategories: function(field) { // for multiple values

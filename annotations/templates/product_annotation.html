@@ -16,14 +16,14 @@
                 <form class="form-inline">
                 Mode:
                     <label for="filter-mode">Filter</label> <input type="radio" id="filter-mode" class="form-control" v-model="annotationMode" value="filter">
-                    <label for="filter-mode">Iterate</label> <input type="radio" id="iterate-mode" class="form-control"v-model="annotationMode" value="iterate">
+                    <label for="filter-mode">Iterate</label> <input type="radio" id="iterate-mode" class="form-control" v-model="annotationMode" value="iterate">
                 </form>
 
-                <div v-if="annotationMode=='filter'" class="row">
+                <div v-if="annotationMode=='filter'" class="row"><!-- filter controls -->
                     <div class="col-12">
                         <form v-on:submit.prevent="" class="form">
                             <div class="form-row">
-                                <div  class="col-12">
+                                <div class="col-12">
                                     <label></label>
                                     <input id="filter-search-text" v-model="filterModel.text" placeholder="search in description"
                                            disabled="disabled" class="form-control">
@@ -59,24 +59,20 @@
                         </form>
                     </div>
                 </div>
-                <div v-if="annotationMode=='iterate'" class="row">
+
+                <div v-if="annotationMode=='iterate'" class="row justify-content-end"><!-- iteration controls -->
                     <form class="form-inline" v-on:submit.prevent="">
-                        <div class="col-12">
+                            <button type="button" class="btn btn-lg" v-on:click="prev()">Prev</button>
                             <input type="number" class="form-control" v-model="boardIndex" min="0" v-bind:max="boards.length">
-                            <button type="button" class="btn" v-on:click="next()">Next</button>
-                        </div>
+                            <button type="button" class="btn btn-lg" v-on:click="next()">Next</button>
                     </form>
                 </div>
             </div>
         </div>
-        <div v-if="annotationMode=='iterate'" class="row">
-            <div class="col-12">
-            </div>
-        </div>
 
-        <div v-if="annotationMode=='filter'" class="row board mb-1" v-for="board in filteredBoards">
+        <div v-if="annotationMode=='filter'" class="row board mb-1" v-for="board in filteredBoards"><!-- filter view -->
             <div class="col-8">
-                <h3>[[ board.title]]<br><small><a href="board.url">[[ board.url ]]</a></small></h3>
+                <h3>[[ board.title ]]<br><small><a href="board.url">[[ board.url ]]</a></small></h3>
                 <p class="">[[ board.description_en ]]</p>
                 <div>Locations: [[ board.location.join(', ')  ]]</div>
             </div>
@@ -96,7 +92,7 @@
             </div>
         </div>
 
-        <div v-if="annotationMode=='filter'" class="row board mb-1" v-for="board in filteredBoards">
+        <div v-if="annotationMode=='filter'" class="row board mb-1" v-for="board in filteredBoards"><!-- filter view -->
             <div class="col-8">
                 <h3>[[ board.title]]<br><small>[[ board.url ]]</small></h3>
                 <p class="small">[[ board.description_en ]]</p>
@@ -120,16 +116,15 @@
 
         <div v-if="annotationMode=='iterate'" class="row board mb-1">
             <div class="col-8">
-                <h3><span class="text-muted">#[[ boardIndex ]]</span> [[ focusBoard.title_en]]<br>
+                <h3>[[ focusBoard.title_en]]<br>
                     <small><a :href="focusBoard.url">[[ focusBoard.url ]]</a></small>
                 </h3>
                 <p class="">[[ focusBoard.description_en ]]</p>
                 <div>Locations: [[ focusBoard.location.join(', ')  ]]</div>
-
-
-
             </div>
             <div class="col-4">
+
+                <div class="float-right"><a target="_blank" :href="'/admin/products/product/'+focusBoard.id">edit in admin ([[focusBoard.id]])</a></div>
                 <form v-on:submit.prevent="" class="form-inline">
                     <h2>Industries</h2>
                     <p style="clear:left">
@@ -138,7 +133,9 @@
                     <select class="form-control" v-model="industryToAdd">
                         <option v-for="industry in industries" :value="industry">[[industry]]</option>
                     </select>
-                    <button class="btn" @click="addIndustry(industryToAdd)">Add it</button>
+                    <button v-if="industryToAdd" class="btn" @click="addIndustry(industryToAdd)">Add '[[industryToAdd]]'</button>
+                    <button v-if="!focusBoard.industries.includes('Generic')" class="btn" @click="addIndustry('Generic')">Add 'Generic'</button>
+
 
                     <div v-if="suggestedIndustries().length">
                         Suggested by SF Industry mapping <abbr v-bind:title="[[ focusBoard.salesforce_industries ]]">values</abbr>
@@ -164,6 +161,7 @@
                         @click="postCategorisation(focusBoard.id, 'industries', selectedIndustry)"
                         class="btn btn-block btn-outline-primary">Change to <strong>[[selectedIndustry]]</strong>function</button>
             </div>
+
         </div>
 
         <div class="row">
