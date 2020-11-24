@@ -193,6 +193,8 @@ USE_TZ = True
 
 SIMILARWEB_API_KEY = os.getenv("SIMILARWEB_API_KEY")
 
+MAPBOX_KEY = os.getenv("MAPBOX_ACCESS_TOKEN")
+
 
 if not is_development():
     sentry_sdk.init(

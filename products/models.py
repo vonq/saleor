@@ -155,7 +155,7 @@ class Location(models.Model):
     approved = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.canonical_name or self.geocoder_id
+        return f"{self.full_location_name} ({', '.join(self.place_type)})"
 
     @classmethod
     def get_country_short_code(cls, location: dict):
@@ -166,32 +166,35 @@ class Location(models.Model):
         return None
 
     @classmethod
-    def from_mapbox_response(cls, mapbox_response: list):
-        locations = []
-        for result in mapbox_response:
-            location = cls()
-            location.mapbox_id = result["id"]
-            location.mapbox_placename = result["place_name"]
-            location.canonical_name = result["text"]
-            location.mapbox_text = result["text"]
-            location.mapbox_place_type = []
-            location.country_code = cls.get_country_short_code(result)
-            for place_type in result["place_type"]:
-                location.mapbox_place_type.append(place_type)
-            if "short_code" in result["properties"]:
-                location.mapbox_shortcode = result["properties"]["short_code"]
-            if "context" in result:
-                country = result["place_name"].split(",")[-1].strip()
-                continent = Geocoder.get_continent_for_country(country)
-                location.mapbox_context = [place["id"] for place in result["context"]]
-                location.mapbox_context.extend([f"continent.{continent}", "world"])
-                country_entity = Location.objects.filter(
-                    canonical_name=country, mapbox_place_type=["country"]
-                )
-                if country_entity.exists():
-                    location.mapbox_within_id = country_entity.first().id
+    def from_mapbox_result(cls, mapbox_response: dict):
+        location = cls()
+        location.mapbox_id = mapbox_response["id"]
+        location.mapbox_placename = mapbox_response["place_name"]
+        location.canonical_name = mapbox_response["text"]
+        location.mapbox_text = mapbox_response["text"]
+        location.mapbox_place_type = []
+        location.country_code = cls.get_country_short_code(mapbox_response)
+        for place_type in mapbox_response["place_type"]:
+            location.mapbox_place_type.append(place_type)
+        if "short_code" in mapbox_response["properties"]:
+            location.mapbox_shortcode = mapbox_response["properties"]["short_code"]
+        if "context" in mapbox_response:
+            country = mapbox_response["place_name"].split(",")[-1].strip()
+            continent = Geocoder.get_continent_for_country(country)
+            location.mapbox_context = [
+                place["id"] for place in mapbox_response["context"]
+            ]
+            location.mapbox_context.extend([f"continent.{continent}", "world"])
+            country_entity = Location.objects.filter(
+                canonical_name=country, mapbox_place_type=["country"]
+            )
+            if country_entity.exists():
+                location.mapbox_within_id = country_entity.first().id
+        return location
 
-            locations.append(location)
+    @classmethod
+    def from_mapbox_autocomplete_response(cls, mapbox_response: list):
+        locations = [cls.from_mapbox_result(result) for result in mapbox_response]
 
         existing = cls.objects.filter(
             mapbox_id__in=[location.mapbox_id for location in locations]

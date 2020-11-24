@@ -71,7 +71,9 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         if not self.geocoder_response:
             self.geocoder_response = Geocoder.geocode(text)
         if not self.locations:
-            self.locations = Location.from_mapbox_response(self.geocoder_response)
+            self.locations = Location.from_mapbox_autocomplete_response(
+                self.geocoder_response
+            )
 
         return list(itertools.chain(continents, self.locations))
 

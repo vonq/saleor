@@ -1,7 +1,10 @@
+from django.conf import settings
 from django.contrib import admin
 from django.db.models import Count
+from django import forms
 
 from modeltranslation.admin import TranslationAdmin
+from rest_framework.utils import json
 
 from api.products.models import (
     Product,
@@ -70,6 +73,54 @@ class JobFunctionAdmin(TranslationAdmin):
     search_fields = ("name",)
 
 
+class MapboxAutocompleteWidget(forms.widgets.Input):
+    template_name = "django/forms/widgets/mapbox.html"
+
+
+class EditLocationForm(forms.ModelForm):
+    class Meta:
+        model = Location
+        fields = ("canonical_name", "mapbox_place_type", "mapbox_within")
+
+
+class NewLocationForm(forms.ModelForm):
+    location_name = forms.CharField(
+        widget=MapboxAutocompleteWidget(attrs={"id": "mapbox_placename"})
+    )
+    mapbox_hidden = forms.CharField(
+        widget=forms.HiddenInput(attrs={"id": "geocoder-data"})
+    )
+
+    class Meta:
+        model = Location
+        fields = ()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not cleaned_data.get("mapbox_hidden"):
+            return cleaned_data
+
+        self.instance = Location.from_mapbox_result(
+            json.loads(cleaned_data["mapbox_hidden"])
+        )
+        if Location.objects.filter(
+            mapbox_id=self.instance.mapbox_id, approved=True
+        ).exists():
+            self.add_error("location_name", "This location is already present.")
+            return cleaned_data
+
+        if Location.objects.filter(
+            mapbox_id=self.instance.mapbox_id, approved=False
+        ).exists():
+            self.instance = Location.objects.get(mapbox_id=self.instance.mapbox_id)
+
+        # locations manually added via admin
+        # will be considered approved by default
+        self.instance.approved = True
+
+        return cleaned_data
+
+
 @admin.register(Location)
 class LocationAdmin(TranslationAdmin):
     fields = ("canonical_name", "mapbox_within", "mapbox_place_type", "approved")
@@ -86,6 +137,33 @@ class LocationAdmin(TranslationAdmin):
 
     def products_count(self, location):
         return location.products_count
+
+    def add_view(self, request, form_url="", extra_context=None):
+        self.form = NewLocationForm
+        self.fieldsets = (
+            (
+                None,
+                {
+                    "fields": ("location_name", "mapbox_hidden"),
+                },
+            ),
+        )
+        self.fields = ()
+
+        return super().add_view(request, form_url, {"mapbox_key": settings.MAPBOX_KEY})
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        self.form = EditLocationForm
+        self.fields = (
+            "canonical_name",
+            "mapbox_within",
+            "mapbox_place_type",
+            "mapbox_context",
+            "approved",
+        )
+        self.readonly_fields = ("mapbox_context",)
+        self.fieldsets = ()
+        return super().change_view(request, object_id, form_url, extra_context)
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
