@@ -53,25 +53,48 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         )
         cls.engineering_industry.save()
 
-        cls.construction_board = Product(title="Construction board")
+        cls.construction_board = Product(
+            is_active=True, status="Negotiated", title="Construction board"
+        )
         cls.construction_board.save()
         cls.construction_board.industries.add(cls.construction_industry)
         cls.construction_board.save()
 
-        cls.engineering_board = Product(title="Engineering Board")
+        cls.engineering_board = Product(
+            is_active=True, status="Negotiated", title="Engineering Board"
+        )
         cls.engineering_board.save()
         cls.engineering_board.industries.add(cls.engineering_industry)
         cls.engineering_board.save()
 
-        cls.general_board = Product(title="General")
+        cls.general_board = Product(
+            is_active=True, status="Negotiated", title="General"
+        )
         cls.general_board.save()
         cls.general_board.industries.set(
             [cls.engineering_industry, cls.construction_industry]
         )
         cls.general_board.save()
 
-        cls.null_board = Product(title="Null")
+        cls.null_board = Product(is_active=True, status="Negotiated", title="Null")
         cls.null_board.save()
+
+        cls.active_product = Product(
+            is_active=True, status="Negotiated", salesforce_id="active_product"
+        )
+        cls.active_product.save()
+
+        cls.inactive_product = Product(
+            is_active=False, status="Negotiated", salesforce_id="inactive_product"
+        )
+        cls.inactive_product.save()
+
+        cls.unwanted_status_product = Product(
+            is_active=True,
+            status="Blacklisted",
+            salesforce_id="unwanted_status_product",
+        )
+        cls.unwanted_status_product.save()
 
         # populate product locations
         united_kingdom = Location(
@@ -131,6 +154,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         cls.global_id = global_location.id
 
         product = Product(
+            is_active=True,
             title="Something in the whole of the UK",
             url="https://vonq.com/somethinglkasjdfhg",
         )
@@ -139,21 +163,27 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         product.save()
 
         product2 = Product(
-            title="Something in Reading", url="https://vonq.com/something"
+            is_active=True,
+            title="Something in Reading",
+            url="https://vonq.com/something",
         )
         product2.save()
         product2.locations.add(reading)
         product2.save()
 
         product3 = Product(
-            title="Something in Slough", url="https://vonq.com/something2"
+            is_active=True,
+            title="Something in Slough",
+            url="https://vonq.com/something2",
         )
         product3.save()
         product3.locations.add(slough)
         product3.save()
 
         product4 = Product(
-            title="Something in Slough and Reading", url="https://vonq.com/something4"
+            is_active=True,
+            title="Something in Slough and Reading",
+            url="https://vonq.com/something4",
         )
 
         product4.save()
@@ -161,7 +191,9 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         product4.save()
 
         global_product = Product(
-            title="Something Global", url="https://vonq.com/somethingGlobal"
+            is_active=True,
+            title="Something Global",
+            url="https://vonq.com/somethingGlobal",
         )
         global_product.save()
         global_product.locations.add(global_location)
@@ -191,13 +223,16 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         cls.java_developer_id = java_developer.id
 
         product = Product(
+            is_active=True,
             title="A job board for developers",
         )
         product.save()
         product.job_functions.add(software_engineering)
         product.save()
 
-        product2 = Product(title="A job board for construction jobs")
+        product2 = Product(
+            is_active=True, status="Trial", title="A job board for construction jobs"
+        )
         product2.save()
         product2.job_functions.add(construction)
         product2.save()
@@ -291,7 +326,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
 
     def test_return_all_products_with_no_locations(self):
         resp = self.client.get(reverse("api.products:products-list"))
-        self.assertEquals(len(resp.json()["results"]), 11)
+        self.assertEquals(len(resp.json()["results"]), 12)
 
     def test_results_are_sorted_by_specificity(self):
         resp = self.client.get(
@@ -349,6 +384,36 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             resp_two.json()["results"][0]["title"],
             resp_three.json()["results"][0]["title"],
         )
+
+    def test_returns_an_active_product(self):
+        resp = self.client.get(
+            reverse(
+                "api.products:products-detail",
+                kwargs={"product_id": self.active_product.product_id},
+            )
+        )
+
+        self.assertEquals(resp.status_code, 200)
+
+    def test_hides_an_inactive_product(self):
+        resp = self.client.get(
+            reverse(
+                "api.products:products-detail",
+                kwargs={"product_id": self.inactive_product.product_id},
+            )
+        )
+
+        self.assertEquals(resp.status_code, 404)
+
+    def test_hides_an_product_with_unwanted_status(self):
+        resp = self.client.get(
+            reverse(
+                "api.products:products-detail",
+                kwargs={"product_id": self.unwanted_status_product.product_id},
+            )
+        )
+
+        self.assertEquals(resp.status_code, 404)
 
     def test_can_narrow_the_list_by_filter_by(self):
         resp_one = self.client.get(

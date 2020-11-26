@@ -251,6 +251,8 @@ class IndexSearchableProductMixin:
     job_functions: QuerySet
     locations: QuerySet
     similarweb_top_country_shares: dict
+    status: str
+    is_active: bool
 
     @property
     def all_industries(self) -> Iterable["Industry"]:
@@ -267,6 +269,10 @@ class IndexSearchableProductMixin:
     @property
     def searchable_industries_ids(self):
         return [industry.id for industry in self.all_industries]
+
+    @property
+    def filterable_status(self):
+        return self.status or "None"
 
     @property
     def searchable_industries_names(self):

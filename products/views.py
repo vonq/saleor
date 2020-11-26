@@ -19,6 +19,8 @@ from api.products.filters import (
     IndustryFacetFilter,
     PrimarySimilarWebFacetFilter,
     SecondarySimilarWebFacetFilter,
+    IsActiveFacetFilter,
+    StatusFacetFilter,
 )
 from api.products.geocoder import Geocoder
 from api.products.models import Location, Product, JobTitle, JobFunction, Industry
@@ -142,6 +144,8 @@ class ProductsViewSet(viewsets.ModelViewSet):
         IndustryFacetFilter,
         PrimarySimilarWebFacetFilter,
         SecondarySimilarWebFacetFilter,
+        IsActiveFacetFilter,
+        StatusFacetFilter,
     )
 
     @property

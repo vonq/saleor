@@ -8,9 +8,10 @@ from api.products.models import Location
 
 
 class FacetFilter:
+    operator: str = "OR"
     filter_name: str
     parameter_name: str
-    filters: str
+    filters: str = ""
     parameter: openapi.Parameter
     score: int
 
@@ -90,6 +91,26 @@ class SecondarySimilarWebFacetFilter(PrimarySimilarWebFacetFilter):
     score = 7
 
 
+class IsActiveFacetFilter(FacetFilter):
+    filter_name = "is_active"
+    parameter_name = "is_active"
+    parameter = None
+    operator = "AND"
+
+    def __init__(self):
+        self.filters = "is_active:true"
+
+
+class StatusFacetFilter(FacetFilter):
+    filter_name = "filterable_status"
+    parameter_name = "status"
+    parameter = None
+    operator = "AND"
+
+    def __init__(self):
+        self.filters = 'filterable_status:"None" OR filterable_status:"Trial" OR filterable_status:"Negotiated"'
+
+
 class JobFunctionsFacetFilter(FacetFilter):
     filter_name = "searchable_job_functions_ids"
     parameter_name = "jobFunctionId"
@@ -142,7 +163,26 @@ class FacetFilterCollection:
         self.limit = limit
         self.offset = offset
 
+    def get_filters(self):
+        and_filters = " AND ".join(
+            [
+                f"({facet_filter.filters})"
+                for facet_filter in self.facet_filters
+                if facet_filter.filters and facet_filter.operator.lower() == "and"
+            ]
+        )
+        or_filters = " OR ".join(
+            [
+                f"({facet_filter.filters})"
+                for facet_filter in self.facet_filters
+                if facet_filter.filters and facet_filter.operator.lower() == "or"
+            ]
+        )
+        filters = and_filters + (" AND ({})".format(or_filters) if or_filters else "")
+        return filters
+
     def query(self):
+        filters = self.get_filters()
         query = {
             "getRankingInfo": True,
             "analytics": False,
@@ -159,13 +199,7 @@ class FacetFilterCollection:
                 "searchable_locations_context_ids",
                 "searchable_locations_ids",
             ],
-            "filters": " OR ".join(
-                [
-                    facet_filter.filters
-                    for facet_filter in self.facet_filters
-                    if facet_filter.filters
-                ]
-            ),
+            "filters": filters,
             "sumOrFiltersScores": True,
             "length": self.limit,
             "offset": self.offset,

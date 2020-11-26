@@ -34,7 +34,7 @@ class ProductIndex(AlgoliaIndex):
         "primary_similarweb_location",
         "secondary_similarweb_location",
         "maximum_locations_cardinality",
-        "status",
+        "filterable_status",
     )
     settings = {
         "minWordSizefor1Typo": 4,
@@ -50,7 +50,6 @@ class ProductIndex(AlgoliaIndex):
             "unordered(searchable_industries)",
             "unordered(searchable_job_functions)",
             "unordered(logo_url)",
-            "unordered(is_active)",
             "unordered(available_in_ats)",
             "unordered(salesforce_product_category)",
             "unordered(searchable_job_titles_ids)",
@@ -63,7 +62,6 @@ class ProductIndex(AlgoliaIndex):
             "unordered(searchable_locations_context_names)",
             "unordered(primary_similarweb_location)",
             "unordered(secondary_similarweb_location)",
-            "unordered(status)",
         ],
         "numericAttributesToIndex": ["maximum_locations_cardinality"],
         "attributesToRetrieve": None,
@@ -84,6 +82,8 @@ class ProductIndex(AlgoliaIndex):
             "searchable_locations_context_ids",  # do we need it?
             "searchable_locations_context_names",
             "searchable_locations_context_mapbox_ids",
+            "is_active",
+            "filterable_status",
         ],
         "attributesToSnippet": None,
         "attributesToHighlight": None,
