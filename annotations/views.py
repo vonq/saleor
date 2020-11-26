@@ -149,7 +149,7 @@ def update_boards(request):
 
 @permission_required("products.view_product")
 def get_products_text_json(request):
-    products = Product.objects.filter()
+    products = Product.objects.order_by('id')
     return JsonResponse(
         {
             "products_text": list(
@@ -218,7 +218,6 @@ def get_job_titles_json(request):
                     "id",
                     "name",
                     "job_function__name",
-                    "industry__name",
                     "canonical",
                     "alias_of__name",
                     "alias_of__id",
