@@ -11,7 +11,7 @@ from django.contrib.contenttypes.models import ContentType
 from api.products.models import Industry, Product, JobFunction, JobTitle, Location
 
 import json
-
+import csv
 
 def index(request):
     return HttpResponse("left intentionally blank")
@@ -89,7 +89,7 @@ def update_title(request):
 
 
 def dashboard(request):
-    return render(request, "dashboard.html")
+    return render(request, "data_quality_dashboard.html")
 
 
 @permission_required("products.view_product")
@@ -133,6 +133,7 @@ def update_boards(request):
                     "jobfunctions": funs,
                     "industries": inds,
                     "salesforce_industries": sf_inds,
+                    "salesforce_product_category": board.salesforce_product_category,
                     "url": board.url,
                     "logo_url": board.logo_url,
                     "channel_type": "missing",
@@ -173,7 +174,7 @@ def get_product_json(request, id):
 
     locs = []
     for loc in product.locations.all():
-        locs.append(loc.fully_qualified_place_name)
+        locs.append(loc.canonical_name)
 
     monthly_visits = (
         product.similarweb_estimated_monthly_visits
@@ -242,8 +243,11 @@ def get_job_functions_json(request):
 
 @permission_required("products.view_location")
 def get_locations_json(request):
-    locations = Location.objects.filter()
-    return JsonResponse({"locations": list(locations.values("name", "within__name"))})
+    locations = Location.objects.all()
+    return JsonResponse({"locations": list(locations.values("canonical_name",
+                                                            "mapbox_within__canonical_name",
+                                                            "approved"))}
+                        )
 
 
 @permission_required("products.view_jobtitle")
@@ -298,7 +302,7 @@ def set_category_values(request):
     board = Product.objects.get(pk=payload["id"])
     # field = getattr(board, payload["field"])
     if payload["field"] == "jobfunctions":
-        func_names = payload["categoryNames"]  # .split(',')
+        func_names = payload["categoryNames"]
         board.job_functions.clear()
         for func_name in func_names:
             try:
@@ -318,3 +322,52 @@ def set_category_values(request):
             "channelType": "",
         }
     )
+
+@permission_required("products.change_product")
+def set_locations(request):
+    try:
+        payload = json.loads(request.body)
+    except TypeError:
+        return JsonResponse({"error": "Request body cannot be parsed as a JSON"})
+
+    board = Product.objects.get(pk=payload["id"])
+
+    location_names = payload["locations"]
+    print(location_names)
+    board.locations.clear()
+    for loc_name in location_names:
+        try:
+            location = Location.objects.get(canonical_name=loc_name)
+            board.locations.add(location)
+        except:
+            print("cannot find a location called: " + loc_name)
+
+    board.save()
+    return JsonResponse(
+        {
+            "industry": list(board.industries.all().values_list("name", flat=True)),
+            "jobFunctions": list(
+                board.job_functions.all().values_list("name", flat=True)
+            ),
+            "channelType": "",
+            "locations": list(board.locations.all().values_list("canonical_name", flat=True))
+        }
+    )
+
+def export_options_json(request):
+    # categories = Industry.objects.all()
+    return JsonResponse({'categories': list(Industry.objects.all().values('name_en', 'name_de', 'name_nl')),
+                         'job_functions': list(JobFunction.objects.all().values('name', 'parent__name'))
+                         })
+
+def export_categories_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    # response['Content-Disposition'] = 'attachment; filename="categories.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Name EN', 'Name DE', 'Name NL'])
+    for category in Industry.objects.all():
+        writer.writerow([category.name_en, category.name_de, category.name_nl])
+
+    return response
+

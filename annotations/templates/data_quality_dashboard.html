@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Data Dashboard</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+</head>
+<body>
+<div class="container" id="data-quality-app">
+    <div class="row">
+        <div class="col-12">
+            <h1>Data Quality Dashboard</h1>
+                <pre>
+On two occasions I have been asked, 'Pray, Mr. Babbage, if you put into the machine wrong figures, will the right answers come out?'
+I am not able rightly to apprehend the kind of confusion of ideas that could provoke such a question. -- Charles Babbage
+                </pre>
+            <div v-for="check in checks"><h2>[[ check.label ]] ([[check.values !== null ? check.values.length : '*']])</h2>
+                <p>[[ check.values ]]</p></div>
+        </div>
+    </div>
+</div>
+<script src="/static/vue.min.js"></script>
+<script src="/static/d3.v5.min.js"></script>
+<script src="/static/data_quality_app.js"></script>
+</body>
+</html>

@@ -143,7 +143,7 @@ class NewLocationForm(forms.ModelForm):
 
 @admin.register(Location)
 class LocationAdmin(TranslationAdmin):
-    fields = ("canonical_name", "mapbox_within", "mapbox_place_type", "approved")
+    fields = ("canonical_name", "mapbox_within", "mapbox_place_type", "approved", "mapbox_id")
     list_display = (
         "full_location_name",
         "approved",
@@ -151,6 +151,7 @@ class LocationAdmin(TranslationAdmin):
         "mapbox_within",
         "mapbox_place_type",
         "products_count",
+        "mapbox_id"
     )
     search_fields = ("mapbox_placename", "canonical_name")
     list_filter = ("approved",)

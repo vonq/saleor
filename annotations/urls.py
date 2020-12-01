@@ -26,4 +26,7 @@ urlpatterns = [
     path("update-title", views.update_title, name="update_title"),
     path("add-categorisation", views.add_categorisation, name="add_categorisation"),
     path("set-category-values", views.set_category_values, name="set_category_values"),
+    path("set-locations", views.set_locations, name="set_locations"),
+    path("export-options", views.export_options_json, name="export_options_json"),
+    path("export-categories-csv", views.export_categories_csv, name="export_categories_csv"),
 ]
