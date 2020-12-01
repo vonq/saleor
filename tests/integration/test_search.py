@@ -8,6 +8,7 @@ from rest_framework.reverse import reverse
 from api.products.index import ProductIndex
 from api.products.models import Product, Industry, Location, JobFunction, JobTitle
 from api.tests import AuthenticatedTestCase
+from django.contrib.auth import get_user_model
 
 NOW = int(time.time())
 TEST_INDEX_SUFFIX = f"test_{NOW}"
@@ -88,6 +89,22 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             is_active=False, status="Negotiated", salesforce_id="inactive_product"
         )
         cls.inactive_product.save()
+
+        cls.available_in_jmp_product = Product(
+            is_active=True,
+            status="Trial",
+            available_in_jmp=True,
+            salesforce_id="available_jmp_product",
+        )
+        cls.available_in_jmp_product.save()
+
+        cls.unavailable_in_jmp_product = Product(
+            is_active=True,
+            status="Trial",
+            available_in_jmp=False,
+            salesforce_id="unavailable_jmp_product",
+        )
+        cls.unavailable_in_jmp_product.save()
 
         cls.unwanted_status_product = Product(
             is_active=True,
@@ -326,7 +343,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
 
     def test_return_all_products_with_no_locations(self):
         resp = self.client.get(reverse("api.products:products-list"))
-        self.assertEquals(len(resp.json()["results"]), 12)
+        self.assertEquals(len(resp.json()["results"]), 14)
 
     def test_results_are_sorted_by_specificity(self):
         resp = self.client.get(
@@ -498,3 +515,31 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             + f"?jobTitleId={self.python_developer_id}&jobFunctionId={self.software_engineering_id}"
         )
         self.assertEqual(resp.status_code, 400)
+
+    def test_it_returns_available_products_in_jmp(self):
+        User = get_user_model()
+        user = User.objects.create(username="jmp", password="test")
+        user.profile.type = "jmp"
+        self.client.force_login(user)
+        resp = self.client.get(
+            reverse(
+                "api.products:products-detail",
+                kwargs={"product_id": self.available_in_jmp_product.product_id},
+            )
+        )
+
+        self.assertEquals(resp.status_code, 200)
+
+    def test_it_hides_unavailable_products_in_jmp(self):
+        User = get_user_model()
+        user = User.objects.create(username="jmp", password="test")
+        user.profile.type = "jmp"
+        self.client.force_login(user)
+        resp = self.client.get(
+            reverse(
+                "api.products:products-detail",
+                kwargs={"product_id": self.unavailable_in_jmp_product.product_id},
+            )
+        )
+
+        self.assertEquals(resp.status_code, 404)

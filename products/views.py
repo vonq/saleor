@@ -21,9 +21,17 @@ from api.products.filters import (
     SecondarySimilarWebFacetFilter,
     IsActiveFacetFilter,
     StatusFacetFilter,
+    IsAvailableInJmpFacetFilter,
 )
 from api.products.geocoder import Geocoder
-from api.products.models import Location, Product, JobTitle, JobFunction, Industry
+from api.products.models import (
+    Location,
+    Product,
+    JobTitle,
+    JobFunction,
+    Industry,
+    Profile,
+)
 from api.products.paginators import (
     StandardResultsSetPagination,
     AutocompleteResultsSetPagination,
@@ -158,10 +166,16 @@ class ProductsViewSet(viewsets.ModelViewSet):
             )
         return self._paginator
 
+    def get_all_filters(self):
+        if self.request.user.profile.type == Profile.Type.JMP:
+            all_filters = self.search_filters + (IsAvailableInJmpFacetFilter,)
+            return all_filters
+        return self.search_filters
+
     def get_queryset(self):
         filter_collection = FacetFilterCollection.build_filter_collection_from_request(
             request=self.request,
-            filters=self.search_filters,
+            filters=self.get_all_filters(),
             limit=SearchResultsPagination().get_limit(self.request),
             offset=SearchResultsPagination().get_offset(self.request),
         )

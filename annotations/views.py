@@ -149,7 +149,7 @@ def update_boards(request):
 
 @permission_required("products.view_product")
 def get_products_text_json(request):
-    products = Product.objects.order_by('id')
+    products = Product.objects.order_by("id")
     return JsonResponse(
         {
             "products_text": list(

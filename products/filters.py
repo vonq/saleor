@@ -101,6 +101,16 @@ class IsActiveFacetFilter(FacetFilter):
         self.filters = "is_active:true"
 
 
+class IsAvailableInJmpFacetFilter(FacetFilter):
+    filter_name = "available_in_jmp"
+    parameter_name = "available_in_jmp"
+    parameter = None
+    operator = "AND"
+
+    def __init__(self):
+        self.filters = "available_in_jmp:true"
+
+
 class StatusFacetFilter(FacetFilter):
     filter_name = "filterable_status"
     parameter_name = "status"

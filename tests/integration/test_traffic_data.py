@@ -78,13 +78,16 @@ class TrafficLocationsDataTestCase(AuthenticatedTestCase):
         cls.europe_location.save()
 
         cls.rome_board = Product(
-            title="Product for Rome", similarweb_top_country_shares={"it": 90, "gb": 10}
+            is_active=True,
+            title="Product for Rome",
+            similarweb_top_country_shares={"it": 90, "gb": 10},
         )
         cls.rome_board.save()
         cls.rome_board.locations.set([cls.rome_location])
         cls.rome_board.save()
 
         cls.london_board = Product(
+            is_active=True,
             title="Board with London jobs",
             similarweb_top_country_shares={"gb": 80, "us": 20},
         )
@@ -99,6 +102,7 @@ class TrafficLocationsDataTestCase(AuthenticatedTestCase):
         cls.germany_location.save()
 
         cls.german_board = Product(
+            is_active=True,
             title="Board with German jobs (but popular for Polish)",
             similarweb_top_country_shares={"de": 10, "pl": 90},
         )
@@ -107,6 +111,7 @@ class TrafficLocationsDataTestCase(AuthenticatedTestCase):
         cls.german_board.save()
 
         cls.european_board = Product(
+            is_active=True,
             title="European Jobs Board",
             similarweb_top_country_shares={"gb": 5, "it": 5, "de": 90},
         )
@@ -121,6 +126,7 @@ class TrafficLocationsDataTestCase(AuthenticatedTestCase):
         cls.european_board.save()
 
         cls.amsterdam_board = Product(
+            is_active=True,
             title="Jobs in Amsterdam",
             similarweb_top_country_shares={"nl": 80, "de": 20},
         )

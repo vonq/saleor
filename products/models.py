@@ -12,6 +12,10 @@ from modeltranslation.fields import TranslationFieldDescriptor
 
 from api.field_permissions.models import FieldPermissionModelMixin
 from api.products.geocoder import Geocoder
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.utils.translation import gettext_lazy as _
 
 
 class AcrossLanguagesQuerySet(QuerySet):
@@ -449,9 +453,7 @@ class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMix
         blank=True,
     )
     logo_url = models.CharField(max_length=300, null=True, blank=True, default=None)
-    is_active = models.BooleanField(default=True)
-    is_deleted = models.BooleanField(default=True)
-    is_archived = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
 
     available_in_ats = models.BooleanField(default=True)
     available_in_jmp = models.BooleanField(default=True)
@@ -521,3 +523,22 @@ class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMix
 
     def __str__(self):
         return str(self.title) + " : " + str(self.url)
+
+
+class Profile(models.Model):
+    class Type(models.TextChoices):
+        JMP = "jmp", _("JMP")
+        ATS = "ats", _("ATS")
+        INTERNAL = "internal", _("Internal")
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    type = models.TextField(
+        max_length=15, blank=True, choices=Type.choices, default=Type.INTERNAL
+    )
+
+
+@receiver(post_save, sender=User)
+def create_or_update_user_profile(sender, instance, created, **kwargs):
+    if created or not instance.profile:
+        Profile.objects.create(user=instance)
+    instance.profile.save()

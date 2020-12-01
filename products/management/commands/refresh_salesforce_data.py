@@ -14,8 +14,6 @@ class Command(BaseCommand):
         "title": "product_name",
         "description": "description",
         "is_active": "is_active",
-        "is_deleted": "is_deleted",
-        "is_archived": "is_archived",
         "salesforce_product_type": "type",
         "available_in_jmp": "is_available_on_jmp",
         "available_in_ats": "is_available_in_ats",

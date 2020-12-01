@@ -16,6 +16,25 @@ from api.products.models import (
     Industry,
 )
 
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User
+
+from api.products.models import Profile
+
+
+class ProfileInline(admin.StackedInline):
+    model = Profile
+    can_delete = False
+    verbose_name_plural = "profile"
+
+
+class UserAdmin(BaseUserAdmin):
+    inlines = (ProfileInline,)
+
+
+admin.site.unregister(User)
+admin.site.register(User, UserAdmin)
+
 
 @admin.register(Product)
 class ProductAdmin(PermissionBasedFieldsMixin, TranslationAdmin):

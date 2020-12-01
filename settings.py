@@ -195,7 +195,6 @@ SIMILARWEB_API_KEY = os.getenv("SIMILARWEB_API_KEY")
 
 MAPBOX_KEY = os.getenv("MAPBOX_ACCESS_TOKEN")
 
-
 if not is_development():
     sentry_sdk.init(
         dsn="https://a0ea7b5b249d4181b092b5f627fc2067@o218462.ingest.sentry.io/5514267",
