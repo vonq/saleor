@@ -1,16 +1,20 @@
 import itertools
 from collections import defaultdict
-from typing import List, Iterable
+from typing import List, Iterable, Type, Tuple
 
 from django.db.models import Case, When
 from django.db.models import Q
 from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins
-from rest_framework.response import Response
+from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
+from api.products.apps import ProductsConfig
+from api.products.docs import CommonParameters
 from api.products.filters import (
+    FacetFilter,
     InclusiveLocationIdFacetFilter,
     FacetFilterCollection,
     ExactLocationIdFacetFilter,
@@ -46,8 +50,6 @@ from api.products.serializers import (
     IndustrySerializer,
     ProductSearchSerializer,
 )
-from api.products.apps import ProductsConfig
-from api.products.docs import CommonParameters
 
 
 class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
@@ -92,7 +94,7 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         operation_summary="Search for any Location by a given text.",
         operation_description="""
                         This endpoint takes any text as input and returns a list of Locations matching the query, ordered by popularity.
-                        Each response will include the entire world as a Location, even no Locations match the text query. 
+                        Each response will include the entire world as a Location, even no Locations match the text query.
                         Use the <code>id</code> key of each object in the response to search for a Product.
                         Supports text input in English, Dutch and German.
                         """,
@@ -139,12 +141,11 @@ class ProductsViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     http_method_names = ("get",)
     queryset = Product.objects.all()
-    ids: List[int] = []
     lookup_field = "product_id"
 
     search_results_count: int = None
 
-    search_filters = (
+    search_filters: Tuple[Type[FacetFilter]] = (
         InclusiveLocationIdFacetFilter,
         ExactLocationIdFacetFilter,
         JobFunctionsFacetFilter,
@@ -172,7 +173,7 @@ class ProductsViewSet(viewsets.ModelViewSet):
             return all_filters
         return self.search_filters
 
-    def get_queryset(self):
+    def search_queryset(self, queryset):
         filter_collection = FacetFilterCollection.build_filter_collection_from_request(
             request=self.request,
             filters=self.get_all_filters(),
@@ -180,21 +181,25 @@ class ProductsViewSet(viewsets.ModelViewSet):
             offset=SearchResultsPagination().get_offset(self.request),
         )
 
-        if not filter_collection:
-            # a list request doesn't need
-            # to go through algolia
-            # before we can serialise it
-            return self.queryset
-
-        if not self.ids:
-            self.search_results_count, results = query_search_index(
-                Product, params=filter_collection.query()
-            )
-            self.ids = get_results_ids(results)
-
-        return self.queryset.filter(pk__in=self.ids).order_by(
-            Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(self.ids)])
+        self.search_results_count, results = query_search_index(
+            Product, params=filter_collection.query()
         )
+        ids = get_results_ids(results)
+
+        return self.queryset.filter(pk__in=ids).order_by(
+            Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(ids)])
+        )
+
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+        return queryset.filter(is_active=True).exclude(
+            status__in=["Blacklisted", "Disabled"]
+        )
+
+    def check_object_permissions(self, request, obj):
+        super().check_object_permissions(request, obj)
+        if request.user.profile.type == Profile.Type.JMP and not obj.available_in_jmp:
+            raise NotFound()
 
     @swagger_auto_schema(
         operation_description="""
@@ -265,7 +270,7 @@ class ProductsViewSet(viewsets.ModelViewSet):
         ProductSearchSerializer(data=self.request.query_params).is_valid(
             raise_exception=True
         )
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.search_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True)
         return self.get_paginated_response(serializer.data)
