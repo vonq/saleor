@@ -22,7 +22,7 @@ urlpatterns = [
         "get-products-text", views.get_products_text_json, name="get_products_text_json"
     ),
     path("get-product/<int:id>", views.get_product_json, name="get_product_json"),
-    path("update-boards", views.update_boards, name="update_boards"),
+    path("get-boards", views.get_boards, name="get_boards"),
     path("update-title", views.update_title, name="update_title"),
     path("add-categorisation", views.add_categorisation, name="add_categorisation"),
     path("set-category-values", views.set_category_values, name="set_category_values"),

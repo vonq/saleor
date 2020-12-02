@@ -20,11 +20,28 @@ var DataQualityApp = new Vue({
             }
         )
 
-        d3.json('/annotations/update-boards').then(
+        d3.json('/annotations/get-boards').then(
             data => {
                 this.products = data.boards
             }
         )
+    },
+    methods: {
+        redundantLocations : function() {
+            if(this.products.length == 0) return []
+            // just parent < child, initially
+            parent_lookup = []
+            for (loc of this.locations) {
+                if (loc.mapbox_within__canonical_name != null) {
+                    parent_lookup[loc.canonical_name] = loc.mapbox_within__canonical_name
+                }
+            }
+
+            return this.products.filter(product => {
+                return product.salesforce_product_category == 'Generic Product'
+                    && product.location.some(loc => product.location.includes(parent_lookup[loc]))
+            })
+        }
     },
     computed: {
         checks : function() {
@@ -32,25 +49,49 @@ var DataQualityApp = new Vue({
             let many_location_threshold = 20
             return [
                 {
-                    'label': 'Locations with no parent',
+                    'label': 'Approved Locations with no parent',
                     'values': this.locations.filter(l => l.mapbox_within__canonical_name == null)
-                        .map(l=>l.canonical_name)
+                        .map(l=>{ return {
+                            'label':l.canonical_name,
+                            'admin_url': '/admin/products/location/' + l.id + '/change',
+                        }
+                    })
                 },
                 {
-                    'label': 'Duplicate locations',  // child + parent
+                    'label': 'Duplicate locations',
                     'values': this.locations
                         .filter((l, index) => canonical_names.lastIndexOf(l.canonical_name) !== index)
-                        .map(l => l.canonical_name)
+                        .map(l=>{ return {
+                            'label':l.canonical_name,
+                            'admin_url': '/admin/products/location/' + l.id + '/change',
+                        }
+                    })
                 },
                 {
-                    'label': 'Products with no location tagging',
-                    'values': this.products ? this.products.filter(p => p.location.length == 0)
+                    'label': 'Generic Products with no location tagging',
+                    'values': this.products ? this.products
+                        .filter(p => p.location.length == 0 && p.location
+                            && p.salesforce_product_category == "Generic Product")
                         .map(p=>[p.title, p.id]) : null
+                },
+                {
+                    'label': 'Products with redundant sub-locations of locations',
+                    'values': this.products ? this.redundantLocations().map(product => {
+                        return {
+                            'label': product.title,
+                            'admin_url': '/admin/products/product/' + product.id + '/change',
+                            'values': product.location
+                        }
+                    }) : null
                 },
                 {
                     'label': `Products with ${many_location_threshold} location taggings or more`,
                     'values': this.products ? this.products.filter(p => p.location.length >= many_location_threshold)
-                        .map(p=>[p.title, p.id]) : null
+                        .map(p=>{ return {
+                            'label':p.title,
+                            'admin_url': '/admin/products/product/' + p.id + '/change',
+                            'values': [p.location.length]
+                        }}) : null
                 }
             ]
         }

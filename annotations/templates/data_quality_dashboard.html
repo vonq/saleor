@@ -14,8 +14,14 @@
 On two occasions I have been asked, 'Pray, Mr. Babbage, if you put into the machine wrong figures, will the right answers come out?'
 I am not able rightly to apprehend the kind of confusion of ideas that could provoke such a question. -- Charles Babbage
                 </pre>
-            <div v-for="check in checks"><h2>[[ check.label ]] ([[check.values !== null ? check.values.length : '*']])</h2>
-                <p>[[ check.values ]]</p></div>
+            <h2>[[ locations.length ]] locations : [[ products ? products.length : '?']] Products</h2>
+
+            <div v-for="check in checks"><h3>[[ check.label ]] ([[check.values !== null ? check.values.length : '*']])</h3>
+                <ul>
+                    <li v-for="value in check.values"><a :href="value.admin_url">[[ value.label ]]</a>
+                        <span v-if="value.values">[[ value.values.join(', ') ]]</span></li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>

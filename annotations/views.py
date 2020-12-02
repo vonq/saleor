@@ -93,7 +93,7 @@ def dashboard(request):
 
 
 @permission_required("products.view_product")
-def update_boards(request):
+def get_boards(request):
     boards = Product.objects.filter().all()
 
     def build_output():
@@ -150,7 +150,7 @@ def update_boards(request):
 
 @permission_required("products.view_product")
 def get_products_text_json(request):
-    products = Product.objects.order_by("id")
+    products = Product.objects.order_by('id')
     return JsonResponse(
         {
             "products_text": list(
@@ -244,7 +244,8 @@ def get_job_functions_json(request):
 @permission_required("products.view_location")
 def get_locations_json(request):
     locations = Location.objects.all()
-    return JsonResponse({"locations": list(locations.values("canonical_name",
+    return JsonResponse({"locations": list(locations.values("id",
+                                                            "canonical_name",
                                                             "mapbox_within__canonical_name",
                                                             "approved"))}
                         )
@@ -333,7 +334,6 @@ def set_locations(request):
     board = Product.objects.get(pk=payload["id"])
 
     location_names = payload["locations"]
-    print(location_names)
     board.locations.clear()
     for loc_name in location_names:
         try:
@@ -355,14 +355,13 @@ def set_locations(request):
     )
 
 def export_options_json(request):
-    # categories = Industry.objects.all()
     return JsonResponse({'categories': list(Industry.objects.all().values('name_en', 'name_de', 'name_nl')),
                          'job_functions': list(JobFunction.objects.all().values('name', 'parent__name'))
                          })
 
 def export_categories_csv(request):
     response = HttpResponse(content_type='text/csv')
-    # response['Content-Disposition'] = 'attachment; filename="categories.csv"'
+    response['Content-Disposition'] = 'attachment; filename="categories.csv"'
 
     writer = csv.writer(response)
     writer.writerow(['Name EN', 'Name DE', 'Name NL'])
@@ -370,4 +369,3 @@ def export_categories_csv(request):
         writer.writerow([category.name_en, category.name_de, category.name_nl])
 
     return response
-
