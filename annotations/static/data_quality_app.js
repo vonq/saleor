@@ -10,12 +10,6 @@ var DataQualityApp = new Vue({
     mounted: function () {
         d3.json('/annotations/locations').then(
             data => {
-                this.products = data.products
-            }
-        )
-
-        d3.json('/annotations/locations').then(
-            data => {
                 this.locations = data.locations
             }
         )
@@ -50,7 +44,7 @@ var DataQualityApp = new Vue({
             return [
                 {
                     'label': 'Approved Locations with no parent',
-                    'values': this.locations.filter(l => l.mapbox_within__canonical_name == null)
+                    'values': this.locations.filter(l => l.mapbox_within__canonical_name == null && l.approved)
                         .map(l=>{ return {
                             'label':l.canonical_name,
                             'admin_url': '/admin/products/location/' + l.id + '/change',
@@ -72,7 +66,13 @@ var DataQualityApp = new Vue({
                     'values': this.products ? this.products
                         .filter(p => p.location.length == 0 && p.location
                             && p.salesforce_product_category == "Generic Product")
-                        .map(p=>[p.title, p.id]) : null
+                        .map(p=> {
+                                return {
+                                    'label': p.title,
+                                    'admin_url': '/admin/products/product/' + p.id + '/change'
+                                }
+                            }
+                        ) : null
                 },
                 {
                     'label': 'Products with redundant sub-locations of locations',
