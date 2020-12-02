@@ -23,6 +23,7 @@ class LocationSerializer(serializers.ModelSerializer):
             "place_type",
             "within",
         )
+        read_only_fields = fields
 
 
 class JobFunctionSerializer(serializers.ModelSerializer):
