@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib import admin
+from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.db.models import Count
 from django import forms
 
@@ -62,9 +63,30 @@ class ProductAdmin(PermissionBasedFieldsMixin, TranslationAdmin):
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
 
+class ChannelForm(forms.ModelForm):
+    class Meta:
+        model = Channel
+        fields = "__all__"
+
+    products = forms.ModelMultipleChoiceField(
+        queryset=Product.objects.all(),
+        widget=FilteredSelectMultiple(verbose_name="products", is_stacked=False),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance:
+            self.fields["products"].initial = self.instance.product_set.all()
+
+    def _save_m2m(self):
+        super()._save_m2m()
+        self.instance.product_set.set(self.cleaned_data["products"])
+
+
 @admin.register(Channel)
 class ChannelAdmin(TranslationAdmin):
-    fields = ["name", "url", "type"]
+    form = ChannelForm
     list_display = ("name", "url", "type")
     list_filter = ("type",)
     search_fields = ("name",)
