@@ -10,7 +10,7 @@ class PermissionBasedFieldsMixin:
         unavailable_fields = tuple(
             field
             for field in self.fields
-            if not obj.has_field_change_perm(request.user, field)
+            if not self.model.has_field_change_perm(request.user, field)
         )
         return readonly_fields + unavailable_fields
 
@@ -21,8 +21,8 @@ class PermissionBasedFieldsMixin:
             for field in fields
             if any(
                 (
-                    obj.has_field_view_perm(request.user, field),
-                    obj.has_field_change_perm(request.user, field),
+                    self.model.has_field_view_perm(request.user, field),
+                    self.model.has_field_change_perm(request.user, field),
                 )
             )
         ]
