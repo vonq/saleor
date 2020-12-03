@@ -435,7 +435,7 @@ class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMix
         )
 
     title = models.CharField(max_length=200, null=True)
-    url = models.URLField(max_length=300, null=True)
+    url = models.URLField(max_length=300, null=True, blank=True)
     channel = models.ForeignKey(
         Channel, on_delete=models.SET_NULL, null=True, blank=True
     )
@@ -482,15 +482,15 @@ class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMix
         null=True,
     )
 
-    salesforce_id = models.CharField(max_length=36, null=True)
+    salesforce_id = models.CharField(max_length=36, null=True, blank=True)
     product_id = models.CharField(
         max_length=36,
         unique=True,
         default=uuid.uuid4,
     )
 
-    salesforce_product_type = models.CharField(max_length=30, null=True)
-    salesforce_product_category = models.CharField(max_length=30, null=True)
+    salesforce_product_type = models.CharField(max_length=30, null=True, blank=True)
+    salesforce_product_category = models.CharField(max_length=30, null=True, blank=True)
     salesforce_industries = ArrayField(
         base_field=models.CharField(max_length=80, blank=False), default=list
     )
@@ -500,7 +500,7 @@ class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMix
 
     salesforce_cross_postings = models.JSONField(null=True, blank=True, default=list)
 
-    desq_product_id = models.CharField(max_length=10, null=True)
+    desq_product_id = models.CharField(max_length=10, null=True, blank=True)
 
     similarweb_estimated_monthly_visits = models.CharField(
         max_length=300, null=True, blank=True, default=None
