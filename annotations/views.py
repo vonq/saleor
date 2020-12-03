@@ -13,6 +13,7 @@ from api.products.models import Industry, Product, JobFunction, JobTitle, Locati
 import json
 import csv
 
+
 def index(request):
     return HttpResponse("left intentionally blank")
 
@@ -150,7 +151,7 @@ def get_boards(request):
 
 @permission_required("products.view_product")
 def get_products_text_json(request):
-    products = Product.objects.order_by('id')
+    products = Product.objects.order_by("id")
     return JsonResponse(
         {
             "products_text": list(
@@ -244,11 +245,15 @@ def get_job_functions_json(request):
 @permission_required("products.view_location")
 def get_locations_json(request):
     locations = Location.objects.all()
-    return JsonResponse({"locations": list(locations.values("id",
-                                                            "canonical_name",
-                                                            "mapbox_within__canonical_name",
-                                                            "approved"))}
-                        )
+    return JsonResponse(
+        {
+            "locations": list(
+                locations.values(
+                    "id", "canonical_name", "mapbox_within__canonical_name", "approved"
+                )
+            )
+        }
+    )
 
 
 @permission_required("products.view_jobtitle")
@@ -324,6 +329,7 @@ def set_category_values(request):
         }
     )
 
+
 @permission_required("products.change_product")
 def set_locations(request):
     try:
@@ -350,21 +356,32 @@ def set_locations(request):
                 board.job_functions.all().values_list("name", flat=True)
             ),
             "channelType": "",
-            "locations": list(board.locations.all().values_list("canonical_name", flat=True))
+            "locations": list(
+                board.locations.all().values_list("canonical_name", flat=True)
+            ),
         }
     )
 
+
 def export_options_json(request):
-    return JsonResponse({'categories': list(Industry.objects.all().values('name_en', 'name_de', 'name_nl')),
-                         'job_functions': list(JobFunction.objects.all().values('name', 'parent__name'))
-                         })
+    return JsonResponse(
+        {
+            "categories": list(
+                Industry.objects.all().values("name_en", "name_de", "name_nl")
+            ),
+            "job_functions": list(
+                JobFunction.objects.all().values("name", "parent__name")
+            ),
+        }
+    )
+
 
 def export_categories_csv(request):
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="categories.csv"'
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="categories.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(['Name EN', 'Name DE', 'Name NL'])
+    writer.writerow(["Name EN", "Name DE", "Name NL"])
     for category in Industry.objects.all():
         writer.writerow([category.name_en, category.name_de, category.name_nl])
 

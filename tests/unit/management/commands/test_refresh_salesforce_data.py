@@ -3,14 +3,15 @@ from unittest.mock import patch, mock_open
 from django.test import TestCase, tag
 from django.core import management
 
-from api.products.models import Product, Location
+from api.products.models import Product, Location, Channel
 
-json_data = """{"salesforce_id": "1", "product_name": "Product 1"}
-{"salesforce_id": "2", "product_name": "Product 2", "description": "New description"}
-{"salesforce_id": "3", "product_name": "Product 3 - I'm new"}
+json_data = """{"salesforce_id": "1", "jmp_product_name": "Product 1"}
+{"salesforce_id": "2", "jmp_product_name": "Product 2", "description": "New description"}
+{"salesforce_id": "3", "jmp_product_name": "Product 3 - I'm new"}
 {"salesforce_id": "4", "is_available_on_jmp": false}
 {"salesforce_id": "5", "relevant_location_names": ["Brazil", "Netherlands"]}
 {"salesforce_id": "6", "desq_id": "5432"}
+{"salesforce_id": "7", "jmp_product_name": "Product 7", "channel_name": "Channel 1", "channel_id": "1"}
 """
 
 
@@ -53,6 +54,28 @@ class CommandTests(TestCase):
         )
         self.assertEquals(
             Product.objects.filter(salesforce_id="2").first().title, "Product 2"
+        )
+
+    @patch("algoliasearch_django.registration.AlgoliaEngine.save_record")
+    @patch("builtins.open", new_callable=mock_open, read_data=json_data)
+    def test_builds_complete_title(self, mock_file, mock_save):
+        management.call_command(self.command, self.fake_path)
+        self.assertEquals(Product.objects.filter(title="Product 7").count(), 1)
+        self.assertEquals(
+            Product.objects.filter(salesforce_id="7").first().title, "Product 7"
+        )
+        self.assertEquals(
+            Product.objects.filter(salesforce_id="7").first().external_product_name,
+            "Channel 1 - Product 7",
+        )
+
+    @patch("algoliasearch_django.registration.AlgoliaEngine.save_record")
+    @patch("builtins.open", new_callable=mock_open, read_data=json_data)
+    def test_creates_channel(self, mock_file, mock_save):
+        management.call_command(self.command, self.fake_path)
+        self.assertEquals(Channel.objects.filter(salesforce_id="1").count(), 1)
+        self.assertEquals(
+            Channel.objects.filter(salesforce_id="1").first().name, "Channel 1"
         )
 
     @patch("algoliasearch_django.registration.AlgoliaEngine.save_record")

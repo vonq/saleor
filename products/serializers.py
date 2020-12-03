@@ -108,6 +108,10 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_time_to_process(product):
         return {"range": "hours", "period": product.time_to_process}
 
+    @staticmethod
+    def get_title(product):
+        return product.external_product_name
+
     locations = LimitedLocationSerializer(many=True, read_only=True)
     job_functions = LimitedJobFunctionSerializer(many=True, read_only=True)
     industries = IndustrySerializer(many=True, read_only=True)
@@ -119,6 +123,7 @@ class ProductSerializer(serializers.ModelSerializer):
     homepage = serializers.SerializerMethodField()
     type = serializers.SerializerMethodField()
     logo_url = serializers.SerializerMethodField()
+    title = serializers.SerializerMethodField()
 
     class Meta:
         model = Product

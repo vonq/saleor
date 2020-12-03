@@ -235,8 +235,9 @@ class Location(models.Model):
 
 
 class Channel(models.Model):
+    salesforce_id = models.CharField(max_length=20, null=True)
     name = models.CharField(max_length=200)
-    url = models.URLField(max_length=300, unique=True)
+    url = models.URLField(max_length=300)
     TYPE_CHOICES = [
         ("job board", "Job Board"),
         ("social media", "Social Media"),
@@ -434,6 +435,19 @@ class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMix
             ("can_change_product_job_functions", "Can change product job functions"),
         )
 
+    class TrackingMethod(models.TextChoices):
+        FIXED = "Fixed duration", _("Fixed duration")
+        SLOTS = "Slots", _("Slots")
+        FREE = "Free", _("Free")
+        PROGRAMMATIC = "Programmatic", _("Programmatic")
+        NA = "N/A", _("N/A")
+
+    @property
+    def external_product_name(self):
+        if self.channel and self.channel.name:
+            return self.channel.name + " - " + self.title
+        return self.title
+
     title = models.CharField(max_length=200, null=True)
     url = models.URLField(max_length=300, null=True, blank=True)
     channel = models.ForeignKey(
@@ -497,8 +511,14 @@ class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMix
     salesforce_job_categories = ArrayField(
         base_field=models.CharField(max_length=80, blank=False), default=list
     )
-
     salesforce_cross_postings = models.JSONField(null=True, blank=True, default=list)
+
+    is_recommended = models.BooleanField(default=False)
+    is_html_required = models.BooleanField(default=False)
+
+    tracking_method = models.TextField(
+        choices=TrackingMethod.choices, default=TrackingMethod.FIXED
+    )
 
     desq_product_id = models.CharField(max_length=10, null=True, blank=True)
 

@@ -28,7 +28,6 @@ class SetLocationViewTestCase(TestCase):
         self.board2 = Product(title="Other jobs")
         self.board2.save()
 
-
     def _login_as_superuser(self):
         User.objects.create_superuser(username="testuser", password="pass")
         self.client.login(username="testuser", password="pass")
@@ -46,7 +45,7 @@ class SetLocationViewTestCase(TestCase):
 
         payload = {
             "id": self.board.id,
-            "locations": ['London', 'France'],
+            "locations": ["London", "France"],
         }
 
         resp = self.client.post(
@@ -58,11 +57,7 @@ class SetLocationViewTestCase(TestCase):
         self.assertEqual(resp.status_code, 200)
 
         self.assertEqual(
-            Product.objects.all()
-                .filter(pk=self.board.id)
-                .first()
-                .locations
-                .count(),
+            Product.objects.all().filter(pk=self.board.id).first().locations.count(),
             2,
         )
 
@@ -77,19 +72,15 @@ class SetLocationViewTestCase(TestCase):
 
         self.assertEqual(
             Product.objects.all()
-                .filter(pk=self.board.id)
-                .first()
-                .locations.last()
-                .canonical_name,
+            .filter(pk=self.board.id)
+            .first()
+            .locations.last()
+            .canonical_name,
             "France",
         )
 
         self.assertEqual(
-            Product.objects.all()
-                .filter(pk=self.board2.id)
-                .first()
-                .locations
-                .count(),
+            Product.objects.all().filter(pk=self.board2.id).first().locations.count(),
             0,
         )
 

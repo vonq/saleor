@@ -1,6 +1,8 @@
+from typing import Optional
+
 from django.core.management.base import BaseCommand
 
-from api.products.models import Product, Location
+from api.products.models import Product, Location, Channel
 import json
 
 
@@ -11,7 +13,7 @@ class Command(BaseCommand):
 
     # A map between the names we have in our models and the field names from the file
     fields_to_update_map = {
-        "title": "product_name",
+        "title": "jmp_product_name",
         "description": "description",
         "is_active": "is_active",
         "salesforce_product_type": "type",
@@ -34,6 +36,14 @@ class Command(BaseCommand):
         "title_nl": "product_name_nl",
         "title_de": "product_name_de",
         "status": "status",
+        "is_recommended": "is_recommended_product",
+        "is_html_required": "is_html_required",
+        "tracking_method": "tracking_method",
+    }
+
+    channel_fields_to_update_map = {
+        "name": "channel_name",
+        "salesforce_id": "channel_id",
     }
 
     def add_arguments(self, parser):
@@ -46,24 +56,58 @@ class Command(BaseCommand):
                 self.stdout.write("Refreshing Salesforce data...")
                 for row in json_file:
                     product = json.loads(row)
-                    self.__update_product(product)
+                    self.__update(product)
             self.stdout.write(self.style.SUCCESS("Success"))
 
         except OSError:
             self.stdout.write(self.style.ERROR('Could not open file "%s".' % json_file))
 
-    def __update_product(self, new: dict):
+    def __update(self, new: dict):
         """
-        Updates or creates a product based on a dict with data.
-        Only fields present in fields_to_update_map will be updated.
+        Updates or creates product (and its channel) based on a dict with data.
+        Only fields present in fields_to_update_map and channel_fields_to_update_map will be updated.
         :param new: The dict with fields to be updated
         :return:
         """
-        current, product_created_flag = Product.objects.get_or_create(
+        current_product = self.__update_product(new=new)
+        current_channel = self.__update_channel(new=new)
+        if current_channel:
+            current_channel.save()
+            self.__link_product_to_channel(current_product, current_channel)
+        current_product.save()
+
+    def __link_product_to_channel(self, product: Product, channel: Channel):
+        """ Updates a product's channel foreign key """
+        if product.channel != channel:
+            self.stdout.write(
+                "Updating product {}'s channel to {}".format(
+                    product.title, channel.name
+                )
+            )
+            product.channel = channel
+
+    def __update_product(self, new: dict) -> Product:
+        current_product, product_created_flag = Product.objects.get_or_create(
             salesforce_id=new["salesforce_id"]
         )
         if product_created_flag:
-            self.stdout.write("Creating product {}".format(new["product_name"]))
+            self.stdout.write("Creating product {}".format(new.get("jmp_product_name")))
+        self.__update_product_fields(current=current_product, new=new)
+        return current_product
+
+    def __update_channel(self, new: dict) -> Optional[Channel]:
+        channel_id = new.get("channel_id")
+        if not channel_id:
+            return None
+        current_channel, channel_created_flag = Channel.objects.get_or_create(
+            salesforce_id=channel_id
+        )
+        if channel_created_flag:
+            self.stdout.write("Creating channel {}".format(new.get("channel_name")))
+        self.__update_channel_fields(current=current_channel, new=new)
+        return current_channel
+
+    def __update_product_fields(self, current, new):
         for current_field_name, new_field_name in self.fields_to_update_map.items():
             if current_field_name == "locations":
                 self.__add_locations(
@@ -76,7 +120,18 @@ class Command(BaseCommand):
                     new_field_name=new_field_name,
                     new_obj=new,
                 )
-        current.save()
+
+    def __update_channel_fields(self, current, new):
+        for (
+            current_field_name,
+            new_field_name,
+        ) in self.channel_fields_to_update_map.items():
+            self.__update_field(
+                current_field_name=current_field_name,
+                current_obj=current,
+                new_field_name=new_field_name,
+                new_obj=new,
+            )
 
     def __update_field(
         self,
