@@ -538,7 +538,7 @@ class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMix
         null=True,
     )
     salesforce_industries = ArrayField(
-        base_field=models.CharField(max_length=80, blank=False), default=list
+        base_field=models.CharField(max_length=80, blank=True), default=list
     )
     salesforce_job_categories = ArrayField(
         base_field=models.CharField(max_length=80, blank=False), default=list
