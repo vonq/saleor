@@ -41,7 +41,6 @@ admin.site.register(User, UserAdmin)
 class ProductAdmin(PermissionBasedFieldsMixin, TranslationAdmin):
     readonly_fields = [
         "salesforce_id",
-        "salesforce_industries",
     ]
 
     fields = [
@@ -56,6 +55,7 @@ class ProductAdmin(PermissionBasedFieldsMixin, TranslationAdmin):
         "is_recommended",
         "has_html_posting",
         "salesforce_product_category",
+        "salesforce_industries",
         "locations",
         "similarweb_top_country_shares",
         "tracking_method",
