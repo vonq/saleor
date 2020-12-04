@@ -44,6 +44,7 @@ class Command(BaseCommand):
     channel_fields_to_update_map = {
         "name": "channel_name",
         "salesforce_id": "channel_id",
+        "salesforce_account_id": "account_id",
     }
 
     def add_arguments(self, parser):

@@ -1,9 +1,11 @@
+from ajax_select.fields import AutoCompleteSelectField
+from django import forms
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin.widgets import FilteredSelectMultiple
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User
 from django.db.models import Count
-from django import forms
-
 from modeltranslation.admin import TranslationAdmin
 from rest_framework.utils import json
 
@@ -16,11 +18,8 @@ from api.products.models import (
     Location,
     Industry,
 )
-
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.contrib.auth.models import User
-
 from api.products.models import Profile
+from api.products.signals import channel_updated, product_updated
 
 
 class ProfileInline(admin.StackedInline):
@@ -37,12 +36,30 @@ admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 
 
+class ProductForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = "__all__"
+
+    def _save_m2m(self):
+        super()._save_m2m()
+        product_updated.send(sender=self.instance.__class__, instance=self.instance)
+
+    def save(self, commit=True):
+        self.instance.salesforce_sync_status = Product.SyncStatusChoices.PENDING
+        return super().save(commit)
+
+
 @admin.register(Product)
 class ProductAdmin(PermissionBasedFieldsMixin, TranslationAdmin):
+    form = ProductForm
     readonly_fields = [
         "product_id",
         "salesforce_industries",
         "logo_url",
+        "salesforce_id",
+        "salesforce_sync_status",
+        "salesforce_last_sync",
     ]
 
     fields = [
@@ -71,9 +88,13 @@ class ProductAdmin(PermissionBasedFieldsMixin, TranslationAdmin):
         "product_id",
         "unit_price",
         "rate_card_price",
+        "salesforce_sync_status",
+        "salesforce_last_sync",
+        "salesforce_id",
     ]
     filter_horizontal = ("industries", "job_functions", "locations")
     search_fields = ("title", "description")
+    autocomplete_fields = ("channel",)
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == "locations":
@@ -92,6 +113,9 @@ class ChannelForm(forms.ModelForm):
         widget=FilteredSelectMultiple(verbose_name="products", is_stacked=False),
         required=False,
     )
+    salesforce_account_id = AutoCompleteSelectField(
+        "account", required=True, help_text=None
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -101,6 +125,11 @@ class ChannelForm(forms.ModelForm):
     def _save_m2m(self):
         super()._save_m2m()
         self.instance.product_set.set(self.cleaned_data["products"])
+        channel_updated.send(sender=self.instance.__class__, instance=self.instance)
+
+    def save(self, commit=True):
+        self.instance.salesforce_sync_status = Channel.SyncStatusChoices.PENDING
+        return super().save(commit)
 
 
 @admin.register(Channel)
@@ -109,6 +138,11 @@ class ChannelAdmin(TranslationAdmin):
     list_display = ("name", "url", "type", "is_active")
     list_filter = ("type", "is_active")
     search_fields = ("name",)
+    readonly_fields = (
+        "salesforce_id",
+        "salesforce_sync_status",
+        "salesforce_last_sync",
+    )
 
 
 @admin.register(JobTitle)

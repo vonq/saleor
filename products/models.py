@@ -1,8 +1,10 @@
 import itertools
 import re
 import uuid
+import datetime
 from typing import List, Iterable
 
+from dateutil.tz import UTC
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import FieldError
@@ -14,13 +16,33 @@ from modeltranslation.fields import TranslationFieldDescriptor
 from api.field_permissions.models import FieldPermissionModelMixin
 from api.products.geocoder import Geocoder
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from api.settings import AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME
 
 from django.core.validators import FileExtensionValidator
 from django.core.exceptions import ValidationError
+
+
+class SFSyncable(models.Model):
+    class Meta:
+        abstract = True
+
+    class SyncStatusChoices(models.TextChoices):
+        SYNCED = "synced"
+        UNSYNCED = "unsynced"
+        PENDING = "pending"
+
+    salesforce_sync_status = models.CharField(
+        max_length=8,
+        choices=SyncStatusChoices.choices,
+        default=SyncStatusChoices.UNSYNCED,
+    )
+    salesforce_last_sync = models.DateTimeField(default=None, null=True)
+
+    def mark_as_synced(self):
+        self.salesforce_sync_status = self.SyncStatusChoices.SYNCED
+        self.salesforce_last_sync = datetime.datetime.now(tz=UTC)
+        self.save()
 
 
 class AcrossLanguagesQuerySet(QuerySet):
@@ -245,11 +267,12 @@ class Location(models.Model):
         )
 
 
-class Channel(models.Model):
+class Channel(SFSyncable):
     salesforce_id = models.CharField(max_length=20, null=True)
     name = models.CharField(max_length=200)
     url = models.URLField(max_length=300)
     is_active = models.BooleanField(default=False)
+    salesforce_account_id = models.CharField(max_length=20, null=True)
     TYPE_CHOICES = [
         ("job board", "Job Board"),
         ("social media", "Social Media"),
@@ -432,7 +455,7 @@ class IndexSearchableProductMixin:
         return self.salesforce_product_type in Product.SalesforceProductType.products()
 
 
-class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMixin):
+class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin):
     def set_product_id(self):
         if self.desq_product_id:
             product_id = self.desq_product_id
@@ -688,10 +711,3 @@ class Profile(models.Model):
     type = models.TextField(
         max_length=15, blank=True, choices=Type.choices, default=Type.INTERNAL
     )
-
-
-@receiver(post_save, sender=User)
-def create_or_update_user_profile(sender, instance, created, **kwargs):
-    if created and not hasattr(instance, "profile"):
-        Profile.objects.create(user=instance)
-    instance.profile.save()

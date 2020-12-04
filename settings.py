@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 
 from pathlib import Path
 import os
+import sys
 
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -67,6 +68,8 @@ INSTALLED_APPS = [
     "health_check.db",  # stock Django health checkers
     "rest_framework",
     "drf_yasg2",
+    "django_q",
+    "ajax_select",
     "api",
     "api.products",
     "api.annotations",
@@ -203,6 +206,17 @@ DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
 AWS_S3_REGION_NAME = "eu-central-1"
 
+if is_development():
+    DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+
+SALESFORCE_SYNC_ENABLED = bool(int(os.getenv("SALESFORCE_SYNC_ENABLED", 0)))
+
+SALESFORCE_DOMAIN = os.getenv("SALESFORCE_DOMAIN")
+SALESFORCE_CLIENT_ID = os.getenv("SALESFORCE_CLIENT_ID")
+SALESFORCE_CLIENT_SECRET = os.getenv("SALESFORCE_CLIENT_SECRET")
+SALESFORCE_API_USERNAME = os.getenv("SALESFORCE_API_USERNAME")
+SALESFORCE_API_PASSWORD = os.getenv("SALESFORCE_API_PASSWORD")
+
 if not is_development():
     sentry_sdk.init(
         dsn="https://a0ea7b5b249d4181b092b5f627fc2067@o218462.ingest.sentry.io/5514267",
@@ -210,3 +224,16 @@ if not is_development():
         environment=ENV,
         send_default_pii=True,
     )
+
+
+Q_CLUSTER = {
+    "name": "DjangORM",
+    "workers": 4,
+    "timeout": 120,
+    "retry": 120,
+    "queue_limit": 50,
+    "max_attempts": 3,
+    "bulk": 10,
+    "orm": "default",
+    "poll": 1,
+}

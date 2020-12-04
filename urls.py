@@ -19,6 +19,8 @@ from drf_yasg2 import openapi
 from drf_yasg2.views import get_schema_view
 from rest_framework import permissions
 
+from ajax_select import urls as ajax_select_urls
+
 from api.products.views import (
     LocationSearchViewSet,
     JobTitleSearchViewSet,
@@ -52,6 +54,7 @@ urlpatterns = [
         JobTitleSearchViewSet.as_view({"get": "list"}),
         name="job-titles",
     ),
+    path(r"ajax_select/", include(ajax_select_urls)),
     path(
         r"channels/",
         ChannelsViewSet.as_view({"get": "list"}),
