@@ -41,8 +41,6 @@ admin.site.register(User, UserAdmin)
 class ProductAdmin(PermissionBasedFieldsMixin, TranslationAdmin):
     readonly_fields = [
         "salesforce_id",
-        "unit_price",
-        "rate_card_price",
     ]
 
     fields = [
