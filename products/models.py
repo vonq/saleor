@@ -442,6 +442,30 @@ class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMix
         PROGRAMMATIC = "Programmatic", _("Programmatic")
         NA = "N/A", _("N/A")
 
+    class SalesforceProductCategory(models.TextChoices):
+        WALLET = "Wallet", _("Wallet")
+        INTERNAL = "Internal Product", _("Internal Product")
+        GENERIC = "Generic Product", _("Generic Product")
+        CUSTOMER_SPECIFIC = "Customer Specific Product", _("Customer Specific Product")
+        NONE = None, _("--None--")
+
+    class SalesforceProductType(models.TextChoices):
+        SOCIAL = "Social", _("Social")
+        PRINT = "Print / Offline", _("Print / Offline")
+        HANDLING_FEE = "Handling fee", _("Handling fee")
+        IMAGE_CREATION = "Image creation", _("Image creation")
+        WEBSITE_CREATION = "Website creation", _("Website creation")
+        VONQ_SERVICES = "VONQ Services/Hours", _("VONQ Services/Hours")
+        VIDEO_CREATION = "Video creation", _("Video creation")
+        TEXT_SERVICES = "Text services", _("Text services")
+        OTHER = "Other", _("Other")
+        FINANCE = "Finance", _("Finance")
+        JOB_BOARD = "Jobboard", _("Jobboard")
+        SUBSCRIPTION = "Subscription", _("Subscription")
+        WALLET = "Wallet", _("Wallet")
+        GOOGLE = "Google", _("Google")
+        NONE = None, _("--None--")
+
     @property
     def external_product_name(self):
         if self.channel and self.channel.name:
@@ -503,8 +527,16 @@ class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMix
         default=uuid.uuid4,
     )
 
-    salesforce_product_type = models.CharField(max_length=30, null=True, blank=True)
-    salesforce_product_category = models.CharField(max_length=30, null=True, blank=True)
+    salesforce_product_type = models.TextField(
+        choices=SalesforceProductType.choices,
+        default=SalesforceProductType.NONE,
+        null=True,
+    )
+    salesforce_product_category = models.TextField(
+        choices=SalesforceProductCategory.choices,
+        default=SalesforceProductCategory.NONE,
+        null=True,
+    )
     salesforce_industries = ArrayField(
         base_field=models.CharField(max_length=80, blank=False), default=list
     )
@@ -514,7 +546,7 @@ class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMix
     salesforce_cross_postings = models.JSONField(null=True, blank=True, default=list)
 
     is_recommended = models.BooleanField(default=False)
-    is_html_required = models.BooleanField(default=False)
+    has_html_posting = models.BooleanField(default=False)
 
     tracking_method = models.TextField(
         choices=TrackingMethod.choices, default=TrackingMethod.FIXED

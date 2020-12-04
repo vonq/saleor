@@ -12,7 +12,8 @@ class PermissionBasedFieldsMixin:
             for field in self.fields
             if not self.model.has_field_change_perm(request.user, field)
         )
-        return readonly_fields + unavailable_fields
+
+        return tuple(readonly_fields) + unavailable_fields
 
     def get_fields(self, request, obj=None):
         fields = super().get_fields(request, obj)

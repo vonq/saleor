@@ -37,7 +37,7 @@ class Command(BaseCommand):
         "title_de": "product_name_de",
         "status": "status",
         "is_recommended": "is_recommended_product",
-        "is_html_required": "is_html_required",
+        "has_html_posting": "has_html_posting",
         "tracking_method": "tracking_method",
     }
 

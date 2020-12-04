@@ -39,6 +39,12 @@ admin.site.register(User, UserAdmin)
 
 @admin.register(Product)
 class ProductAdmin(PermissionBasedFieldsMixin, TranslationAdmin):
+    readonly_fields = [
+        "salesforce_id",
+        "unit_price",
+        "rate_card_price",
+    ]
+
     fields = [
         "title",
         "url",
@@ -46,12 +52,23 @@ class ProductAdmin(PermissionBasedFieldsMixin, TranslationAdmin):
         "description",
         "industries",
         "job_functions",
+        "status",
         "is_active",
+        "is_recommended",
+        "has_html_posting",
         "salesforce_product_category",
         "salesforce_industries",
         "locations",
         "similarweb_top_country_shares",
-        "status",
+        "tracking_method",
+        "logo_url",
+        "salesforce_product_type",
+        "salesforce_cross_postings",
+        "duration_days",
+        "time_to_process",
+        "salesforce_id",
+        "unit_price",
+        "rate_card_price",
     ]
     filter_horizontal = ("industries", "job_functions", "locations")
     search_fields = ("title", "description")
