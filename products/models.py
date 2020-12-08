@@ -16,6 +16,10 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
+from api.settings import AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME
+
+from django.core.validators import FileExtensionValidator
+from django.core.exceptions import ValidationError
 
 
 class AcrossLanguagesQuerySet(QuerySet):
@@ -421,6 +425,24 @@ class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMix
         self.set_product_id()
         super(Product, self).save(*args, **kwargs)
 
+    class Logo:
+        @staticmethod
+        def logo_path(instance, filename):
+            return "{0}/{1}".format(instance.product_id, filename)
+
+        allowed_extensions = ["png", "jpg", "gif", "svg", "jpeg"]
+
+        @staticmethod
+        def validate_logo_size(value):
+            filesize = value.size
+
+            if filesize > 1048576:
+                raise ValidationError(
+                    "The maximum file size that can be uploaded is 1MB"
+                )
+            else:
+                return value
+
     class Meta:
         permissions = (
             # field level permissions, formatted as "can_{view|change}_{modelname}_{fieldname}"
@@ -472,6 +494,12 @@ class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMix
             return self.channel.name + " - " + self.title
         return self.title
 
+    @property
+    def logo_url(self):
+        if self.logo:
+            return f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/{self.logo.name}"
+        return self.salesforce_logo_url
+
     title = models.CharField(max_length=200, null=True)
     url = models.URLField(max_length=300, null=True, blank=True)
     channel = models.ForeignKey(
@@ -490,7 +518,19 @@ class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMix
         related_query_name="job_function",
         blank=True,
     )
-    logo_url = models.CharField(max_length=300, null=True, blank=True, default=None)
+
+    salesforce_logo_url = models.CharField(
+        max_length=300, null=True, blank=True, default=None
+    )
+    logo = models.FileField(
+        null=True,
+        blank=True,
+        upload_to=Logo.logo_path,
+        validators=[
+            FileExtensionValidator(allowed_extensions=Logo.allowed_extensions),
+            Logo.validate_logo_size,
+        ],
+    )
     is_active = models.BooleanField(default=False)
 
     available_in_ats = models.BooleanField(default=True)

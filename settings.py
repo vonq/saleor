@@ -195,6 +195,13 @@ SIMILARWEB_API_KEY = os.getenv("SIMILARWEB_API_KEY")
 
 MAPBOX_KEY = os.getenv("MAPBOX_ACCESS_TOKEN")
 
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
+AWS_S3_REGION_NAME = "eu-central-1"
+
 if not is_development():
     sentry_sdk.init(
         dsn="https://a0ea7b5b249d4181b092b5f627fc2067@o218462.ingest.sentry.io/5514267",

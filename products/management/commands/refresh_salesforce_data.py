@@ -22,7 +22,7 @@ class Command(BaseCommand):
         "desq_product_id": "desq_id",
         "url": "channel_url",
         "salesforce_product_category": "product_category",
-        "logo_url": "product_logo",
+        "salesforce_logo_url": "product_logo",
         "salesforce_cross_postings": "cross_postings",
         "locations": "relevant_location_names",
         "salesforce_industries": "industries",

@@ -50,7 +50,6 @@ class ProductIndex(AlgoliaIndex):
             "unordered(description)",
             "unordered(searchable_industries)",
             "unordered(searchable_job_functions)",
-            "unordered(logo_url)",
             "unordered(available_in_ats)",
             "unordered(salesforce_product_category)",
             "unordered(searchable_job_titles_ids)",

@@ -40,8 +40,9 @@ admin.site.register(User, UserAdmin)
 @admin.register(Product)
 class ProductAdmin(PermissionBasedFieldsMixin, TranslationAdmin):
     readonly_fields = [
-        "salesforce_id",
+        "product_id",
         "salesforce_industries",
+        "logo_url",
     ]
 
     fields = [
@@ -60,12 +61,13 @@ class ProductAdmin(PermissionBasedFieldsMixin, TranslationAdmin):
         "similarweb_top_country_shares",
         "tracking_method",
         "logo_url",
+        "logo",
         "salesforce_product_type",
         "salesforce_cross_postings",
         "salesforce_industries",
         "duration_days",
         "time_to_process",
-        "salesforce_id",
+        "product_id",
         "unit_price",
         "rate_card_price",
     ]
