@@ -580,7 +580,7 @@ class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMix
 class Profile(models.Model):
     class Type(models.TextChoices):
         JMP = "jmp", _("JMP")
-        ATS = "ats", _("ATS")
+        MAPI = "mapi", _("MAPI")
         INTERNAL = "internal", _("Internal")
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)

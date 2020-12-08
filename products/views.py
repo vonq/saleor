@@ -167,8 +167,16 @@ class ProductsViewSet(viewsets.ModelViewSet):
             )
         return self._paginator
 
+    def get_queryset(self):
+        active_products = self.queryset.filter(is_active=True).exclude(
+            status__in=["Blacklisted", "Disabled"]
+        )
+        if self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]:
+            return active_products.filter(available_in_jmp=True)
+        return active_products
+
     def get_all_filters(self):
-        if self.request.user.profile.type == Profile.Type.JMP:
+        if self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]:
             all_filters = self.search_filters + (IsAvailableInJmpFacetFilter,)
             return all_filters
         return self.search_filters
@@ -270,7 +278,10 @@ class ProductsViewSet(viewsets.ModelViewSet):
         ProductSearchSerializer(data=self.request.query_params).is_valid(
             raise_exception=True
         )
-        queryset = self.search_queryset(self.get_queryset())
+        queryset = self.get_queryset()
+        if self.request.query_params:
+            # a pure list view doesn't need to hit the search index
+            queryset = self.search_queryset(queryset)
         page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True)
         return self.get_paginated_response(serializer.data)

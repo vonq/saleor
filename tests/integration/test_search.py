@@ -543,3 +543,27 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         )
 
         self.assertEquals(resp.status_code, 404)
+
+    def test_mapi_sees_jmp_products(self):
+        User = get_user_model()
+        mapi_user = User.objects.create(username="mapi", password="test")
+        mapi_user.profile.type = "mapi"
+        self.client.force_login(mapi_user)
+
+        resp = self.client.get(
+            reverse(
+                "api.products:products-detail",
+                kwargs={"product_id": self.available_in_jmp_product.product_id},
+            )
+        )
+
+        self.assertEquals(resp.status_code, 200)
+
+        resp = self.client.get(
+            reverse(
+                "api.products:products-detail",
+                kwargs={"product_id": self.unavailable_in_jmp_product.product_id},
+            )
+        )
+
+        self.assertEquals(resp.status_code, 404)
