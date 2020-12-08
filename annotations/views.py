@@ -112,7 +112,7 @@ def get_boards(request):
 
             locs = []
             for loc in board.locations.all():
-                locs.append(loc.fully_qualified_place_name)
+                locs.append({'canonical_name':loc.canonical_name, 'mapbox_id':loc.mapbox_id})
 
             monthly_visits = (
                 board.similarweb_estimated_monthly_visits
@@ -175,7 +175,7 @@ def get_product_json(request, id):
 
     locs = []
     for loc in product.locations.all():
-        locs.append(loc.canonical_name)
+        locs.append(loc.fully_qualified_place_name())
 
     monthly_visits = (
         product.similarweb_estimated_monthly_visits
@@ -249,7 +249,12 @@ def get_locations_json(request):
         {
             "locations": list(
                 locations.values(
-                    "id", "canonical_name", "mapbox_within__canonical_name", "approved"
+                    "id",
+                    "canonical_name",
+                    "mapbox_within__canonical_name",
+                    "mapbox_id",
+                    "mapbox_within__mapbox_id",
+                    "approved"
                 )
             )
         }

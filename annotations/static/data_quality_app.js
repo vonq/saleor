@@ -26,14 +26,16 @@ var DataQualityApp = new Vue({
             // just parent < child, initially
             parent_lookup = []
             for (loc of this.locations) {
-                if (loc.mapbox_within__canonical_name != null) {
-                    parent_lookup[loc.canonical_name] = loc.mapbox_within__canonical_name
+                if (loc.mapbox_within__mapbox_id != null) {
+                    parent_lookup[loc.mapbox_id] = loc.mapbox_within__mapbox_id
                 }
             }
 
             return this.products.filter(product => {
                 return product.salesforce_product_category == 'Generic Product'
-                    && product.location.some(loc => product.location.includes(parent_lookup[loc]))
+                    && product.location.some(loc =>
+                        product.location.map(l=>l.mapbox_id).includes(parent_lookup[loc.mapbox_id])
+                    )
             })
         }
     },
@@ -80,7 +82,7 @@ var DataQualityApp = new Vue({
                         return {
                             'label': product.title,
                             'admin_url': '/admin/products/product/' + product.id + '/change',
-                            'values': product.location
+                            'values': product.location.map(l => l.canonical_name)
                         }
                     }) : null
                 },
