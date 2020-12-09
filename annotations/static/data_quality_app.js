@@ -6,9 +6,11 @@ var DataQualityApp = new Vue({
         products: [],
         jobFunctionTree: {},
         locationTree: {},
-        parent_lookup: {}
+        parent_lookup: {},
+        branches: {}
     },
     mounted: function () {
+        vm = this
         d3.json('/annotations/locations').then(
             data => {
                 this.locations = data.locations
@@ -16,6 +18,16 @@ var DataQualityApp = new Vue({
                     if (loc.mapbox_within__mapbox_id != null) {
                         this.parent_lookup[loc.mapbox_id] = loc.mapbox_within__mapbox_id
                     }
+                }
+
+                 let ancestors = function(mapbox_id) {
+                    let parent_lookup = vm.parent_lookup[mapbox_id]
+                    return parent_lookup ? [parent_lookup].concat(ancestors(parent_lookup)) : []
+                }
+
+                // once we have complete lookup we can build all branches
+                for (loc of vm.locations) {
+                    this.branches[loc.mapbox_id] = ancestors(loc.mapbox_id)
                 }
             }
         )
@@ -65,15 +77,19 @@ var DataQualityApp = new Vue({
             if(this.products.length == 0) return []
 
             return this.products.filter(product => {
+                let prod_loc_ids = product.location.map(l=>l.mapbox_id)
                 return product.salesforce_product_category == 'Generic Product'
                     && product.location.some(loc =>
-                        product.location.map(l=>l.mapbox_id).includes(this.parent_lookup[loc.mapbox_id])
+                        this.branches[loc.mapbox_id].some(anc => prod_loc_ids.includes(anc))
                     )
             })
         },
         pruneRedundantProductLocations : function(product) {
+            let prod_loc_ids = product.location.map(l=>l.mapbox_id)
             let cleanedLocations = product.location.filter(loc =>
-                !product.location.map(l=>l.mapbox_id).includes(this.parent_lookup[loc.mapbox_id])
+                // !prod_loc_ids.includes(this.parent_lookup[loc.mapbox_id])
+
+                !this.branches[loc.mapbox_id].some(anc => prod_loc_ids.includes(anc))
             )
             this.setLocations(product.id, cleanedLocations.map(l=>l.canonical_name))
         },
@@ -137,6 +153,16 @@ var DataQualityApp = new Vue({
                             'label':p.title,
                             'admin_url': '/admin/products/product/' + p.id + '/change',
                             'values': [p.location.length]
+                        }}) : null
+                },
+                {
+                    'label': `Locations without a continent in context`,
+                    'values': this.locations ? this.locations.filter(loc =>
+                        typeof loc.mapbox_context == 'object' && !loc.mapbox_context.some(con => con.startsWith('continent.')))
+                        .map(loc=>{ return {
+                            'label':loc.canonical_name,
+                            'admin_url': '/admin/products/product/' + loc.id + '/change',
+                            'values': [loc.mapbox_context.join(', ')]
                         }}) : null
                 }
             ]
