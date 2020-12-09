@@ -530,6 +530,7 @@ class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMix
             FileExtensionValidator(allowed_extensions=Logo.allowed_extensions),
             Logo.validate_logo_size,
         ],
+        help_text="Rules: Logo size must be 1MB max. Logo file must be an image.",
     )
     is_active = models.BooleanField(default=False)
 
