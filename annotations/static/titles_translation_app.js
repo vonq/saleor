@@ -4,7 +4,8 @@ var titleTranslationApp = new Vue({
     data: {
         titles: [],
         pageIndex: 0,
-        pageSize: 50
+        pageSize: 50,
+        orderedTitles: []
     },
     mounted:  function() {
         d3.json('/annotations/get-titles').then(data=> {
@@ -12,9 +13,23 @@ var titleTranslationApp = new Vue({
                 .filter(title => title.alias_of__id == null)
                 .filter(title => title.active)
                 .sort((a, b) => {
-                    // return b.frequency - a.frequency
-                    return a.name > b.name ? 1 : -1
+                    if(this.titleSeen(a) && this.titleSeen(b)) return b.frequency - a.frequency
+                    if(!this.titleSeen(a) && this.titleSeen(b)) return 1
+                    if(this.titleSeen(a) && !this.titleSeen(b)) return -1
+                    return b.frequency - a.frequency
+                    // return a.name > b.name ? 1 : -1
                 })
+        })
+
+        d3.csv('/static/ordered_job_titles.csv').then(data => {
+            this.orderedTitles = data.map(d=>d.title
+                .toLowerCase()
+                .replace('(m/w/d)', '')
+                .replace('(w/m/d)', '')
+                .replace('(m/w/x)', '')
+                .replace('(d/f/m)', '')
+                .trim()
+            )
         })
     },
     methods: {
@@ -61,7 +76,16 @@ var titleTranslationApp = new Vue({
             if(empty(title.name_de)) title.name_de = title.name_en
             if(empty(title.name_nl)) title.name_nl = title.name_en
             this.postUpdate(title)
+        },
+        titleSeen: function(title) {
+            return this.orderedTitles.includes(title.name_en.toLowerCase())
+                || (title.name_nl && this.orderedTitles.includes(title.name_nl.toLowerCase()))
+                || (title.name_de && this.orderedTitles.includes(title.name_de.toLowerCase()))
+        },
+        seenCount: function() {
+            return this.titles.filter(t=>this.titleSeen(t)).length
         }
+
     },
     watch: {
         pageIndex: function() {

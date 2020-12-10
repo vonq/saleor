@@ -11,6 +11,8 @@
         <div class="row">
             <div class="col-12">
                 <h2>Job Title Translation</h2>
+                <span class="float-right">👀 = title seen in orders</span>
+
                 <form class="form-inline" v-on:submit.prevent="">
                     Page <input class="form-control" type="number" min="0" v-bind:max="titles.length - 1" v-model="pageIndex">
                         <button class="btn btn-primary float-right" v-on:click="nextPage()">Save & Next</button>
@@ -18,14 +20,16 @@
                 <table class="table">
                     <thead>
                         <tr>
+                            <th scope="col"></th>
                             <th scope="col">English 🇬🇧</th>
-                            <th scope="col">fill in</th>
+                            <th scope="col">copy to blanks</th>
                             <th scope="col">Dutch 🇳🇱</th>
                             <th scope="col">German 🇩🇪</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="title in titles.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)">
+                            <td><span v-if="titleSeen(title)">👀</span></td>
                             <td>[[title.name_en]]</td>
                             <td><button v-on:click="fillIn(title)" class="btn btn-sm btn-light">→</button></td>
                             <td><input v-model="title.name_nl" v-on:blur="postUpdate(title)" class="form-control"></td>
