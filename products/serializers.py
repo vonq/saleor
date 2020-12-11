@@ -78,7 +78,11 @@ class JobTitleSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     @staticmethod
     def get_homepage(product):
-        return product.url
+        if product.url:
+            return product.url
+        if product.channel:
+            return product.channel.url
+        return None
 
     @staticmethod
     def get_type(product):

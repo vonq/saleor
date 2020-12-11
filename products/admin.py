@@ -54,6 +54,7 @@ class ProductAdmin(PermissionBasedFieldsMixin, TranslationAdmin):
         "job_functions",
         "status",
         "is_active",
+        "available_in_jmp",
         "is_recommended",
         "has_html_posting",
         "salesforce_product_category",
