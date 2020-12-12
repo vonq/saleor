@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import FieldError
 from django.db import models
-from django.db.models import QuerySet, Q, Max, Func, F
+from django.db.models import QuerySet, Q, Max, Func, F, Count
 from django.db.models.functions import Cast
 from modeltranslation.fields import TranslationFieldDescriptor
 
@@ -205,21 +205,27 @@ class Location(models.Model):
     def from_mapbox_autocomplete_response(cls, mapbox_response: list):
         locations = [cls.from_mapbox_result(result) for result in mapbox_response]
 
-        existing = cls.objects.filter(
-            mapbox_id__in=[location.mapbox_id for location in locations]
+        existing = (
+            cls.objects.filter(
+                mapbox_id__in=[location.mapbox_id for location in locations]
+            )
+            .annotate(products_count=Count("products"))
+            .order_by("products_count")
         )
         existing_ids = [location.mapbox_id for location in existing]
 
-        created = Location.objects.bulk_create(
-            filter(lambda x: x.mapbox_id not in existing_ids, locations)
-        )
+        if existing.count() < len(locations):
 
-        return list(
-            itertools.chain(
-                sorted(existing, key=lambda x: x.products.count(), reverse=True),
+            created = Location.objects.bulk_create(
+                filter(lambda x: x.mapbox_id not in existing_ids, locations)
+            )
+
+            return itertools.chain(
+                existing,
                 created,
             )
-        )
+
+        return existing
 
     @classmethod
     def list_context_locations_ids(cls, location_ids: Iterable[str]) -> List[str]:

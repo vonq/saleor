@@ -53,6 +53,7 @@ from api.products.serializers import (
 
 
 class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+    queryset = Location.objects.all()
     permission_classes = [IsAuthenticated]
     http_method_names = ("get",)
     serializer_class = LocationSerializer
@@ -69,25 +70,6 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     )
     geocoder_response = []
     locations = []
-
-    def get_queryset(self):
-        text = self.request.query_params.get("text")
-        if not text:
-            return []
-
-        # first attempt to match on continents
-        continents = Geocoder.get_continents(text)
-
-        # avoid hitting mapbox or the database again
-        # when serializing a response
-        if not self.geocoder_response:
-            self.geocoder_response = Geocoder.geocode(text)
-        if not self.locations:
-            self.locations = Location.from_mapbox_autocomplete_response(
-                self.geocoder_response
-            )
-
-        return list(itertools.chain(continents, self.locations))
 
     @swagger_auto_schema(
         operation_id="Locations",
@@ -133,14 +115,29 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         },
     )
     def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
+        text = self.request.query_params.get("text")
+        if not text:
+            return []
+
+        # first attempt to match on continents
+        continents = Geocoder.get_continents(text)
+
+        geocoder_response = Geocoder.geocode(text)
+        locations = Location.from_mapbox_autocomplete_response(geocoder_response)
+
+        serializer = self.get_serializer(
+            itertools.chain(continents, locations), many=True
+        )
+        return Response(serializer.data)
 
 
 class ProductsViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = ProductSerializer
     http_method_names = ("get",)
-    queryset = Product.objects.all()
+    queryset = Product.objects.all().prefetch_related(
+        "locations", "industries", "job_functions"
+    )
     lookup_field = "product_id"
 
     search_results_count: int = None

@@ -75,7 +75,7 @@ class JobTitleSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "job_function")
 
 
-class ProductSerializer(serializers.ModelSerializer):
+class ProductSerializer(serializers.Serializer):
     @staticmethod
     def get_homepage(product):
         if product.url:
