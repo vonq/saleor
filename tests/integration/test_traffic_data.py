@@ -81,6 +81,7 @@ class TrafficLocationsDataTestCase(AuthenticatedTestCase):
             is_active=True,
             title="Product for Rome",
             similarweb_top_country_shares={"it": 90, "gb": 10},
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         cls.rome_board.save()
         cls.rome_board.locations.set([cls.rome_location])
@@ -90,6 +91,7 @@ class TrafficLocationsDataTestCase(AuthenticatedTestCase):
             is_active=True,
             title="Board with London jobs",
             similarweb_top_country_shares={"gb": 80, "us": 20},
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         cls.london_board.save()
         cls.london_board.locations.set([cls.london_location])
@@ -105,6 +107,7 @@ class TrafficLocationsDataTestCase(AuthenticatedTestCase):
             is_active=True,
             title="Board with German jobs (but popular for Polish)",
             similarweb_top_country_shares={"de": 10, "pl": 90},
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         cls.german_board.save()
         cls.german_board.locations.set([cls.europe_location, cls.germany_location])
@@ -114,6 +117,7 @@ class TrafficLocationsDataTestCase(AuthenticatedTestCase):
             is_active=True,
             title="European Jobs Board",
             similarweb_top_country_shares={"gb": 5, "it": 5, "de": 90},
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         cls.european_board.save()
         cls.european_board.locations.set(
@@ -129,6 +133,7 @@ class TrafficLocationsDataTestCase(AuthenticatedTestCase):
             is_active=True,
             title="Jobs in Amsterdam",
             similarweb_top_country_shares={"nl": 80, "de": 20},
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         cls.amsterdam_board.save()
         cls.amsterdam_board.locations.set([cls.amsterdam_location])

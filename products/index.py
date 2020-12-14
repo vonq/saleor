@@ -37,6 +37,8 @@ class ProductIndex(AlgoliaIndex):
         "maximum_locations_cardinality",
         "filterable_status",
         "available_in_jmp",
+        "is_addon",
+        "is_product",
     )
     settings = {
         "minWordSizefor1Typo": 4,
@@ -68,6 +70,8 @@ class ProductIndex(AlgoliaIndex):
             "is_active",
             "filterable_status",
             "available_in_jmp",
+            "is_addon",
+            "is_product",
         ],
         "attributesToSnippet": None,
         "attributesToHighlight": None,

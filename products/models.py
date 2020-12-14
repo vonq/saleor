@@ -420,6 +420,14 @@ class IndexSearchableProductMixin:
     def searchable_product_title(self):
         return self.external_product_name
 
+    @property
+    def is_addon(self):
+        return self.salesforce_product_type in Product.SalesforceProductType.addons()
+
+    @property
+    def is_product(self):
+        return self.salesforce_product_type in Product.SalesforceProductType.products()
+
 
 class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMixin):
     def set_product_id(self):
@@ -482,6 +490,28 @@ class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMix
         CUSTOMER_SPECIFIC = "Customer Specific Product", _("Customer Specific Product")
         NONE = None, _("--None--")
 
+    class Status(models.TextChoices):
+        BLACKLISTED = (
+            "Blacklisted",
+            _("Blacklisted"),
+        )
+        DISABLED = (
+            "Disabled",
+            _("Disabled"),
+        )
+        NEGOTIATED = (
+            "Negotiated",
+            _("Negotiated"),
+        )
+        TRIAL = (
+            "Trial",
+            _("Trial"),
+        )
+        NONE = (
+            None,
+            _("--None--"),
+        )
+
     class SalesforceProductType(models.TextChoices):
         SOCIAL = "Social", _("Social")
         PRINT = "Print / Offline", _("Print / Offline")
@@ -498,6 +528,21 @@ class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMix
         WALLET = "Wallet", _("Wallet")
         GOOGLE = "Google", _("Google")
         NONE = None, _("--None--")
+
+        @classmethod
+        def addons(cls):
+            return [
+                cls.PRINT,
+                cls.IMAGE_CREATION,
+                cls.WEBSITE_CREATION,
+                cls.VONQ_SERVICES,
+                cls.VIDEO_CREATION,
+                cls.TEXT_SERVICES,
+            ]
+
+        @classmethod
+        def products(cls):
+            return [cls.JOB_BOARD, cls.SOCIAL, cls.GOOGLE]
 
     @property
     def external_product_name(self):
@@ -560,13 +605,7 @@ class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMix
 
     status = models.CharField(
         max_length=12,
-        choices=[
-            ("Blacklisted", "Blacklisted"),
-            ("Disabled", "Disabled"),
-            ("Negotiated", "Negotiated"),
-            ("Trial", "Trial"),
-            (None, "--None--"),
-        ],
+        choices=Status.choices,
         default=None,
         blank=True,
         null=True,

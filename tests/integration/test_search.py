@@ -55,21 +55,30 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         cls.engineering_industry.save()
 
         cls.construction_board = Product(
-            is_active=True, status="Negotiated", title="Construction board"
+            is_active=True,
+            status="Negotiated",
+            title="Construction board",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         cls.construction_board.save()
         cls.construction_board.industries.add(cls.construction_industry)
         cls.construction_board.save()
 
         cls.engineering_board = Product(
-            is_active=True, status="Negotiated", title="Engineering Board"
+            is_active=True,
+            status="Negotiated",
+            title="Engineering Board",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         cls.engineering_board.save()
         cls.engineering_board.industries.add(cls.engineering_industry)
         cls.engineering_board.save()
 
         cls.general_board = Product(
-            is_active=True, status="Negotiated", title="General"
+            is_active=True,
+            status="Negotiated",
+            title="General",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         cls.general_board.save()
         cls.general_board.industries.set(
@@ -77,16 +86,27 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         )
         cls.general_board.save()
 
-        cls.null_board = Product(is_active=True, status="Negotiated", title="Null")
+        cls.null_board = Product(
+            is_active=True,
+            status="Negotiated",
+            title="Null",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+        )
         cls.null_board.save()
 
         cls.active_product = Product(
-            is_active=True, status="Negotiated", salesforce_id="active_product"
+            is_active=True,
+            status="Negotiated",
+            salesforce_id="active_product",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         cls.active_product.save()
 
         cls.inactive_product = Product(
-            is_active=False, status="Negotiated", salesforce_id="inactive_product"
+            is_active=False,
+            status="Negotiated",
+            salesforce_id="inactive_product",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         cls.inactive_product.save()
 
@@ -95,6 +115,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             status="Trial",
             available_in_jmp=True,
             salesforce_id="available_jmp_product",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         cls.available_in_jmp_product.save()
 
@@ -103,6 +124,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             status="Trial",
             available_in_jmp=False,
             salesforce_id="unavailable_jmp_product",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         cls.unavailable_in_jmp_product.save()
 
@@ -110,6 +132,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             is_active=True,
             status="Blacklisted",
             salesforce_id="unwanted_status_product",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         cls.unwanted_status_product.save()
 
@@ -174,6 +197,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             is_active=True,
             title="Something in the whole of the UK",
             url="https://vonq.com/somethinglkasjdfhg",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         product.save()
         product.locations.add(united_kingdom)
@@ -183,6 +207,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             is_active=True,
             title="Something in Reading",
             url="https://vonq.com/something",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         product2.save()
         product2.locations.add(reading)
@@ -192,6 +217,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             is_active=True,
             title="Something in Slough",
             url="https://vonq.com/something2",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         product3.save()
         product3.locations.add(slough)
@@ -201,6 +227,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             is_active=True,
             title="Something in Slough and Reading",
             url="https://vonq.com/something4",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
 
         product4.save()
@@ -211,6 +238,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             is_active=True,
             title="Something Global",
             url="https://vonq.com/somethingGlobal",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         global_product.save()
         global_product.locations.add(global_location)
@@ -242,13 +270,17 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         product = Product(
             is_active=True,
             title="A job board for developers",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         product.save()
         product.job_functions.add(software_engineering)
         product.save()
 
         product2 = Product(
-            is_active=True, status="Trial", title="A job board for construction jobs"
+            is_active=True,
+            status="Trial",
+            title="A job board for construction jobs",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         product2.save()
         product2.job_functions.add(construction)
@@ -574,3 +606,88 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         )
 
         self.assertTrue(len(resp.json()["results"]), 5)
+
+
+@tag("algolia")
+@tag("integration")
+class AddonSearchTestCase(AuthenticatedTestCase):
+    @classmethod
+    @override_settings(
+        ALGOLIA={
+            "INDEX_SUFFIX": TEST_INDEX_SUFFIX,
+            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
+            "API_KEY": settings.ALGOLIA["API_KEY"],
+            "AUTO_INDEXING": True,
+        }
+    )
+    def setUpClass(cls):
+        super().setUpClass()
+        addon_product_1 = Product.objects.create(
+            title="This is an addon",
+            salesforce_product_type=Product.SalesforceProductType.VONQ_SERVICES,
+            is_active=True,
+        )
+        addon_product_1 = Product.objects.create(
+            title="This is another addon",
+            salesforce_product_type=Product.SalesforceProductType.IMAGE_CREATION,
+            is_active=True,
+        )
+
+        proper_product = Product.objects.create(
+            title="This is a product",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            is_active=True,
+        )
+
+        proper_product2 = Product.objects.create(
+            title="This is another product",
+            salesforce_product_type=Product.SalesforceProductType.SOCIAL,
+            is_active=True,
+        )
+
+        internal_product = Product.objects.create(
+            title="Internal product",
+            salesforce_product_type=Product.SalesforceProductType.FINANCE,
+            is_active=True,
+        )
+
+        other_interal_product = Product.objects.create(
+            title="Another internal product",
+            salesforce_product_type=Product.SalesforceProductType.OTHER,
+            is_active=True,
+        )
+
+        time.sleep(4)
+
+    def setUp(self) -> None:
+        super().setUp()
+
+    @classmethod
+    @override_settings(
+        ALGOLIA={
+            "INDEX_SUFFIX": "test",
+            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
+            "API_KEY": settings.ALGOLIA["API_KEY"],
+            "AUTO_INDEXING": True,
+        }
+    )
+    def tearDownClass(cls):
+        super().tearDownClass()
+        algolia_engine.client.delete_index(
+            f"{ProductIndex.index_name}_{TEST_INDEX_SUFFIX}"
+        )
+        algolia_engine.reset(settings.ALGOLIA)
+
+    def test_can_list_all_products(self):
+        resp = self.client.get(reverse("api.products:products-list"))
+        self.assertEqual(len(resp.json()["results"]), 2)
+        self.assertTrue(
+            all(["product" in product["title"] for product in resp.json()["results"]])
+        )
+
+    def test_can_list_all_addons(self):
+        resp = self.client.get(reverse("api.products:addons-list"))
+        self.assertEqual(len(resp.json()["results"]), 2)
+        self.assertTrue(
+            all(["addon" in product["title"] for product in resp.json()["results"]])
+        )

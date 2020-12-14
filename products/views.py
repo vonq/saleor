@@ -26,6 +26,8 @@ from api.products.filters import (
     IsActiveFacetFilter,
     StatusFacetFilter,
     IsAvailableInJmpFacetFilter,
+    ProductsOnlyFacetFilter,
+    AddonsOnlyFacetFilter,
 )
 from api.products.geocoder import Geocoder
 from api.products.models import (
@@ -152,6 +154,7 @@ class ProductsViewSet(viewsets.ModelViewSet):
         SecondarySimilarWebFacetFilter,
         IsActiveFacetFilter,
         StatusFacetFilter,
+        ProductsOnlyFacetFilter,
     )
 
     @property
@@ -165,9 +168,14 @@ class ProductsViewSet(viewsets.ModelViewSet):
         return self._paginator
 
     def get_queryset(self):
-        active_products = self.queryset.filter(is_active=True).exclude(
-            status__in=["Blacklisted", "Disabled"]
+        active_products = (
+            self.queryset.filter(is_active=True)
+            .filter(
+                salesforce_product_type__in=Product.SalesforceProductType.products()
+            )
+            .exclude(status__in=[Product.Status.BLACKLISTED, Product.Status.DISABLED])
         )
+
         if self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]:
             return active_products.filter(available_in_jmp=True)
         return active_products
@@ -199,7 +207,7 @@ class ProductsViewSet(viewsets.ModelViewSet):
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
         return queryset.filter(is_active=True).exclude(
-            status__in=["Blacklisted", "Disabled"]
+            status__in=[Product.Status.BLACKLISTED, Product.Status.DISABLED]
         )
 
     def check_object_permissions(self, request, obj):
@@ -293,6 +301,31 @@ class ProductsViewSet(viewsets.ModelViewSet):
     )
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
+
+
+class AddonsViewSet(ProductsViewSet):
+    search_filters: Tuple[Type[FacetFilter]] = (
+        InclusiveLocationIdFacetFilter,
+        ExactLocationIdFacetFilter,
+        JobFunctionsFacetFilter,
+        JobTitlesFacetFilter,
+        IndustryFacetFilter,
+        PrimarySimilarWebFacetFilter,
+        SecondarySimilarWebFacetFilter,
+        IsActiveFacetFilter,
+        StatusFacetFilter,
+        AddonsOnlyFacetFilter,
+    )
+
+    def get_queryset(self):
+        active_products = (
+            self.queryset.filter(is_active=True)
+            .filter(salesforce_product_type__in=Product.SalesforceProductType.addons())
+            .exclude(status__in=[Product.Status.BLACKLISTED, Product.Status.DISABLED])
+        )
+        if self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]:
+            return active_products.filter(available_in_jmp=True)
+        return active_products
 
 
 class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):

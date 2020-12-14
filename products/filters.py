@@ -121,6 +121,26 @@ class StatusFacetFilter(FacetFilter):
         self.filters = 'filterable_status:"None" OR filterable_status:"Trial" OR filterable_status:"Negotiated"'
 
 
+class ProductsOnlyFacetFilter(FacetFilter):
+    filter_name = "is_product"
+    parameter_name = "is_product"
+    parameter = None
+    operator = "AND"
+
+    def __init__(self):
+        self.filters = "is_product:true"
+
+
+class AddonsOnlyFacetFilter(FacetFilter):
+    filter_name = "is_addon"
+    parameter_name = "is_addon"
+    parameter = None
+    operator = "AND"
+
+    def __init__(self):
+        self.filters = "is_addon:true"
+
+
 class JobFunctionsFacetFilter(FacetFilter):
     filter_name = "searchable_job_functions_ids"
     parameter_name = "jobFunctionId"
