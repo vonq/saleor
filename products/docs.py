@@ -11,3 +11,13 @@ class CommonParameters:
         required=False,
         description="The language the client prefers.",
     )
+    PRODUCT_NAME = (
+        openapi.Parameter(
+            "name",
+            in_=openapi.IN_QUERY,
+            description="Search text for a product name",
+            type=openapi.TYPE_STRING,
+            required=False,
+            example="Monster.com",
+        ),
+    )

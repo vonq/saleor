@@ -185,9 +185,10 @@ class ProductsViewSet(viewsets.ModelViewSet):
             limit=SearchResultsPagination().get_limit(self.request),
             offset=SearchResultsPagination().get_offset(self.request),
         )
+        product_name = self.request.query_params.get("name", "")
 
         self.search_results_count, results = query_search_index(
-            Product, params=filter_collection.query()
+            Product, params=filter_collection.query(), query=product_name
         )
         ids = get_results_ids(results)
 
@@ -217,7 +218,7 @@ class ProductsViewSet(viewsets.ModelViewSet):
         operation_id="Products Search",
         operation_summary="Search and filter for products by various criteria.",
         manual_parameters=[item.parameter for item in search_filters if item.parameter]
-        + [CommonParameters.ACCEPT_LANGUAGE],
+        + [CommonParameters.ACCEPT_LANGUAGE, CommonParameters.PRODUCT_NAME],
         tags=[ProductsConfig.verbose_name],
         responses={
             400: openapi.Response(description="In case of a bad request."),

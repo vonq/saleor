@@ -267,6 +267,7 @@ class IndexSearchableProductMixin:
     locations: QuerySet
     similarweb_top_country_shares: dict
     status: str
+    external_product_name: str
     is_active: bool
 
     @property
@@ -414,6 +415,10 @@ class IndexSearchableProductMixin:
                 models.IntegerField(),
             )
         ).values_list("locations_cardinality", flat=True)[0]
+
+    @property
+    def searchable_product_title(self):
+        return self.external_product_name
 
 
 class Product(FieldPermissionModelMixin, models.Model, IndexSearchableProductMixin):

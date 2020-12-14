@@ -567,3 +567,10 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         )
 
         self.assertEquals(resp.status_code, 404)
+
+    def test_can_search_for_product_name(self):
+        resp = self.client.get(
+            reverse("api.products:products-list") + f"?name=something"
+        )
+
+        self.assertTrue(len(resp.json()["results"]), 5)
