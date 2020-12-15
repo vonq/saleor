@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import (
 from django.contrib.admin.models import LogEntry, CHANGE
 from django.contrib.contenttypes.models import ContentType
 
-from api.products.models import Industry, Product, JobFunction, JobTitle, Location
+from api.products.models import Industry, Product, JobFunction, JobTitle, Location, Channel
 
 import json
 import csv
@@ -36,6 +36,61 @@ def product_annotation(request):
             ],
         },
     )  # want to be reading this from model choices directly
+
+@permission_required("products.view_channel")
+def channel_annotation(request):
+    return render(
+        request, "channel_annotation.html", {
+            "type_options": [
+                            "job board",
+                            "social media",
+                            "community",
+                            "publication",
+                            "aggregator",
+                        ] #Channel.TYPE_CHOICES
+        }
+    )
+
+@permission_required("products.view_channel")
+def get_channel_list_json(request):
+    channels = Channel.objects.distinct()
+
+    return JsonResponse({
+        "channels": list(channels.values(
+            "id",
+            "url",
+            "name_en",
+            "name_de",
+            "name_nl",
+            "type"
+        ))
+    })
+
+@permission_required("products.view_channel")
+def get_channel_json(request, channel_id):
+    # include a request to get title from URL?
+    channel = Channel.objects.filter(pk=channel_id)
+    print(channel.values('product__description'))
+    return JsonResponse({
+        'type': channel.first().type,
+        'descriptions': list(channel.values_list('product__description', flat=True))
+    })
+
+@permission_required("products.change_channel")
+def update_channel(request):
+    try:
+        payload = json.loads(request.body)
+    except TypeError:
+        return JsonResponse({"error": "Request body cannot be parsed as a JSON"})
+
+    channel = Channel.objects.get(pk=payload['id'])
+
+    channel.type = payload['type']
+    channel.save()
+
+    return JsonResponse({
+        'type': channel.type
+    })
 
 
 @permission_required("products.view_jobtitle")
@@ -370,6 +425,22 @@ def set_locations(request):
         }
     )
 
+@permission_required("products.change_channel")
+def set_channel(request):
+    try:
+        payload = json.loads(request.body)
+    except TypeError:
+        return JsonResponse({"error": "Request body cannot be parsed as a JSON"})
+
+    channel = Channel.objects.get(pk=payload["id"])
+
+    if(payload["type"] is not None and payload["type"] in [choice[0] for choice in Channel.TYPE_CHOICES]):
+        channel.type = payload["type"]
+        channel.save()
+
+    return JsonResponse({
+        'type': channel.type
+    })
 
 def export_options_json(request):
     return JsonResponse(
