@@ -20,7 +20,11 @@
             <div class="col-10 col-md-9 col-sm-7">
                 <h2>[[ typeof channels[cursor] == 'object' ? channels[cursor].name_en:'' ]]</h2>
                 <a target="_blank" :href="channels[cursor].url">[[cleanURL(channels[cursor].url)]]</a>
-                <div v-for="desc in channels[cursor].descriptions">[[desc]]</div>
+                <div v-for="product in channels[cursor].products">
+                    <h3>[[ product[0] ]]</h3>
+                        <a :href="cleanURL(product[2])">[[ product[2] ]]</a>
+                        <p>[[ product[1] ]]</p>
+                </div>
             </div>
             <div class="col-2 col-md-3 col-sm-5">
                 <input class="form-control-lg my-lg-2" type="number" v-model="cursor">

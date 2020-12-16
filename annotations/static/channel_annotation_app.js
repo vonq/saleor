@@ -65,7 +65,7 @@ var ChannelAnnotationApp = new Vue({
         getChannel: async function(channel) {
             const data = await d3.json('/annotations/get-channel/'+channel.id)
             channel.type = data.type
-            this.$set(channel, 'descriptions', data.descriptions.filter(d=>d.length))
+            this.$set(channel, 'products', data.products)
         },
         cleanURL: function(url) {
             return url ? url.startsWith('http') ? url : 'http://' + url: ''

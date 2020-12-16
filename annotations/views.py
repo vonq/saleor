@@ -27,27 +27,15 @@ def product_annotation(request):
         {
             "industries": list(industries.values("name")),
             "jobFunctions": list(jobFunctions.values("name")),
-            "channelTypes": [
-                "job board",
-                "social media",
-                "community",
-                "publication",
-                "aggregator",
-            ],
+            "channelTypes": [choice[0] for choice in Channel.TYPE_CHOICES],
         },
-    )  # want to be reading this from model choices directly
+    )
 
 @permission_required("products.view_channel")
 def channel_annotation(request):
     return render(
         request, "channel_annotation.html", {
-            "type_options": [
-                            "job board",
-                            "social media",
-                            "community",
-                            "publication",
-                            "aggregator",
-                        ] #Channel.TYPE_CHOICES
+            "type_options": [choice[0] for choice in Channel.TYPE_CHOICES]
         }
     )
 
@@ -73,7 +61,7 @@ def get_channel_json(request, channel_id):
     print(channel.values('product__description'))
     return JsonResponse({
         'type': channel.first().type,
-        'descriptions': list(channel.values_list('product__description', flat=True))
+        'products': list(channel.values_list('product__title','product__description', "product__url")),
     })
 
 @permission_required("products.change_channel")
