@@ -255,6 +255,7 @@ class Channel(models.Model):
         ("community", "Community"),
         ("publication", "Publication"),
         ("aggregator", "Aggregator"),
+        ("not channel", "Not Channel"),
     ]
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, default="job board")
 
