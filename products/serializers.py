@@ -146,6 +146,8 @@ class ProductSearchSerializer(serializers.Serializer):
     industryId = serializers.CharField(required=False)
     jobTitleId = serializers.IntegerField(required=False)
     jobFunctionId = serializers.IntegerField(required=False)
+    durationFrom = serializers.IntegerField(required=False)
+    durationTo = serializers.IntegerField(required=False)
 
     @staticmethod
     def is_a_valid_integer_array(value):

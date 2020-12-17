@@ -69,6 +69,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             status="Negotiated",
             title="Engineering Board",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            duration_days=10,
         )
         cls.engineering_board.save()
         cls.engineering_board.industries.add(cls.engineering_industry)
@@ -79,6 +80,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             status="Negotiated",
             title="General",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            duration_days=20,
         )
         cls.general_board.save()
         cls.general_board.industries.set(
@@ -91,6 +93,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             status="Negotiated",
             title="Null",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            duration_days=30,
         )
         cls.null_board.save()
 
@@ -98,7 +101,9 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             is_active=True,
             status="Negotiated",
             salesforce_id="active_product",
+            title="Negotiated product",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            duration_days=40,
         )
         cls.active_product.save()
 
@@ -114,8 +119,10 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             is_active=True,
             status="Trial",
             available_in_jmp=True,
+            title="Product available in JMP",
             salesforce_id="available_jmp_product",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            duration_days=90,
         )
         cls.available_in_jmp_product.save()
 
@@ -632,6 +639,37 @@ class ProductSearchTestCase(AuthenticatedTestCase):
 
         self.assertTrue(len(resp.json()["results"]), 5)
 
+    def test_can_search_for_duration_from(self):
+        resp = self.client.get(
+            reverse("api.products:products-list") + "?durationFrom=20"
+        )
+        self.assertEqual(len(resp.json()["results"]), 4)
+
+        self.assertCountEqual(
+            ["Product available in JMP", "Negotiated product", "Null", "General"],
+            [obj["title"] for obj in resp.json()["results"]],
+        )
+
+    def test_can_search_for_duration_to(self):
+        resp = self.client.get(reverse("api.products:products-list") + "?durationTo=20")
+        self.assertEqual(len(resp.json()["results"]), 2)
+
+        self.assertCountEqual(
+            ["Engineering Board", "General"],
+            [obj["title"] for obj in resp.json()["results"]],
+        )
+
+    def test_can_search_for_duration_boundaries(self):
+        resp = self.client.get(
+            reverse("api.products:products-list") + "?durationTo=90&durationFrom=40"
+        )
+        self.assertEqual(len(resp.json()["results"]), 2)
+
+        self.assertCountEqual(
+            ["Negotiated product", "Product available in JMP"],
+            [obj["title"] for obj in resp.json()["results"]],
+        )
+
 
 @tag("algolia")
 @tag("integration")
@@ -690,7 +728,7 @@ class AddonSearchTestCase(AuthenticatedTestCase):
     @classmethod
     @override_settings(
         ALGOLIA={
-            "INDEX_SUFFIX": "test",
+            "INDEX_SUFFIX": TEST_INDEX_SUFFIX,
             "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
             "API_KEY": settings.ALGOLIA["API_KEY"],
             "AUTO_INDEXING": True,

@@ -28,6 +28,8 @@ from api.products.filters import (
     IsAvailableInJmpFacetFilter,
     ProductsOnlyFacetFilter,
     AddonsOnlyFacetFilter,
+    DurationMoreThanFacetFilter,
+    DurationLessThanFacetFilter,
 )
 from api.products.geocoder import Geocoder
 from api.products.models import (
@@ -154,6 +156,8 @@ class ProductsViewSet(viewsets.ModelViewSet):
         IndustryFacetFilter,
         PrimarySimilarWebFacetFilter,
         SecondarySimilarWebFacetFilter,
+        DurationMoreThanFacetFilter,
+        DurationLessThanFacetFilter,
         IsActiveFacetFilter,
         StatusFacetFilter,
         ProductsOnlyFacetFilter,

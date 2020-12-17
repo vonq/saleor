@@ -131,6 +131,40 @@ class ProductsOnlyFacetFilter(FacetFilter):
         self.filters = "is_product:true"
 
 
+class DurationMoreThanFacetFilter(FacetFilter):
+    filter_name = "duration_days"
+    parameter_name = "durationFrom"
+    parameter = openapi.Parameter(
+        parameter_name,
+        in_=openapi.IN_QUERY,
+        description="Match only products with a duration more or equal than a certain number of days",
+        type=openapi.TYPE_STRING,
+        required=False,
+        explode=False,
+    )
+    operator = "AND"
+
+    def __init__(self, value=None):
+        self.filters = f"duration_days>={value}" if value else ""
+
+
+class DurationLessThanFacetFilter(FacetFilter):
+    filter_name = "duration_days"
+    parameter_name = "durationTo"
+    parameter = openapi.Parameter(
+        parameter_name,
+        in_=openapi.IN_QUERY,
+        description="Match only products with a duration up to a certain number of days",
+        type=openapi.TYPE_STRING,
+        required=False,
+        explode=False,
+    )
+    operator = "AND"
+
+    def __init__(self, value=None):
+        self.filters = f"duration_days<={value}" if value else ""
+
+
 class AddonsOnlyFacetFilter(FacetFilter):
     filter_name = "is_addon"
     parameter_name = "is_addon"

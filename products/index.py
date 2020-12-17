@@ -17,6 +17,7 @@ class ProductIndex(AlgoliaIndex):
         "description",
         "logo_url",
         "is_active",
+        "duration_days",
         "available_in_ats",
         "salesforce_product_category",
         "similarweb_top_country_shares",
@@ -48,7 +49,7 @@ class ProductIndex(AlgoliaIndex):
         "searchableAttributes": [
             "unordered(searchable_product_title)",
         ],
-        "numericAttributesToIndex": ["maximum_locations_cardinality"],
+        "numericAttributesToIndex": ["maximum_locations_cardinality", "duration_days"],
         "attributesToRetrieve": None,
         "ignorePlurals": ["en", "de", "nl"],
         "advancedSyntax": True,
