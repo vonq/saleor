@@ -75,6 +75,13 @@ class JobTitleSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "job_function")
 
 
+class LimitedChannelSerializer(serializers.Serializer):
+    name = serializers.CharField(read_only=True)
+    url = serializers.URLField(read_only=True)
+    type = serializers.CharField(read_only=True)
+    id = serializers.IntegerField()
+
+
 class ProductSerializer(serializers.Serializer):
     @staticmethod
     def get_homepage(product):
@@ -128,6 +135,7 @@ class ProductSerializer(serializers.Serializer):
     type = serializers.SerializerMethodField()
     logo_url = serializers.SerializerMethodField()
     title = serializers.SerializerMethodField()
+    channel = LimitedChannelSerializer(read_only=True)
 
     class Meta:
         model = Product
@@ -184,3 +192,13 @@ class ProductSearchSerializer(serializers.Serializer):
                 detail="Cannot search by both job title and job function. Please use either field."
             )
         return attrs
+
+
+class ChannelSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(read_only=True)
+    url = serializers.URLField(read_only=True)
+    products = serializers.ListField(
+        child=ProductSerializer(read_only=True), source="product_set.all"
+    )
+    type = serializers.CharField(read_only=True)

@@ -37,6 +37,7 @@ from api.products.models import (
     JobFunction,
     Industry,
     Profile,
+    Channel,
 )
 from api.products.paginators import (
     StandardResultsSetPagination,
@@ -51,6 +52,7 @@ from api.products.serializers import (
     JobFunctionTreeSerializer,
     IndustrySerializer,
     ProductSearchSerializer,
+    ChannelSerializer,
 )
 
 
@@ -501,3 +503,81 @@ class IndustriesViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+
+
+class ChannelsViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    http_method_names = ("get",)
+    pagination_class = StandardResultsSetPagination
+    queryset = Channel.objects.all()
+    serializer_class = ChannelSerializer
+
+    @swagger_auto_schema(
+        operation_description="""
+        This endpoint exposes a list of channels with products associated.
+        """,
+        operation_id="Channels list",
+        manual_parameters=[CommonParameters.ACCEPT_LANGUAGE],
+        tags=[ProductsConfig.verbose_name],
+        responses={
+            200: openapi.Response(
+                schema=serializer_class(many=True),
+                description="Paginated list of channels",
+                examples={
+                    "application/json": {
+                        "count": 1664,
+                        "next": "http://host/channels/?limit=25&offset=25",
+                        "previous": None,
+                        "results": [
+                            {
+                                "id": 139,
+                                "name": "Channel Name",
+                                "url": "https://channel.com/",
+                                "products": [
+                                    {
+                                        "locations": [],
+                                        "job_functions": [],
+                                        "industries": [],
+                                        "duration": {"range": "days", "period": None},
+                                        "time_to_process": {
+                                            "range": "hours",
+                                            "period": None,
+                                        },
+                                        "vonq_price": [
+                                            {"amount": None, "currency": "EUR"}
+                                        ],
+                                        "ratecard_price": [
+                                            {"amount": None, "currency": "EUR"}
+                                        ],
+                                        "cross_postings": [],
+                                        "homepage": "http://www.product.com/product/",
+                                        "type": "Finance",
+                                        "logo_url": [{"size": "300x200", "url": None}],
+                                        "title": "Product Name",
+                                        "channel": {
+                                            "name": "Channel Name",
+                                            "url": "http://www.channel.com/",
+                                            "type": "job board",
+                                            "id": 1854,
+                                        },
+                                    }
+                                ],
+                                "type": "job board",
+                            },
+                        ],
+                    }
+                },
+            ),
+        },
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_id="Retrieve Channel details",
+        operation_summary="This endpoint retrieves a Channel by its id.",
+        manual_parameters=(CommonParameters.ACCEPT_LANGUAGE,),
+        tags=[ProductsConfig.verbose_name],
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)

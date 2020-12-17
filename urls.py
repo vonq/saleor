@@ -15,7 +15,6 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include, re_path
-
 from drf_yasg2 import openapi
 from drf_yasg2.views import get_schema_view
 from rest_framework import permissions
@@ -24,6 +23,7 @@ from api.products.views import (
     LocationSearchViewSet,
     JobTitleSearchViewSet,
     JobFunctionsViewSet,
+    ChannelsViewSet,
 )
 
 schema_view = get_schema_view(
@@ -50,6 +50,16 @@ urlpatterns = [
         r"job-titles/",
         JobTitleSearchViewSet.as_view({"get": "list"}),
         name="job-titles",
+    ),
+    path(
+        r"channels/",
+        ChannelsViewSet.as_view({"get": "list"}),
+        name="channels",
+    ),
+    path(
+        r"channels/<int:pk>/",
+        ChannelsViewSet.as_view({"get": "retrieve"}),
+        name="channel-detail",
     ),
     path(
         r"docs/",
