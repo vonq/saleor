@@ -275,6 +275,12 @@ class ProductsViewSet(viewsets.ModelViewSet):
                                 "ratecard_price": [{"amount": 234, "currency": "EUR"}],
                                 "type": None,
                                 "cross_postings": [],
+                                "channel": {
+                                    "name": "Channel Name",
+                                    "url": "https://www.channel.jobs/",
+                                    "type": "job board",
+                                    "id": 12,
+                                },
                             }
                         ],
                     }

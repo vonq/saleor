@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from api.products.models import Product, Location, JobFunction, JobTitle, Industry
+from api.products.models import Location, JobFunction, JobTitle, Industry
 from rest_framework_recursive.fields import RecursiveField
 
 
@@ -136,27 +136,8 @@ class ProductSerializer(serializers.Serializer):
     logo_url = serializers.SerializerMethodField()
     title = serializers.SerializerMethodField()
     channel = LimitedChannelSerializer(read_only=True)
-
-    class Meta:
-        model = Product
-        lookup_field = "product_id"
-        fields = (
-            "title",
-            "locations",
-            "job_functions",
-            "industries",
-            "description",
-            "homepage",
-            "logo_url",
-            "duration",
-            "time_to_process",
-            "product_id",
-            "vonq_price",
-            "ratecard_price",
-            "type",
-            "cross_postings",
-        )
-        read_only_fields = fields
+    product_id = serializers.CharField(read_only=True)
+    description = serializers.CharField(read_only=True)
 
 
 class ProductSearchSerializer(serializers.Serializer):

@@ -377,6 +377,31 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         resp = self.client.get(reverse("api.products:products-list"))
         self.assertEquals(len(resp.json()["results"]), 14)
 
+    def test_products_conform_to_required_specification(self):
+        resp = self.client.get(reverse("api.products:products-list"))
+        result = resp.json()["results"][0]
+
+        self.assertCountEqual(
+            result.keys(),
+            [
+                "title",
+                "locations",
+                "job_functions",
+                "industries",
+                "description",
+                "homepage",
+                "logo_url",
+                "duration",
+                "time_to_process",
+                "product_id",
+                "vonq_price",
+                "ratecard_price",
+                "type",
+                "cross_postings",
+                "channel",
+            ],
+        )
+
     def test_results_are_sorted_by_specificity(self):
         resp = self.client.get(
             reverse("api.products:products-list")
