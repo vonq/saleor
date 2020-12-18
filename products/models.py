@@ -249,6 +249,7 @@ class Channel(models.Model):
     salesforce_id = models.CharField(max_length=20, null=True)
     name = models.CharField(max_length=200)
     url = models.URLField(max_length=300)
+    is_active = models.BooleanField(default=False)
     TYPE_CHOICES = [
         ("job board", "Job Board"),
         ("social media", "Social Media"),

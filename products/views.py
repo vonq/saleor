@@ -519,7 +519,7 @@ class ChannelsViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     http_method_names = ("get",)
     pagination_class = StandardResultsSetPagination
-    queryset = Channel.objects.all()
+    queryset = Channel.objects.filter(is_active=True)
     serializer_class = ChannelSerializer
 
     @swagger_auto_schema(

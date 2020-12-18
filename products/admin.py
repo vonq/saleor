@@ -106,8 +106,8 @@ class ChannelForm(forms.ModelForm):
 @admin.register(Channel)
 class ChannelAdmin(TranslationAdmin):
     form = ChannelForm
-    list_display = ("name", "url", "type")
-    list_filter = ("type",)
+    list_display = ("name", "url", "type", "is_active")
+    list_filter = ("type", "is_active")
     search_fields = ("name",)
 
 
