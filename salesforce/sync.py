@@ -142,6 +142,7 @@ def update_channel(channel_instance):
                 "Name": channel_instance.name,
                 "Website__c": channel_instance.url,
                 "Account__c": channel_instance.salesforce_account_id,
+                "IsDeleted": not channel_instance.is_active,
             },
         )
 
@@ -164,6 +165,7 @@ def push_channel(channel_instance):
             "Name": channel_instance.name,
             "Website__c": channel_instance.url,
             "Account__c": account_id,
+            "IsDeleted": not channel_instance.is_active,
         },
     )
     if not resp["success"]:
