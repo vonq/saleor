@@ -10,6 +10,14 @@ from api.salesforce.salesforce_client import get_session_id, get_client
 logger = logging.getLogger(__name__)
 
 
+class RemoteProductNotFound(Exception):
+    pass
+
+
+class SyncProductError(Exception):
+    pass
+
+
 def login():
     # TODO: Switch to a security token
     #       to avoid the extra login step.
@@ -27,11 +35,8 @@ def login():
 
 def make_salesforce_product(product_instance):
     return {
-        "Uuid__c": str(product_instance.product_id),
+        "Uuid__c": str(product_instance.salesforce_id),
         "Name": product_instance.title_en,
-        "pkb_job_function__c": getattr(
-            product_instance.job_functions.first(), "name", None
-        ),
         "Channel__c": getattr(product_instance.channel, "salesforce_id", None),
         "Description": product_instance.description,
         "Product_Logo__c": product_instance.logo_url,
@@ -181,7 +186,7 @@ def push_channel(channel_instance):
     for product in new_products:
         products_to_link.append(
             {
-                "Uuid__c": product.product_id,
+                "Uuid__c": product.salesforce_id,
                 "Channel__c": channel_instance.salesforce_id,
                 "Name": product.title_en,
             }
@@ -194,10 +199,10 @@ def push_channel(channel_instance):
 def update_product(product_instance):
     client = login()
     salesforce_product = client.Product2.get_by_custom_id(
-        "Uuid__c", product_instance.product_id
+        "Uuid__c", product_instance.salesforce_id
     )
     if not salesforce_product:
-        raise Exception(
+        raise RemoteProductNotFound(
             f"Couldn't find any product with external id {product_instance.product_id}"
         )
 
@@ -207,7 +212,9 @@ def update_product(product_instance):
 
     resp = client.Product2.update(product_id, product)
     if resp >= 400:
-        raise Exception(f"Couldn't sync product {product_instance.title} with SF")
+        raise SyncProductError(
+            f"Couldn't sync product {product_instance.title} with SF"
+        )
 
     update_pricebook(client, product_id, product_instance)
 
