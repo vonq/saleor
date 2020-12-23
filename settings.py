@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     "api",
     "api.products",
     "api.annotations",
+    "api.currency",
 ]
 
 ALGOLIA = {

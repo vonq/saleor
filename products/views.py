@@ -232,7 +232,11 @@ class ProductsViewSet(viewsets.ModelViewSet):
         operation_id="Products Search",
         operation_summary="Search and filter for products by various criteria.",
         manual_parameters=[item.parameter for item in search_filters if item.parameter]
-        + [CommonParameters.ACCEPT_LANGUAGE, CommonParameters.PRODUCT_NAME],
+        + [
+            CommonParameters.ACCEPT_LANGUAGE,
+            CommonParameters.PRODUCT_NAME,
+            CommonParameters.CURRENCY,
+        ],
         tags=[ProductsConfig.verbose_name],
         responses={
             400: openapi.Response(description="In case of a bad request."),
@@ -293,15 +297,14 @@ class ProductsViewSet(viewsets.ModelViewSet):
         },
     )
     def list(self, request, *args, **kwargs):
-        ProductSearchSerializer(data=self.request.query_params).is_valid(
-            raise_exception=True
-        )
+        search_serializer = ProductSearchSerializer(data=self.request.query_params)
+        search_serializer.is_valid(raise_exception=True)
         queryset = self.get_queryset()
-        if self.request.query_params:
+        if search_serializer.is_search_request:
             # a pure list view doesn't need to hit the search index
             queryset = self.search_queryset(queryset)
         page = self.paginate_queryset(queryset)
-        serializer = self.serializer_class(page, many=True)
+        serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
     @swagger_auto_schema(

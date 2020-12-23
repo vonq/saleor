@@ -1,8 +1,13 @@
+from typing import Optional, Dict
+
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-
-from api.products.models import Location, JobFunction, JobTitle, Industry
 from rest_framework_recursive.fields import RecursiveField
+
+from api.currency.conversion import convert
+from api.currency.models import ExchangeRate
+from api.products.docs import CommonParameters
+from api.products.models import Location, JobFunction, JobTitle, Industry
 
 
 class LocationSerializer(serializers.ModelSerializer):
@@ -83,6 +88,26 @@ class LimitedChannelSerializer(serializers.Serializer):
 
 
 class ProductSerializer(serializers.Serializer):
+    _selected_currency: Optional[str] = None
+    _exchange_rates: Dict[str, float] = {}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get("request")
+        if not request:
+            return
+
+        exchange_rates = ExchangeRate.get_latest_rates().values(
+            "target_currency__code", "rate"
+        )
+
+        for rate in exchange_rates:
+            self._exchange_rates[rate["target_currency__code"]] = float(rate["rate"])
+
+        self._selected_currency = request.query_params.get(
+            CommonParameters.CURRENCY.name
+        )
+
     @staticmethod
     def get_homepage(product):
         if product.url:
@@ -107,13 +132,29 @@ class ProductSerializer(serializers.Serializer):
     def get_duration(product):
         return {"range": "days", "period": product.duration_days}
 
-    @staticmethod
-    def get_vonq_price(product):
-        return [{"amount": product.unit_price, "currency": "EUR"}]
+    def get_prices(self, price):
+        prices = [{"amount": price, "currency": "EUR"}] + [
+            {
+                "amount": convert(price, exchange_rate),
+                "currency": currency_code,
+            }
+            for currency_code, exchange_rate in self._exchange_rates.items()
+        ]
+        if self._selected_currency:
+            return filter(lambda x: x["currency"] == self._selected_currency, prices)
+        return prices
 
-    @staticmethod
-    def get_ratecard_price(product):
-        return [{"amount": product.rate_card_price, "currency": "EUR"}]
+    def get_vonq_price(self, product):
+        prices = self.get_prices(product.unit_price)
+        if self._selected_currency:
+            return filter(lambda x: x["currency"] == self._selected_currency, prices)
+        return prices
+
+    def get_ratecard_price(self, product):
+        prices = self.get_prices(product.rate_card_price)
+        if self._selected_currency:
+            return filter(lambda x: x["currency"] == self._selected_currency, prices)
+        return prices
 
     @staticmethod
     def get_time_to_process(product):
@@ -148,6 +189,21 @@ class ProductSearchSerializer(serializers.Serializer):
     jobFunctionId = serializers.IntegerField(required=False)
     durationFrom = serializers.IntegerField(required=False)
     durationTo = serializers.IntegerField(required=False)
+    currency = serializers.CharField(required=False, max_length=3)
+
+    @property
+    def is_search_request(self) -> bool:
+        return any(
+            (
+                self.validated_data.get("includeLocationId"),
+                self.validated_data.get("exactLocationId"),
+                self.validated_data.get("industryId"),
+                self.validated_data.get("jobTitleId"),
+                self.validated_data.get("jobFunctionId"),
+                self.validated_data.get("durationFrom"),
+                self.validated_data.get("durationTo"),
+            )
+        )
 
     @staticmethod
     def is_a_valid_integer_array(value):

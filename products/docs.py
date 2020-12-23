@@ -19,3 +19,11 @@ class CommonParameters:
         required=False,
         example="Monster.com",
     )
+    CURRENCY = openapi.Parameter(
+        "currency",
+        in_=openapi.IN_QUERY,
+        description="ISO-4217 code for a currency",
+        type=openapi.TYPE_STRING,
+        required=False,
+        example="GBP",
+    )
