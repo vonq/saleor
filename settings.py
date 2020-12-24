@@ -228,12 +228,12 @@ if not is_development():
 
 Q_CLUSTER = {
     "name": "DjangORM",
-    "workers": 4,
+    "workers": 2,
     "timeout": 120,
     "retry": 120,
     "queue_limit": 50,
     "max_attempts": 3,
     "bulk": 10,
     "orm": "default",
-    "poll": 1,
+    "poll": 2,
 }
