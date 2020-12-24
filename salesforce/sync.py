@@ -35,7 +35,9 @@ def login():
 
 def make_salesforce_product(product_instance):
     return {
-        "Uuid__c": str(product_instance.salesforce_id),
+        # a newly created product won't have a salesforce_id field, only a product_id
+        "Uuid__c": str(product_instance.salesforce_id)
+        or str(product_instance.product_id),
         "Name": product_instance.title_en,
         "Channel__c": getattr(product_instance.channel, "salesforce_id", None),
         "Description": product_instance.description,
