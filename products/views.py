@@ -10,6 +10,7 @@ from rest_framework import viewsets, mixins
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.status import HTTP_400_BAD_REQUEST
 
 from api.products.apps import ProductsConfig
 from api.products.docs import CommonParameters
@@ -123,7 +124,9 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     def list(self, request, *args, **kwargs):
         text = self.request.query_params.get("text")
         if not text:
-            return []
+            return Response(
+                data={"text": ["This field is required"]}, status=HTTP_400_BAD_REQUEST
+            )
 
         # first attempt to match on continents
         continents = Geocoder.get_continents(text)
