@@ -237,3 +237,34 @@ Q_CLUSTER = {
     "orm": "default",
     "poll": 2,
 }
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "stdout": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "stream": sys.stdout,
+            "formatter": "django-q",
+        },
+        "stderr": {
+            "level": "ERROR",
+            "class": "logging.StreamHandler",
+            "stream": sys.stderr,
+            "formatter": "django-q",
+        },
+    },
+    "formatters": {
+        "django-q": {
+            "format": "{asctime} [Q] {levelname} {message}",
+            "style": "{",
+        }
+    },
+    "loggers": {
+        "django-q": {
+            "handlers": ["stdout", "stderr"],
+            "level": "INFO",
+        }
+    },
+}
