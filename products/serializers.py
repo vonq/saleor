@@ -190,6 +190,7 @@ class ProductSearchSerializer(serializers.Serializer):
     durationFrom = serializers.IntegerField(required=False)
     durationTo = serializers.IntegerField(required=False)
     currency = serializers.CharField(required=False, max_length=3)
+    name = serializers.CharField(required=False)
 
     @property
     def is_search_request(self) -> bool:
@@ -202,6 +203,7 @@ class ProductSearchSerializer(serializers.Serializer):
                 self.validated_data.get("jobFunctionId"),
                 self.validated_data.get("durationFrom"),
                 self.validated_data.get("durationTo"),
+                self.validated_data.get("name"),
             )
         )
 

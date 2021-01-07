@@ -633,11 +633,9 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         self.assertEquals(resp.status_code, 404)
 
     def test_can_search_for_product_name(self):
-        resp = self.client.get(
-            reverse("api.products:products-list") + f"?name=something"
-        )
+        resp = self.client.get(reverse("api.products:products-list") + f"?name=global")
 
-        self.assertTrue(len(resp.json()["results"]), 5)
+        self.assertEqual(len(resp.json()["results"]), 1)
 
     def test_can_search_for_duration_from(self):
         resp = self.client.get(
