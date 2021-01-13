@@ -5,7 +5,7 @@ from api.currency.models import ExchangeRate, Currency
 
 @admin.register(ExchangeRate)
 class ExchangeRateAdmin(admin.ModelAdmin):
-    pass
+    readonly_fields = ("created",)
 
 
 @admin.register(Currency)

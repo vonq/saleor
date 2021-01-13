@@ -1,3 +1,5 @@
+from django.utils import timezone
+
 from django.db import models
 
 
@@ -18,6 +20,7 @@ class ExchangeRate(models.Model):
         decimal_places=5, max_digits=20
     )  # conversion rate against EUR
     date = models.DateField()
+    created = models.DateTimeField(default=timezone.now)
 
     @classmethod
     def get_latest_rates(cls):
