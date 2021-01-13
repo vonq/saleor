@@ -138,7 +138,7 @@ class DurationMoreThanFacetFilter(FacetFilter):
         parameter_name,
         in_=openapi.IN_QUERY,
         description="Match only products with a duration more or equal than a certain number of days",
-        type=openapi.TYPE_STRING,
+        type=openapi.TYPE_INTEGER,
         required=False,
         explode=False,
     )
@@ -155,7 +155,7 @@ class DurationLessThanFacetFilter(FacetFilter):
         parameter_name,
         in_=openapi.IN_QUERY,
         description="Match only products with a duration up to a certain number of days",
-        type=openapi.TYPE_STRING,
+        type=openapi.TYPE_INTEGER,
         required=False,
         explode=False,
     )

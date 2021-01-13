@@ -22,7 +22,7 @@ class JobFunctionViewTestCase(AuthenticatedTestCase):
         resp = self.client.get(reverse("api.products:industries-list"))
 
         self.assertEqual(resp.status_code, 200)
-        results = resp.json()["results"]
+        results = resp.json()
 
         self.assertEqual(results[0]["name"], "A Industry")
         self.assertEqual(results[1]["name"], "B Industry")

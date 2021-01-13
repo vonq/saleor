@@ -474,7 +474,6 @@ class JobFunctionsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 class IndustriesViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     permission_classes = [IsAuthenticated]
     serializer_class = IndustrySerializer
-    pagination_class = StandardResultsSetPagination
     http_method_names = ("get",)
 
     search_parameters = [

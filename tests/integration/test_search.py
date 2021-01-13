@@ -322,7 +322,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
 
     def test_can_fetch_all_industries(self):
         resp = self.client.get(reverse("api.products:industries-list"))
-        self.assertEqual(len(resp.json()["results"]), 2)
+        self.assertEqual(len(resp.json()), 2)
 
     def test_can_filter_products_by_industry_id(self):
         resp = self.client.get(
