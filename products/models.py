@@ -238,7 +238,6 @@ class Location(models.Model):
         existing_ids = [location.mapbox_id for location in existing]
 
         if existing.count() < len(locations):
-
             created = Location.objects.bulk_create(
                 filter(lambda x: x.mapbox_id not in existing_ids, locations)
             )
@@ -694,6 +693,8 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
     #     'rs': 0,
     #     'za': 0
     # }
+
+    order_frequency = models.FloatField(null=True, blank=True, default=0)
 
     objects = AcrossLanguagesQuerySet.as_manager()
 
