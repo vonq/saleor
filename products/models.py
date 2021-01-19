@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import FieldError
 from django.db import models
-from django.db.models import QuerySet, Q, Max, Func, F, Count
+from django.db.models import QuerySet, Q, Max, Func, F, Count, Case, When
 from django.db.models.functions import Cast
 from modeltranslation.fields import TranslationFieldDescriptor
 
@@ -227,14 +227,17 @@ class Location(models.Model):
     @classmethod
     def from_mapbox_autocomplete_response(cls, mapbox_response: list):
         locations = [cls.from_mapbox_result(result) for result in mapbox_response]
+        locations_ids = [location.mapbox_id for location in locations]
 
-        existing = (
-            cls.objects.filter(
-                mapbox_id__in=[location.mapbox_id for location in locations]
+        existing = cls.objects.filter(mapbox_id__in=locations_ids).order_by(
+            Case(
+                *[
+                    When(mapbox_id=mapbox_id, then=pos)
+                    for pos, mapbox_id in enumerate(locations_ids)
+                ]
             )
-            .annotate(products_count=Count("products"))
-            .order_by("products_count")
         )
+
         existing_ids = [location.mapbox_id for location in existing]
 
         if existing.count() < len(locations):
