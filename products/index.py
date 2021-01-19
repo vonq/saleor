@@ -40,6 +40,7 @@ class ProductIndex(AlgoliaIndex):
         "available_in_jmp",
         "is_addon",
         "is_product",
+        "order_frequency",
     )
     settings = {
         "minWordSizefor1Typo": 4,
@@ -73,6 +74,7 @@ class ProductIndex(AlgoliaIndex):
             "available_in_jmp",
             "is_addon",
             "is_product",
+            "order_frequency",
         ],
         "attributesToSnippet": None,
         "attributesToHighlight": None,
@@ -81,12 +83,10 @@ class ProductIndex(AlgoliaIndex):
         "exactOnSingleWordQuery": "attribute",
         "ranking": [
             "filters",
+            "desc(order_frequency)",
             "desc(maximum_locations_cardinality)",
         ],
-        "customRanking": [
-            "desc(filters)",
-            "desc(maximum_locations_cardinality)",
-        ],
+        "customRanking": [],
         "separatorsToIndex": "",
         "removeWordsIfNoResults": "lastWords",
         "queryType": "prefixLast",

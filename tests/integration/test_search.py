@@ -293,6 +293,54 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         product2.job_functions.add(construction)
         product2.save()
 
+        # Frequency tests
+
+        cls.recruitment_industry = Industry(name_en="Recruitment")
+        cls.recruitment_industry.save()
+
+        cls.brazil = Location(
+            mapbox_id="country.123",
+            mapbox_text="BR",
+            mapbox_context=["continent.south_america"],
+        )
+        cls.brazil.save()
+
+        high_frequency_product = Product(
+            title="frequency 1",
+            is_active=True,
+            salesforce_id="high",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            order_frequency=0.9,
+        )
+        high_frequency_product.save()
+
+        high_frequency_product.locations.add(cls.brazil)
+        high_frequency_product.save()
+
+        medium_frequency_product = Product(
+            title="frequency 2",
+            is_active=True,
+            salesforce_id="medium",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            order_frequency=0.6,
+        )
+        medium_frequency_product.save()
+        medium_frequency_product.locations.add(cls.brazil)
+        medium_frequency_product.industries.add(cls.recruitment_industry)
+        medium_frequency_product.save()
+
+        low_frequency_product = Product(
+            title="frequency 3",
+            is_active=True,
+            salesforce_id="low",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            order_frequency=0.1,
+        )
+        low_frequency_product.save()
+        low_frequency_product.industries.add(cls.recruitment_industry)
+        low_frequency_product.locations.add(cls.brazil)
+        low_frequency_product.save()
+
         # it takes up to four seconds to actually reindex stuff
         time.sleep(4)
 
@@ -320,9 +368,36 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         )
         algolia_engine.reset(settings.ALGOLIA)
 
+    def test_can_prioritize_products_with_higher_order_frequency(self):
+        resp = self.client.get(
+            reverse("api.products:products-list") + f"?name=frequency"
+        )
+        response = resp.json()["results"]
+        self.assertEqual(len(response), 3)
+        self.assertEqual(response[0]["product_id"], "high")
+        self.assertEqual(response[1]["product_id"], "medium")
+        self.assertEqual(response[2]["product_id"], "low")
+
+    def test_order_frequency_rank_does_not_outweigh_filters(self):
+        """
+        The product with the highest frequency only contains one of the filters, while the other two have both.
+        We expect the ones that match both filters to appear first (ordered by frequency), followed by the product that
+        only matches one filter.
+        """
+        resp = self.client.get(
+            reverse("api.products:products-list")
+            + f"?name=frequency&includeLocationId={self.brazil.id}&industryId={self.recruitment_industry.id}"
+        )
+        response = resp.json()["results"]
+
+        self.assertEqual(len(response), 3)
+        self.assertEqual(response[0]["product_id"], "medium")
+        self.assertEqual(response[1]["product_id"], "low")
+        self.assertEqual(response[2]["product_id"], "high")
+
     def test_can_fetch_all_industries(self):
         resp = self.client.get(reverse("api.products:industries-list"))
-        self.assertEqual(len(resp.json()), 2)
+        self.assertEqual(len(resp.json()), 3)
 
     def test_can_filter_products_by_industry_id(self):
         resp = self.client.get(
@@ -382,7 +457,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
 
     def test_return_all_products_with_no_locations(self):
         resp = self.client.get(reverse("api.products:products-list"))
-        self.assertEquals(len(resp.json()["results"]), 14)
+        self.assertEquals(len(resp.json()["results"]), 17)
 
     def test_products_conform_to_required_specification(self):
         resp = self.client.get(reverse("api.products:products-list"))
