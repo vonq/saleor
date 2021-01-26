@@ -34,7 +34,7 @@ def product_annotation(request):
         {
             "industries": list(industries.values("name")),
             "jobFunctions": list(jobFunctions.values("name")),
-            "channelTypes": [choice[0] for choice in Channel.TYPE_CHOICES],
+            "channelTypes": [choice[0] for choice in Channel.Type.choices],
         },
     )
 
@@ -44,7 +44,7 @@ def channel_annotation(request):
     return render(
         request,
         "channel_annotation.html",
-        {"type_options": [choice[0] for choice in Channel.TYPE_CHOICES]},
+        {"type_options": [choice[0] for choice in Channel.Type.choices]},
     )
 
 
@@ -436,7 +436,7 @@ def set_channel(request):
     channel = Channel.objects.get(pk=payload["id"])
 
     if payload["type"] is not None and payload["type"] in [
-        choice[0] for choice in Channel.TYPE_CHOICES
+        choice[0] for choice in Channel.Type.choices
     ]:
         channel.type = payload["type"]
         channel.save()

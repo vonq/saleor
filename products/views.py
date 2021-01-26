@@ -148,8 +148,13 @@ class ProductsViewSet(viewsets.ModelViewSet):
         "locations", "industries", "job_functions"
     )
     lookup_field = "product_id"
+    recommendation_search_limit = (
+        500  # Number of products to be retrieved on a recommendation query
+    )
 
     search_results_count: int = None
+
+    is_recommendation: bool = False
 
     search_filters: Tuple[Type[FacetFilter]] = (
         InclusiveLocationIdFacetFilter,
@@ -177,7 +182,7 @@ class ProductsViewSet(viewsets.ModelViewSet):
         return self._paginator
 
     def get_queryset(self):
-        active_products = (
+        queryset = (
             self.queryset.filter(is_active=True)
             .filter(
                 salesforce_product_type__in=Product.SalesforceProductType.products()
@@ -186,8 +191,14 @@ class ProductsViewSet(viewsets.ModelViewSet):
         )
 
         if self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]:
-            return active_products.filter(available_in_jmp=True)
-        return active_products
+            queryset = queryset.filter(available_in_jmp=True)
+
+        if self.is_recommendation:
+            queryset = self.add_recommendation_filter(
+                queryset.order_by("-order_frequency")
+            )
+
+        return queryset.order_by("-order_frequency")
 
     def get_all_filters(self):
         if self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]:
@@ -195,12 +206,36 @@ class ProductsViewSet(viewsets.ModelViewSet):
             return all_filters
         return self.search_filters
 
+    @staticmethod
+    def add_recommendation_filter(queryset):
+        jobboard_generic_filter = queryset.filter(
+            channel__type=Channel.Type.JOB_BOARD
+        ).filter(job_functions=None)[:1]
+        jobboard_niche_filter = queryset.filter(
+            channel__type=Channel.Type.JOB_BOARD
+        ).exclude(job_functions=None)[:1]
+        publication_filter = queryset.filter(channel__type=Channel.Type.PUBLICATION)[:2]
+        community_filter = queryset.filter(channel__type=Channel.Type.COMMUNITY)[:2]
+        social_filter = queryset.filter(channel__type=Channel.Type.SOCIAL_MEDIA)[:2]
+        return publication_filter.union(
+            jobboard_generic_filter,
+            jobboard_niche_filter,
+            community_filter,
+            social_filter,
+        ).order_by("-order_frequency")
+
     def search_queryset(self, queryset):
+        if self.is_recommendation:
+            limit = self.recommendation_search_limit
+            offset = 0
+        else:
+            limit = SearchResultsPagination().get_limit(self.request)
+            offset = SearchResultsPagination().get_offset(self.request)
         filter_collection = FacetFilterCollection.build_filter_collection_from_request(
             request=self.request,
             filters=self.get_all_filters(),
-            limit=SearchResultsPagination().get_limit(self.request),
-            offset=SearchResultsPagination().get_offset(self.request),
+            limit=limit,
+            offset=offset,
         )
         product_name = self.request.query_params.get("name", "")
 
@@ -209,9 +244,15 @@ class ProductsViewSet(viewsets.ModelViewSet):
         )
         ids = get_results_ids(results)
 
-        return self.queryset.filter(pk__in=ids).order_by(
+        queryset = self.queryset.filter(pk__in=ids).order_by(
             Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(ids)])
         )
+
+        if self.is_recommendation:
+            queryset = self.add_recommendation_filter(queryset)
+            self.search_results_count = queryset.count()
+
+        return queryset
 
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
@@ -302,6 +343,8 @@ class ProductsViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         search_serializer = ProductSearchSerializer(data=self.request.query_params)
         search_serializer.is_valid(raise_exception=True)
+        self.is_recommendation = search_serializer.is_recommendation
+
         queryset = self.get_queryset()
         if search_serializer.is_search_request:
             # a pure list view doesn't need to hit the search index

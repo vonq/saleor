@@ -191,6 +191,11 @@ class ProductSearchSerializer(serializers.Serializer):
     durationTo = serializers.IntegerField(required=False)
     currency = serializers.CharField(required=False, max_length=3)
     name = serializers.CharField(required=False)
+    recommended = serializers.BooleanField(required=False, default=False)
+
+    @property
+    def is_recommendation(self) -> bool:
+        return self.validated_data.get("recommended")
 
     @property
     def is_search_request(self) -> bool:

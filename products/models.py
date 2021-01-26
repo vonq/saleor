@@ -270,20 +270,38 @@ class Location(models.Model):
 
 
 class Channel(SFSyncable):
+    class Type(models.TextChoices):
+        JOB_BOARD = (
+            "job board",
+            _("Job Board"),
+        )
+        SOCIAL_MEDIA = (
+            "social media",
+            _("Social Media"),
+        )
+        COMMUNITY = (
+            "community",
+            _("Community"),
+        )
+        PUBLICATION = (
+            "publication",
+            _("Publication"),
+        )
+        AGGREGATOR = (
+            "aggregator",
+            _("Aggregator"),
+        )
+        NOT_CHANNEL = (
+            "not channel",
+            _("Not Channel"),
+        )
+
     salesforce_id = models.CharField(max_length=20, null=True)
     name = models.CharField(max_length=200)
     url = models.URLField(max_length=300)
     is_active = models.BooleanField(default=False)
     salesforce_account_id = models.CharField(max_length=20, null=True)
-    TYPE_CHOICES = [
-        ("job board", "Job Board"),
-        ("social media", "Social Media"),
-        ("community", "Community"),
-        ("publication", "Publication"),
-        ("aggregator", "Aggregator"),
-        ("not channel", "Not Channel"),
-    ]
-    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default="job board")
+    type = models.CharField(max_length=20, choices=Type.choices, default="job board")
 
     def __str__(self):
         return str(self.name)

@@ -6,7 +6,14 @@ from django.test import override_settings, tag
 from rest_framework.reverse import reverse
 
 from api.products.index import ProductIndex
-from api.products.models import Product, Industry, Location, JobFunction, JobTitle
+from api.products.models import (
+    Product,
+    Industry,
+    Location,
+    JobFunction,
+    JobTitle,
+    Channel,
+)
 from api.tests import AuthenticatedTestCase
 from django.contrib.auth import get_user_model
 
@@ -341,6 +348,36 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         low_frequency_product.locations.add(cls.brazil)
         low_frequency_product.save()
 
+        # Light recommendations
+
+        jobboard_channel = Channel(type=Channel.Type.JOB_BOARD)
+        jobboard_channel.save()
+        community_channel = Channel(type=Channel.Type.COMMUNITY)
+        community_channel.save()
+        publication_channel = Channel(type=Channel.Type.PUBLICATION)
+        publication_channel.save()
+        social_channel = Channel(type=Channel.Type.SOCIAL_MEDIA)
+        social_channel.save()
+
+        for channel in [
+            jobboard_channel,
+            community_channel,
+            publication_channel,
+            social_channel,
+        ]:
+            for i in range(0, 3):
+                recommended_product = Product(
+                    title=f"recommendation {channel.type} {i}",
+                    is_active=True,
+                    salesforce_id=f"recommendation {channel.type} {i}",
+                    order_frequency=0.1 * i,
+                    salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+                )
+
+                recommended_product.save()
+                recommended_product.channel = channel
+                recommended_product.save()
+
         # it takes up to four seconds to actually reindex stuff
         time.sleep(4)
 
@@ -367,6 +404,56 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             f"{ProductIndex.index_name}_{TEST_INDEX_SUFFIX}"
         )
         algolia_engine.reset(settings.ALGOLIA)
+
+    def test_can_recommend_products(self):
+        def get_number_of_products_for_channel_type(response, channel_type):
+            return len([r for r in response if r["channel"]["type"] == channel_type])
+
+        resp = self.client.get(
+            reverse("api.products:products-list")
+            + f"?name=recommendation&recommended=true"
+        )
+        response = resp.json()["results"]
+
+        self.assertEqual(
+            get_number_of_products_for_channel_type(response, Channel.Type.COMMUNITY), 2
+        )
+        self.assertEqual(
+            get_number_of_products_for_channel_type(
+                response, Channel.Type.SOCIAL_MEDIA
+            ),
+            2,
+        )
+        self.assertEqual(
+            get_number_of_products_for_channel_type(response, Channel.Type.PUBLICATION),
+            2,
+        )
+        # Only one because no products where created with job function (so none were categorized as niche)
+        self.assertEqual(
+            get_number_of_products_for_channel_type(response, Channel.Type.JOB_BOARD), 1
+        )
+
+    def test_recommendations_are_sorted_by_order_frequency(self):
+        def get_order_frequency(product_id):
+            return (
+                Product.objects.all()
+                .filter(product_id=product_id)
+                .first()
+                .order_frequency
+            )
+
+        resp = self.client.get(
+            reverse("api.products:products-list")
+            + f"?name=recommendation&recommended=true"
+        )
+        response = resp.json()["results"]
+
+        for i in range(0, len(response) - 1):
+
+            self.assertTrue(
+                get_order_frequency(response[i]["product_id"])
+                >= get_order_frequency(response[i + 1]["product_id"])
+            )
 
     def test_can_prioritize_products_with_higher_order_frequency(self):
         resp = self.client.get(
@@ -457,7 +544,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
 
     def test_return_all_products_with_no_locations(self):
         resp = self.client.get(reverse("api.products:products-list"))
-        self.assertEquals(len(resp.json()["results"]), 17)
+        self.assertEquals(len(resp.json()["results"]), 25)
 
     def test_products_conform_to_required_specification(self):
         resp = self.client.get(reverse("api.products:products-list"))
