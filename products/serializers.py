@@ -118,7 +118,7 @@ class ProductSerializer(serializers.Serializer):
 
     @staticmethod
     def get_type(product):
-        return product.salesforce_product_type
+        return getattr(product.channel, "type", None)
 
     @staticmethod
     def get_cross_postings(product):
