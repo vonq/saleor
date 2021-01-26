@@ -168,7 +168,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:9001",
-    "http://platform-acceptance.vonq.it",
+    "https://platform-acceptance.vonq.it",
+    "https://platform.vonq.com",
     "http://localhost:3000",
     "https://master.djaiqvf4qskm2.amplifyapp.com",
 ]
