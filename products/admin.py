@@ -275,6 +275,7 @@ class LocationAdmin(TranslationAdmin):
             "mapbox_within",
             "mapbox_place_type",
             "mapbox_context",
+            "mapbox_id",
             "approved",
         )
         self.readonly_fields = ("mapbox_context",)

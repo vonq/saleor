@@ -313,6 +313,29 @@ class Channel(SFSyncable):
         return str(self.name)
 
 
+class PostingRequirement(models.Model):
+
+    class PostingRequirementType(models.TextChoices):
+        LOCATION = "Location", _("Location")
+        SALARY_INDICATION = "Salary Indication", _("Salary Indication")
+        CAREER_LEVEL = "Career Level", _("Career level")
+        LANGUAGE_SPECIFIC = "Language Specific", _("Language Specific")
+        CONTACT_INFO = "Contact Information", _("Contact Information")
+        COMPANY_REGISTRATION_INFO = "Company Registration Information", _("Company Registration Information")
+        FB_PROFILE = "Facebook Profile", _("Facebook Profile")
+        LI_PROFILE = "LinkedIn Profile", _("LinkedIn Profile")
+        XING_PROFILE = "Xing Profile", _("Xing Profile")
+        HOURS = "Hours", _("Hours")
+        NONE = None, _("--None--")
+
+    posting_requirement_type = models.TextField(
+        choices=PostingRequirementType.choices,
+        default=PostingRequirementType.NONE,
+        null=True,
+    )
+    # further attribute and validators to add
+
+
 class IndexSearchableProductMixin:
     industries: QuerySet
     job_functions: QuerySet
@@ -648,6 +671,12 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
 
     job_functions = models.ManyToManyField(
         JobFunction, name="job_functions", related_name="products", blank=True
+    )
+    posting_requirements = models.ManyToManyField(
+        PostingRequirement,
+        related_name="posting_requirements",
+        related_query_name="posting_requirement",
+        blank=True
     )
 
     salesforce_logo_url = models.CharField(
