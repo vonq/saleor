@@ -7,6 +7,8 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from django.db.models import Count
 from modeltranslation.admin import TranslationAdmin
+from mptt.admin import MPTTModelAdmin
+from mptt.forms import TreeNodeChoiceField
 from rest_framework.utils import json
 
 from api.field_permissions.admin import PermissionBasedFieldsMixin
@@ -36,6 +38,16 @@ admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 
 
+class JobFunctionTreeModelInlineForm(forms.ModelForm):
+  jobfunction = TreeNodeChoiceField(queryset=JobFunction.objects.all())
+
+
+class JobFunctionModelInline(admin.TabularInline):
+  model = Product.job_functions.through
+  form = JobFunctionTreeModelInlineForm
+  extra = 0
+
+
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
@@ -61,6 +73,7 @@ class ProductAdmin(PermissionBasedFieldsMixin, TranslationAdmin):
         "salesforce_sync_status",
         "salesforce_last_sync",
     ]
+    inlines = (JobFunctionModelInline,)
 
     fields = [
         "title",
@@ -162,10 +175,11 @@ class JobTitleAdmin(TranslationAdmin):
 
 
 @admin.register(JobFunction)
-class JobFunctionAdmin(TranslationAdmin):
+class TreeJobFunctionAdmin(TranslationAdmin, MPTTModelAdmin):
     fields = ["name", "parent"]
     list_display = ("name", "parent")
     search_fields = ("name",)
+    mptt_level_indent = 36
 
 
 class MapboxAutocompleteWidget(forms.widgets.Input):

@@ -16,11 +16,13 @@ from api.products.apps import ProductsConfig
 from api.products.docs import CommonParameters
 from api.products.filters import (
     FacetFilter,
+    InclusiveJobFunctionChildrenFilter,
     InclusiveLocationIdFacetFilter,
     FacetFilterCollection,
     ExactLocationIdFacetFilter,
     JobFunctionsFacetFilter,
     JobTitlesFacetFilter,
+    DescendentJobTitlesFacetFilter,
     IndustryFacetFilter,
     PrimarySimilarWebFacetFilter,
     SecondarySimilarWebFacetFilter,
@@ -160,7 +162,9 @@ class ProductsViewSet(viewsets.ModelViewSet):
         InclusiveLocationIdFacetFilter,
         ExactLocationIdFacetFilter,
         JobFunctionsFacetFilter,
+        InclusiveJobFunctionChildrenFilter,
         JobTitlesFacetFilter,
+        DescendentJobTitlesFacetFilter,
         IndustryFacetFilter,
         PrimarySimilarWebFacetFilter,
         SecondarySimilarWebFacetFilter,

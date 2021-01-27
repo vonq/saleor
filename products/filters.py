@@ -1,10 +1,11 @@
+import itertools
 from typing import ClassVar, Iterable, Type
 
 from drf_yasg2 import openapi
 from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request
 
-from api.products.models import Location
+from api.products.models import JobFunction, Location
 
 
 class FacetFilter:
@@ -206,6 +207,27 @@ class JobTitlesFacetFilter(FacetFilter):
         super().__init__(*values)
 
 
+class DescendentJobTitlesFacetFilter(FacetFilter):
+    filter_name = "searchable_job_functions_ids"
+    parameter_name = "jobTitleId"
+    parameter = None
+    score = 4
+
+    def __init__(self, *values):
+        descendant_job_functions = list(
+            set(
+                itertools.chain.from_iterable(
+                    job_function.get_descendants().values_list("pk", flat=True)
+                    for job_function in
+                    JobFunction.objects.filter(jobtitle__id__in=values)
+                )
+            )
+        ) or values
+
+        super().__init__(*descendant_job_functions)
+        pass
+
+
 class IndustryFacetFilter(FacetFilter):
     filter_name = "searchable_industries_ids"
     parameter_name = "industryId"
@@ -219,6 +241,26 @@ class IndustryFacetFilter(FacetFilter):
         explode=False,
     )
     score = 8
+
+
+class InclusiveJobFunctionChildrenFilter(FacetFilter):
+    filter_name = "searchable_job_functions_ids"
+    parameter_name = "jobFunctionId"
+    score = 10
+    parameter = None
+    operator = "OR"
+
+    def __init__(self, *values):
+        child_job_functions = list(
+            set(
+                itertools.chain.from_iterable(
+                    job_function.get_descendants().values_list("pk", flat=True)
+                    for job_function in
+                    JobFunction.objects.filter(id__in=values)
+                )
+            )
+        ) or values
+        super().__init__(*child_job_functions)
 
 
 class FacetFilterCollection:

@@ -12,6 +12,7 @@ from django.db import models
 from django.db.models import QuerySet, Q, Max, Func, F, Count, Case, When
 from django.db.models.functions import Cast
 from modeltranslation.fields import TranslationFieldDescriptor
+from mptt.models import MPTTModel
 
 from api.field_permissions.models import FieldPermissionModelMixin
 from api.products.geocoder import Geocoder
@@ -84,10 +85,15 @@ class Industry(models.Model):
         verbose_name_plural = "industries"
 
 
-class JobFunction(models.Model):
+class JobFunction(MPTTModel):
     name = models.CharField(max_length=100)
     parent = models.ForeignKey(
-        "JobFunction", on_delete=models.CASCADE, null=True, blank=True
+        "JobFunction",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        name="parent",
+        related_name="children",
     )
 
     objects = AcrossLanguagesQuerySet.as_manager()
@@ -325,6 +331,18 @@ class IndexSearchableProductMixin:
         return self.job_functions.all()
 
     @property
+    def all_descendants_job_functions(self) -> Iterable["JobFunction"]:
+        return list(set(
+            function for function in
+            itertools.chain.from_iterable(
+                [
+                    job_function.get_descendants()
+                    for job_function in self.all_job_functions
+                ]
+            )
+        ))
+
+    @property
     def all_locations(self) -> Iterable["Location"]:
         return self.locations.all()
 
@@ -348,23 +366,29 @@ class IndexSearchableProductMixin:
     def searchable_job_functions_names(self):
         return [function.name for function in self.all_job_functions]
 
+    def _job_title_info_from_function(self, job_function_iterator, job_title_field):
+        return list(set(
+            getattr(jobtitle, job_title_field)
+            for jobtitle in itertools.chain.from_iterable(
+                [function.jobtitle_set.all() for function in job_function_iterator]
+            )
+        ))
+
     @property
     def searchable_job_titles_ids(self):
-        return [
-            jobtitle.id
-            for jobtitle in itertools.chain.from_iterable(
-                [function.jobtitle_set.all() for function in self.all_job_functions]
-            )
-        ]
+        return self._job_title_info_from_function(self.all_job_functions, "id")
 
     @property
     def searchable_job_titles_names(self) -> List[str]:
-        return [
-            jobtitle.name
-            for jobtitle in itertools.chain.from_iterable(
-                [function.jobtitle_set.all() for function in self.all_job_functions]
-            )
-        ]
+        return self._job_title_info_from_function(self.all_job_functions, "name")
+
+    @property
+    def searchable_descendants_job_titles_ids(self):
+        return self._job_title_info_from_function(self.all_descendants_job_functions, "id")
+
+    @property
+    def searchable_descendants_job_titles_names(self) -> List[str]:
+        return self._job_title_info_from_function(self.all_descendants_job_functions, "name")
 
     @property
     def searchable_locations_ids(self):
@@ -621,11 +645,9 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         related_query_name="industry",
         blank=True,
     )
+
     job_functions = models.ManyToManyField(
-        JobFunction,
-        related_name="job_functions",
-        related_query_name="job_function",
-        blank=True,
+        JobFunction, name="job_functions", related_name="products", blank=True
     )
 
     salesforce_logo_url = models.CharField(

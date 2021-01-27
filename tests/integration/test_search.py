@@ -269,6 +269,10 @@ class ProductSearchTestCase(AuthenticatedTestCase):
 
         cls.software_engineering_id = software_engineering.id
 
+        cls.web_development = JobFunction.objects.create(
+            name="Web Development", parent_id=software_engineering.id
+        )
+
         python_developer = JobTitle(
             name="Python Developer", job_function_id=software_engineering.id
         )
@@ -299,6 +303,15 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         product2.save()
         product2.job_functions.add(construction)
         product2.save()
+
+        web_development_board = Product.objects.create(
+            is_active=True,
+            title="A board for web developers",
+            url="https://something.int/webDev",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+        )
+        web_development_board.job_functions.add(cls.web_development)
+        web_development_board.save()
 
         # Frequency tests
 
@@ -724,7 +737,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
 
         self.assertEqual(resp.status_code, 200)
 
-        self.assertEqual(len(resp.json()["results"]), 1)
+        self.assertEqual(len(resp.json()["results"]), 2)
 
     def test_product_search_can_filter_by_job_title(self):
         resp = self.client.get(
@@ -733,7 +746,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         )
         self.assertEqual(resp.status_code, 200)
 
-        self.assertEqual(len(resp.json()["results"]), 1)
+        self.assertEqual(len(resp.json()["results"]), 2)
 
     def test_product_search_cannot_filter_by_both_job_title_and_job_function(self):
         resp = self.client.get(
@@ -741,6 +754,18 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             + f"?jobTitleId={self.python_developer_id}&jobFunctionId={self.software_engineering_id}"
         )
         self.assertEqual(resp.status_code, 400)
+
+    def test_can_search_products_by_inclusive_job_function(self):
+        resp = self.client.get(
+            reverse("api.products:products-list")
+            + f"?jobFunctionId={self.software_engineering_id}"
+        )
+
+        self.assertEqual(len(resp.json()["results"]), 2)
+        self.assertCountEqual(
+            ["A job board for developers", "A board for web developers"],
+            [res["title"] for res in resp.json()["results"]],
+        )
 
     def test_it_returns_available_products_in_jmp(self):
         User = get_user_model()

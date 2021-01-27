@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     "drf_yasg2",
     "django_q",
     "ajax_select",
+    "mptt",
     "api",
     "api.products",
     "api.annotations",
