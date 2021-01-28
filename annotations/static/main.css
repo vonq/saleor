@@ -47,3 +47,15 @@ body {
 .muted {
     color: #5a6268;
 }
+
+.level-danger {
+    background-color: red;
+}
+
+.level-warning {
+    background-color: yellow;
+}
+
+.level-info {
+    background-color: blue;
+}

@@ -3,11 +3,28 @@ var DataQualityApp = new Vue({
     el: '#data-quality-app',
     data: {
         locations: [],
-        products: [],
+        products: null,
         jobFunctionTree: {},
         locationTree: {},
         parent_lookup: {},
-        branches: {}
+        branches: {},
+        filters: [],
+        showPassingChecks: false,
+        checkLevels: {
+            'danger':{
+                'selector': 'level-danger',
+                'ordering': 0,
+            },
+            'warning':{
+                'color': 'level-warning',
+                'ordering': 1
+            },
+            'info':{
+                'color': 'level-info',
+                'ordering': 2
+            }
+        }
+
     },
     mounted: function () {
         vm = this
@@ -97,6 +114,11 @@ var DataQualityApp = new Vue({
             for(product of this.productsWithRedundantLocations()){
                 this.pruneRedundantProductLocations(product)
             }
+        },
+        classesFor: function(check) {
+            let obj = {}
+            obj[this.checkLevels[check.level].selector] = true
+            return obj
         }
     },
     computed: {
@@ -104,68 +126,108 @@ var DataQualityApp = new Vue({
             let canonical_names = this.locations.map(l => l.canonical_name)
             let many_location_threshold = 20
             return [
-                {
-                    'label': 'Approved Locations with no parent',
-                    'values': this.locations.filter(l => l.mapbox_within__canonical_name == null && l.approved)
-                        .map(l=>{ return {
-                            'label': l.canonical_name,
-                            'admin_url': '/admin/products/location/' + l.id + '/change',
-                        }
-                    })
-                },
-                {
-                    'label': 'Duplicate locations',
-                    'values': this.locations
-                        .filter((l, index) => canonical_names.lastIndexOf(l.canonical_name) !== index)
-                        .map(l=>{ return {
-                            'label':l.canonical_name,
-                            'admin_url': '/admin/products/location/' + l.id + '/change',
-                        }
-                    })
-                },
-                {
-                    'label': 'Generic Products with no location tagging',
-                    'values': this.products ? this.products
-                        .filter(p => p.location.length == 0 && p.location
-                            && p.salesforce_product_category == "Generic Product")
-                        .map(p=> {
-                                return {
-                                    'label': p.title,
-                                    'admin_url': '/admin/products/product/' + p.id + '/change'
-                                }
+                    {
+                        'label': 'Approved Locations with no parent',
+                        'type': 'simple',
+                        'level': 'info',
+                        'pass': this.locations.filter(l => l.mapbox_within__canonical_name == null && l.approved).length == 0,
+                        'values': this.locations.filter(l => l.mapbox_within__canonical_name == null && l.approved)
+                            .map(l=>{ return {
+                                'label': l.canonical_name,
+                                'admin_url': '/admin/products/location/' + l.id + '/change',
                             }
-                        ) : null
-                },
-                {
-                    'label': 'Products with redundant sub-locations of locations',
-                    'values': this.products ? this.productsWithRedundantLocations().map(product => {
-                        return {
-                            'label': product.title,
-                            'admin_url': '/admin/products/product/' + product.id + '/change',
-                            'values': product.location.map(l => l.canonical_name)
-                        }
-                    }) : null
-                },
-                {
-                    'label': `Products with ${many_location_threshold} location taggings or more`,
-                    'values': this.products ? this.products.filter(p => p.location.length >= many_location_threshold)
-                        .map(p=>{ return {
-                            'label':p.title,
-                            'admin_url': '/admin/products/product/' + p.id + '/change',
-                            'values': [p.location.length]
-                        }}) : null
-                },
-                {
-                    'label': `Locations without a continent in context`,
-                    'values': this.locations ? this.locations.filter(loc =>
-                        typeof loc.mapbox_context == 'object' && !loc.mapbox_context.some(con => con.startsWith('continent.')))
-                        .map(loc=>{ return {
-                            'label':loc.canonical_name,
-                            'admin_url': '/admin/products/product/' + loc.id + '/change',
-                            'values': [loc.mapbox_context.join(', ')]
-                        }}) : null
-                }
-            ]
+                            })
+                    },
+                    {
+                        'label': 'Duplicate locations',
+                        'type': 'simple',
+                        'level': 'danger',
+                        'pass': false,
+                        'values': this.locations
+                            .filter((l, index) => canonical_names.lastIndexOf(l.canonical_name) !== index)
+                            .map(l=>{ return {
+                                'label': l.canonical_name,
+                                'admin_url': '/admin/products/location/' + l.id + '/change',
+                            }})
+                            .sort((a,b) => {
+                                return a.canonical_name < b.canonical_name ? -1: 1
+                            })
+                    },
+                    {
+                        'label': 'Products with redundant sub-locations of locations',
+                        'type': 'structured',
+                        'level': 'info',
+                        'pass': this.products ? this.productsWithRedundantLocations().length == 0: true,
+                        'values': this.products ? this.productsWithRedundantLocations().map(product => {
+                            return {
+                                'label': product.title,
+                                'admin_url': '/admin/products/product/' + product.id + '/change',
+                                'values': product.location.map(l => l.canonical_name)
+                            }
+                        }) : null
+                    },
+                    {
+                        'label': `Products with ${many_location_threshold} location taggings or more`,
+                        'type': 'structured',
+                        'level': 'warning',
+                        'pass': this.products ? !this.products.some(p => p.location.length >= many_location_threshold) : true,
+                        'values': this.products ? this.products.filter(p => p.location.length >= many_location_threshold)
+                            .map(p=>{ return {
+                                'label':p.title,
+                                'admin_url': '/admin/products/product/' + p.id + '/change',
+                                'values': [p.location.length]
+                            }}) : null
+                    },
+                    {
+                        'label': `Locations without a continent in context`,
+                        'type': 'structured',
+                        'level': 'info',
+                        'pass': true,
+                        'values': this.locations ? this.locations.filter(loc =>
+                            typeof loc.mapbox_context == 'object' && !loc.mapbox_context.some(con => con.startsWith('continent.')))
+                            .map(loc=>{ return {
+                                'label':loc.canonical_name,
+                                'admin_url': '/admin/products/location/' + loc.id + '/change',
+                                'values': [loc.mapbox_context.join(', ')]
+                            }}).sort((a,b) => {
+                                return a.canonical_name < b.canonical_name ? -1: 1
+                            }) : null
+                    },
+                    {
+                        'label': 'Generic Products with no location tagging',
+                        'type': 'simple',
+                        'level': 'danger',
+                        'pass': this.products ? !this.products.some(p => p.location.length == 0 && p.location
+                                && p.salesforce_product_category == "Generic Product") : true,
+                        'values': this.products ? this.products
+                            .filter(p => p.location.length == 0 && p.location
+                                && p.salesforce_product_category == "Generic Product")
+                            .map(p=> {
+                                    return {
+                                        'label': p.title,
+                                        'admin_url': '/admin/products/product/' + p.id + '/change'
+                                    }
+                                }
+                            ) : null
+                    },
+                    {
+                            'label': 'Locations without a mapbox_id',
+                            'type': 'simple',
+                            'level': 'danger',
+                            'pass': this.locations ? this.locations.filter(l=>l.mapbox_id==null).length == 0 : true,
+                            'values': this.locations ? this.locations.filter(l=>l.mapbox_id==null)
+                                .map(l=> {
+                                        return {
+                                            'label': l.canonical_name,
+                                            'admin_url': '/admin/products/location/' + l.id + '/change'
+                                        }
+                                    }
+                                ) : null
+                    }
+                ]
+            },
+        checksPassingCount : function () {
+            return this.checks.filter(check => check.pass).length
         }
     }
 })

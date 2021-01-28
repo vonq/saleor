@@ -3,24 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <title>Data Dashboard</title>
-    <link rel="stylesheet" href="/static/bootstrap.min.css">
+{#    <link rel="stylesheet" href="/static/bootstrap.min.css">#}
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
 </head>
 <body>
 <div class="container" id="data-quality-app">
     <div class="row">
+        <div class="col-7">
+             <h1>Data Quality Dashboard</h1>
+        </div>
+        <div class="col-5">
+            <div style="font-size: xx-small; float:right" class="">
+                On two occasions I have been asked, 'Pray, Mr. Babbage, if you put into the machine wrong figures, will the right answers come out?'
+                I am not able rightly to apprehend the kind of confusion of ideas that could provoke such a question. &mdash; Charles Babbage
+            </div>
+        </div>
         <div class="col-12">
-            <h1>Data Quality Dashboard</h1>
-                <pre>
-On two occasions I have been asked, 'Pray, Mr. Babbage, if you put into the machine wrong figures, will the right answers come out?'
-I am not able rightly to apprehend the kind of confusion of ideas that could provoke such a question. -- Charles Babbage
-                </pre>
-            <h2>[[ locations.length ]] locations : [[ products ? products.length : '?']] Products</h2>
+            <h2>[[ locations.length ]] locations :
+                <span v-if="products == null"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></span>
+                <span v-else>[[ products.length ]]</span>
+                Products
+            </h2>
+            <form class="form-check-inline">
+                <input type="checkbox" class="form-check-input" v-model="showPassingChecks" id="showPassingChecksCB">
+                <label class="form-check-label" for="showPassingChecksCB"> also show [[ checksPassingCount ]] passing checks</label>
+            </form>
 
-            <div v-for="check in checks"><h3>[[ check.label ]] ([[check.values !== null ? check.values.length : '*']])</h3>
-                <ul>
-                    <li v-for="value in check.values"><a :href="value.admin_url">[[ value.label ]]</a>
-                        <span v-if="value.values">[[ value.values.join(', ') ]]</span></li>
-                </ul>
+            <div v-for="check, i in checks">
+                <div v-if="!check.pass || showPassingChecks" class="accordion" id="accordionExample">
+                  <div class="accordion-item" v-bind:class="classesFor(check)">
+                    <h2 class="accordion-header" id="checkheading">
+                      <button class="accordion-button" type="button" data-bs-toggle="collapse" :data-bs-target="'#collapse'+i" aria-expanded="true" :aria-controls="'collapse'+i">
+                        [[ check.label ]] ([[check.values !== null ? check.values.length : '*']])
+                      </button>
+                    </h2>
+                    <div :id="'collapse'+i" class="accordion-collapse collapse accordion-flush" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+                        <div class="accordion-body" v-if="check.type == 'simple'">
+                            <ul>
+                                <span v-for="value in check.values"><a :href="value.admin_url">[[ value.label ]]</a>, </span>
+                            </ul>
+                        </div>
+
+                        <div class="accordion-body" v-if="check.type == 'structured'">
+                            <ul>
+                                <li v-for="value in check.values"><a :href="value.admin_url">[[ value.label ]]</a>
+                                    <span v-if="value.values">[[ value.values.join(', ') ]]</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                  </div>
+                </div>
             </div>
         </div>
     </div>
