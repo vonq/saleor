@@ -78,6 +78,9 @@ class Industry(models.Model):
 
     objects = AcrossLanguagesQuerySet.as_manager()
 
+    # don't allow deletion of vonq industries that have mappings to pkb industries
+    vonq_taxonomy_value = models.ForeignKey("vonqtaxonomy.Industry", on_delete=models.RESTRICT, null=False, blank=False)
+
     def __str__(self):
         return self.name
 
@@ -95,6 +98,8 @@ class JobFunction(MPTTModel):
         name="parent",
         related_name="children",
     )
+    # don't allow deletion of vonq categories that have mappings to job functions
+    vonq_taxonomy_value = models.ForeignKey("vonqtaxonomy.JobCategory", on_delete=models.RESTRICT, null=False, blank=False)
 
     objects = AcrossLanguagesQuerySet.as_manager()
 

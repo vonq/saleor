@@ -75,6 +75,7 @@ INSTALLED_APPS = [
     "api",
     "api.products",
     "api.annotations",
+    "api.vonqtaxonomy",
     "api.currency",
 ]
 

@@ -44,6 +44,7 @@ urlpatterns = [
     path("products/", include("api.products.urls", namespace="products")),
     path("exchange/", include("api.currency.urls", namespace="exchange")),
     path("annotations/", include("api.annotations.urls", namespace="annotations")),
+    path("vonqtaxonomy/", include("api.vonqtaxonomy.urls", namespace="vonqtaxonomy")),
     path(
         r"job-functions/",
         JobFunctionsViewSet.as_view({"get": "list"}),

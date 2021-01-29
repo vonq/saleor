@@ -176,7 +176,7 @@ class JobTitleAdmin(TranslationAdmin):
 
 @admin.register(JobFunction)
 class TreeJobFunctionAdmin(TranslationAdmin, MPTTModelAdmin):
-    fields = ["name", "parent"]
+    fields = ["name", "parent", "vonq_taxonomy_value"]
     list_display = ("name", "parent")
     search_fields = ("name",)
     mptt_level_indent = 36
