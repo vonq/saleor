@@ -311,7 +311,9 @@ class Channel(SFSyncable):
     name = models.CharField(max_length=200)
     url = models.URLField(max_length=300)
     is_active = models.BooleanField(default=False)
-    salesforce_account_id = models.CharField(max_length=20, null=True)
+    salesforce_account_id = models.CharField(
+        max_length=20, null=True, verbose_name="Salesforce Account"
+    )
     type = models.CharField(max_length=20, choices=Type.choices, default="job board")
 
     def __str__(self):
@@ -319,7 +321,6 @@ class Channel(SFSyncable):
 
 
 class PostingRequirement(models.Model):
-
     class PostingRequirementType(models.TextChoices):
         LOCATION = "Location", _("Location")
         SALARY_INDICATION = "Salary Indication", _("Salary Indication")
@@ -703,7 +704,7 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
     available_in_jmp = models.BooleanField(default=True)
 
     duration_days = models.IntegerField(null=True, blank=True)
-    time_to_process = models.IntegerField(null=True, blank=True)
+    time_to_process = models.IntegerField(null=True, blank=True, verbose_name="Time to process (hours)")
 
     unit_price = models.FloatField(null=True, blank=True)
     rate_card_price = models.FloatField(null=True, blank=True)

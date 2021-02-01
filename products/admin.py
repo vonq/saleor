@@ -67,7 +67,7 @@ class ProductAdmin(PermissionBasedFieldsMixin, TranslationAdmin):
     form = ProductForm
     readonly_fields = [
         "product_id",
-        "salesforce_industries",
+        # "salesforce_industries",
         "logo_url",
         "salesforce_id",
         "salesforce_sync_status",
@@ -89,13 +89,13 @@ class ProductAdmin(PermissionBasedFieldsMixin, TranslationAdmin):
         "has_html_posting",
         "salesforce_product_category",
         "locations",
-        "similarweb_top_country_shares",
+        # "similarweb_top_country_shares",
         "tracking_method",
         "logo_url",
         "logo",
         "salesforce_product_type",
         "salesforce_cross_postings",
-        "salesforce_industries",
+        # "salesforce_industries",
         "duration_days",
         "time_to_process",
         "product_id",
@@ -127,7 +127,7 @@ class ChannelForm(forms.ModelForm):
         required=False,
     )
     salesforce_account_id = AutoCompleteSelectField(
-        "account", required=True, help_text=None
+        "account", required=True, help_text=None, label="Salesforce Account"
     )
 
     def __init__(self, *args, **kwargs):
