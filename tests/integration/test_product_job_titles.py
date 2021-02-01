@@ -5,7 +5,7 @@ from api.products.models import JobFunction, JobTitle
 from api.tests import AuthenticatedTestCase
 
 
-@tag("unit")
+@tag("integration")
 class JobTitleSearchTestCase(AuthenticatedTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -75,7 +75,6 @@ class JobTitleSearchTestCase(AuthenticatedTestCase):
 
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(resp.json()["results"]), 2)
-
         self.assertEqual(
             resp.json()["results"][1]["job_function"]["id"],
             self.software_development_id,

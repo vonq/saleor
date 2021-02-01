@@ -73,7 +73,14 @@ class LimitedJobFunctionSerializer(serializers.Serializer):
 
 
 class JobTitleSerializer(serializers.ModelSerializer):
-    job_function = LimitedJobFunctionSerializer(read_only=True, many=False)
+    job_function = serializers.SerializerMethodField(method_name="get_job_function_of_self_or_canonical")
+
+    def get_job_function_of_self_or_canonical(self, job_title):
+        if job_title.job_function:
+            return LimitedJobFunctionSerializer(job_title.job_function, read_only=True, many=False).data
+        elif job_title.alias_of and job_title.alias_of.job_function:
+            return LimitedJobFunctionSerializer(job_title.alias_of.job_function, read_only=True, many=False).data
+        return None
 
     class Meta:
         model = JobTitle
