@@ -1,3 +1,4 @@
+import random
 import time
 
 from algoliasearch_django import algolia_engine
@@ -818,6 +819,45 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         )
 
         self.assertEquals(resp.status_code, 404)
+
+    def test_can_validate_existing_product_ids(self):
+        resp = self.client.post(
+            reverse("api.products:products-validate"),
+            data=[1, 2, 3],
+            content_type="application/json",
+        )
+
+        self.assertEqual(resp.status_code, 403)
+
+        User = get_user_model()
+        mapi_user = User.objects.create(username="mapi", password="test")
+        mapi_user.profile.type = "mapi"
+        self.client.force_login(mapi_user)
+
+        # fetch list of products available for jmp
+        resp = self.client.get(reverse("api.products:products-list"))
+        product_ids_available_in_mapi = [
+            product["product_id"] for product in resp.json()["results"]
+        ]
+
+        random.sample(product_ids_available_in_mapi, 3)
+
+        resp = self.client.post(
+            reverse("api.products:products-validate"),
+            data=random.sample(product_ids_available_in_mapi, 3),
+            content_type="application/json",
+        )
+
+        self.assertEqual(resp.status_code, 200)
+
+        resp = self.client.post(
+            reverse("api.products:products-validate"),
+            data=random.sample(product_ids_available_in_mapi, 3)
+            + [self.unavailable_in_jmp_product.product_id],
+            content_type="application/json",
+        )
+
+        self.assertEqual(resp.status_code, 404)
 
     def test_can_search_for_product_name(self):
         resp = self.client.get(reverse("api.products:products-list") + f"?name=global")

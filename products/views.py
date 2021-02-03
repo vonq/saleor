@@ -1,5 +1,6 @@
 import itertools
 from collections import defaultdict
+from json import JSONDecodeError
 from typing import List, Iterable, Type, Tuple
 
 from django.db.models import Case, When
@@ -7,10 +8,12 @@ from django.db.models import Q
 from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins
+from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.response import Response
-from rest_framework.status import HTTP_400_BAD_REQUEST
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK, HTTP_404_NOT_FOUND
+from rest_framework.utils import json
 
 from api.products.apps import ProductsConfig
 from api.products.docs import CommonParameters
@@ -59,6 +62,17 @@ from api.products.serializers import (
     ProductSearchSerializer,
     ChannelSerializer,
 )
+
+
+class IsMapiUser(BasePermission):
+    def has_permission(self, request, view):
+        return all(
+            (
+                request.user,
+                request.user.is_authenticated,
+                request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI],
+            )
+        )
 
 
 class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
@@ -145,7 +159,7 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 class ProductsViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = ProductSerializer
-    http_method_names = ("get",)
+    http_method_names = ("get", "post")
     queryset = Product.objects.all().prefetch_related(
         "locations", "industries", "job_functions"
     )
@@ -268,6 +282,25 @@ class ProductsViewSet(viewsets.ModelViewSet):
         super().check_object_permissions(request, obj)
         if request.user.profile.type == Profile.Type.JMP and not obj.available_in_jmp:
             raise NotFound()
+
+    @action(detail=False, methods=["post"], permission_classes=[IsMapiUser])
+    def validate(self, request, **kwargs):
+        """
+        A simple endpoint to quickly check whether a list of product ids is valid
+        and available for MAPI to further process.
+
+        This replaces a database check against portfolio service.
+        """
+        try:
+            validating_product_ids = json.loads(request.body)  # type: List[int]
+        except JSONDecodeError:
+            return Response(status=HTTP_400_BAD_REQUEST)
+        all_products_valid = self.get_queryset().filter(
+            product_id__in=validating_product_ids
+        ).count() == len(validating_product_ids)
+        if all_products_valid:
+            return Response(status=HTTP_200_OK)
+        return Response(status=HTTP_404_NOT_FOUND)
 
     @swagger_auto_schema(
         operation_description="""
