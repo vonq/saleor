@@ -214,15 +214,19 @@ class DescendentJobTitlesFacetFilter(FacetFilter):
     score = 4
 
     def __init__(self, *values):
-        descendant_job_functions = list(
-            set(
-                itertools.chain.from_iterable(
-                    job_function.get_descendants().values_list("pk", flat=True)
-                    for job_function in
-                    JobFunction.objects.filter(jobtitle__id__in=values)
+        descendant_job_functions = (
+            list(
+                set(
+                    itertools.chain.from_iterable(
+                        job_function.get_descendants().values_list("pk", flat=True)
+                        for job_function in JobFunction.objects.filter(
+                            jobtitle__id__in=values
+                        )
+                    )
                 )
             )
-        ) or values
+            or values
+        )
 
         super().__init__(*descendant_job_functions)
         pass
@@ -251,15 +255,17 @@ class InclusiveJobFunctionChildrenFilter(FacetFilter):
     operator = "OR"
 
     def __init__(self, *values):
-        child_job_functions = list(
-            set(
-                itertools.chain.from_iterable(
-                    job_function.get_descendants().values_list("pk", flat=True)
-                    for job_function in
-                    JobFunction.objects.filter(id__in=values)
+        child_job_functions = (
+            list(
+                set(
+                    itertools.chain.from_iterable(
+                        job_function.get_descendants().values_list("pk", flat=True)
+                        for job_function in JobFunction.objects.filter(id__in=values)
+                    )
                 )
             )
-        ) or values
+            or values
+        )
         super().__init__(*child_job_functions)
 
 

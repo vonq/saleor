@@ -16,7 +16,10 @@ from api.products.models import (
     Channel,
 )
 
-from api.vonqtaxonomy.models import JobCategory as VonqJobCategory, Industry as VonqIndustry
+from api.vonqtaxonomy.models import (
+    JobCategory as VonqJobCategory,
+    Industry as VonqIndustry,
+)
 
 from api.tests import AuthenticatedTestCase
 from django.contrib.auth import get_user_model
@@ -52,14 +55,14 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             algolia_engine.register(Product, ProductIndex)
             algolia_engine.reindex_all(Product)
 
-        pkb_industry = VonqIndustry.objects.create(
-            mapi_id=1,
-            name="Something"
-        )
+        pkb_industry = VonqIndustry.objects.create(mapi_id=1, name="Something")
 
         # populate industries
         cls.construction_industry = Industry(
-            name_en="Construction", name_de="Konstruktion", name_nl="bouw", vonq_taxonomy_value_id=pkb_industry.id
+            name_en="Construction",
+            name_de="Konstruktion",
+            name_nl="bouw",
+            vonq_taxonomy_value_id=pkb_industry.id,
         )
         cls.construction_industry.save()
 
@@ -67,7 +70,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             name_en="Engineering",
             name_de="...engineering in german",
             name_nl="...engineering in dutch",
-            vonq_taxonomy_value_id=pkb_industry.id
+            vonq_taxonomy_value_id=pkb_industry.id,
         )
         cls.engineering_industry.save()
 
@@ -270,22 +273,24 @@ class ProductSearchTestCase(AuthenticatedTestCase):
 
         # populate job functions
 
-        pkb_job_category = VonqJobCategory.objects.create(
-            mapi_id=1, name="Whatever"
-        )
+        pkb_job_category = VonqJobCategory.objects.create(mapi_id=1, name="Whatever")
 
         software_engineering = JobFunction(
             name="Software Engineering", vonq_taxonomy_value_id=pkb_job_category.id
         )
         software_engineering.save()
 
-        construction = JobFunction(name="Construction", vonq_taxonomy_value_id=pkb_job_category.id)
+        construction = JobFunction(
+            name="Construction", vonq_taxonomy_value_id=pkb_job_category.id
+        )
         construction.save()
 
         cls.software_engineering_id = software_engineering.id
 
         cls.web_development = JobFunction.objects.create(
-            name="Web Development", parent_id=software_engineering.id, vonq_taxonomy_value_id=pkb_job_category.id
+            name="Web Development",
+            parent_id=software_engineering.id,
+            vonq_taxonomy_value_id=pkb_job_category.id,
         )
 
         python_developer = JobTitle(
@@ -330,7 +335,9 @@ class ProductSearchTestCase(AuthenticatedTestCase):
 
         # Frequency tests
 
-        cls.recruitment_industry = Industry(name_en="Recruitment", vonq_taxonomy_value_id=pkb_industry.id)
+        cls.recruitment_industry = Industry(
+            name_en="Recruitment", vonq_taxonomy_value_id=pkb_industry.id
+        )
         cls.recruitment_industry.save()
 
         cls.brazil = Location(

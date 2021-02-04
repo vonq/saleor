@@ -11,10 +11,7 @@ class JobTitleSearchTestCase(AuthenticatedTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        pkb_job_category = VonqJobCategory.objects.create(
-            mapi_id=1,
-            name="Something"
-        )
+        pkb_job_category = VonqJobCategory.objects.create(mapi_id=1, name="Something")
 
         software_development = JobFunction(name="Software Development")
         software_development.vonq_taxonomy_value = pkb_job_category

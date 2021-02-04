@@ -79,7 +79,9 @@ class Industry(models.Model):
     objects = AcrossLanguagesQuerySet.as_manager()
 
     # don't allow deletion of vonq industries that have mappings to pkb industries
-    vonq_taxonomy_value = models.ForeignKey("vonqtaxonomy.Industry", on_delete=models.RESTRICT, null=False, blank=False)
+    vonq_taxonomy_value = models.ForeignKey(
+        "vonqtaxonomy.Industry", on_delete=models.RESTRICT, null=False, blank=False
+    )
 
     def __str__(self):
         return self.name
@@ -99,7 +101,9 @@ class JobFunction(MPTTModel):
         related_name="children",
     )
     # don't allow deletion of vonq categories that have mappings to job functions
-    vonq_taxonomy_value = models.ForeignKey("vonqtaxonomy.JobCategory", on_delete=models.RESTRICT, null=False, blank=False)
+    vonq_taxonomy_value = models.ForeignKey(
+        "vonqtaxonomy.JobCategory", on_delete=models.RESTRICT, null=False, blank=False
+    )
 
     objects = AcrossLanguagesQuerySet.as_manager()
 
@@ -327,7 +331,9 @@ class PostingRequirement(models.Model):
         CAREER_LEVEL = "Career Level", _("Career level")
         LANGUAGE_SPECIFIC = "Language Specific", _("Language Specific")
         CONTACT_INFO = "Contact Information", _("Contact Information")
-        COMPANY_REGISTRATION_INFO = "Company Registration Information", _("Company Registration Information")
+        COMPANY_REGISTRATION_INFO = "Company Registration Information", _(
+            "Company Registration Information"
+        )
         FB_PROFILE = "Facebook Profile", _("Facebook Profile")
         LI_PROFILE = "LinkedIn Profile", _("LinkedIn Profile")
         XING_PROFILE = "Xing Profile", _("Xing Profile")
@@ -361,15 +367,17 @@ class IndexSearchableProductMixin:
 
     @property
     def all_descendants_job_functions(self) -> Iterable["JobFunction"]:
-        return list(set(
-            function for function in
-            itertools.chain.from_iterable(
-                [
-                    job_function.get_descendants()
-                    for job_function in self.all_job_functions
-                ]
+        return list(
+            set(
+                function
+                for function in itertools.chain.from_iterable(
+                    [
+                        job_function.get_descendants()
+                        for job_function in self.all_job_functions
+                    ]
+                )
             )
-        ))
+        )
 
     @property
     def all_locations(self) -> Iterable["Location"]:
@@ -396,12 +404,14 @@ class IndexSearchableProductMixin:
         return [function.name for function in self.all_job_functions]
 
     def _job_title_info_from_function(self, job_function_iterator, job_title_field):
-        return list(set(
-            getattr(jobtitle, job_title_field)
-            for jobtitle in itertools.chain.from_iterable(
-                [function.jobtitle_set.all() for function in job_function_iterator]
+        return list(
+            set(
+                getattr(jobtitle, job_title_field)
+                for jobtitle in itertools.chain.from_iterable(
+                    [function.jobtitle_set.all() for function in job_function_iterator]
+                )
             )
-        ))
+        )
 
     @property
     def searchable_job_titles_ids(self):
@@ -413,11 +423,15 @@ class IndexSearchableProductMixin:
 
     @property
     def searchable_descendants_job_titles_ids(self):
-        return self._job_title_info_from_function(self.all_descendants_job_functions, "id")
+        return self._job_title_info_from_function(
+            self.all_descendants_job_functions, "id"
+        )
 
     @property
     def searchable_descendants_job_titles_names(self) -> List[str]:
-        return self._job_title_info_from_function(self.all_descendants_job_functions, "name")
+        return self._job_title_info_from_function(
+            self.all_descendants_job_functions, "name"
+        )
 
     @property
     def searchable_locations_ids(self):
@@ -618,6 +632,45 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
             _("--None--"),
         )
 
+    class PurchasePriceMethodType(models.TextChoices):
+        FIXED = "Fixed", _("Fixed")
+        VARIABLE = "Variable", _("Variable")
+        NONE = None, _("--None--")
+
+    class PricingMethodType(models.TextChoices):
+        PORTFOLIO_DE = "Portfolio DE", _("Portfolio DE")
+        PORTFOLIO_INT = "Portfolio INT", _("Portfolio INT")
+        PORTFOLIO_NL = "Portfolio NL", _("Portfolio NL")
+        PORTFOLIO_UK = "Portfolio UK", _("Portfolio UK")
+        PORTFOLIO_US = "Portfolio US", _("Portfolio US")
+        PREMIUM_DE = "Premium DE", _("Premium DE")
+        PREMIUM_INT = "Premium INT", _("Premium INT")
+        PORTFOLIO_FR = "Portfolio FR", _("Portfolio FR")
+        PREMIUM_NL = "Premium NL", _("Premium NL")
+        PREMIUM_UK = "Premium UK", _("Premium UK")
+        PREMIUM_FR = "Premium FR", _("Premium FR")
+        PREMIUM_US = "Premium US", _("Premium US")
+        TROPICAL_DE = "Tropical DE", _("Tropical DE")
+        TROPICAL_INT = "Tropical INT", _("Tropical INT")
+        TROPICAL_NL = "Tropical NL", _("Tropical NL")
+        TROPICAL_UK = "Tropical UK", _("Tropical UK")
+        ADDITIONAL = "Additional", _("Additional")
+        INDEED_ALWAYS_ON = "Indeed Always On", _("Indeed Always On")
+        TRAFFIQ_SEA_VONQ = "TraffiQ / SEA (VONQ Team)", _("TraffiQ / SEA (VONQ Team)")
+        TRAFFIQ_SEA_EXPAND_ONLINE = "TraffiQ / SEA (Expand Online)", _(
+            "TraffiQ / SEA (Expand Online)"
+        )
+        PROJECT_MANAGEMENT = "Project Management (e.g. hours)", _(
+            "Project Management (e.g. hours)"
+        )
+        ADDON_FINANCIAL = "Addon: financial", _("Addon: financial")
+        INTERNAL_TRACKING_TECHNICAL = "Internal / Tracking / Technical", _(
+            "Internal / Tracking / Technical"
+        )
+        KICKBACKS = "Kickbacks", _("Kickbacks")
+        SUBSCRIPTION = "Subscription", _("Subscription")
+        NONE = None, _("--None--")
+
     class SalesforceProductType(models.TextChoices):
         SOCIAL = "Social", _("Social")
         PRINT = "Print / Offline", _("Print / Offline")
@@ -653,7 +706,9 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
     @property
     def external_product_name(self):
         if self.channel and self.channel.name:
-            return self.channel.name + " - " + self.title
+            if self.title:
+                return self.channel.name + " - " + self.title
+            return self.channel.name
         return self.title
 
     @property
@@ -682,7 +737,7 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         PostingRequirement,
         related_name="posting_requirements",
         related_query_name="posting_requirement",
-        blank=True
+        blank=True,
     )
 
     salesforce_logo_url = models.CharField(
@@ -704,10 +759,25 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
     available_in_jmp = models.BooleanField(default=True)
 
     duration_days = models.IntegerField(null=True, blank=True)
-    time_to_process = models.IntegerField(null=True, blank=True, verbose_name="Time to process (hours)")
+    time_to_process = models.IntegerField(
+        null=True, blank=True, verbose_name="Time to process (hours)"
+    )
 
     unit_price = models.FloatField(null=True, blank=True)
     rate_card_price = models.FloatField(null=True, blank=True)
+    purchase_price = models.FloatField(null=True, blank=True)
+    purchase_price_method = models.CharField(
+        choices=PurchasePriceMethodType.choices,
+        default=PurchasePriceMethodType.NONE,
+        null=True,
+        max_length=10,
+    )
+    pricing_method = models.CharField(
+        choices=PricingMethodType.choices,
+        default=PricingMethodType.NONE,
+        null=True,
+        max_length=40,
+    )
 
     locations = models.ManyToManyField(Location, related_name="products", blank=True)
 
@@ -745,6 +815,9 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         base_field=models.CharField(max_length=80, blank=False), default=list
     )
     salesforce_cross_postings = models.JSONField(null=True, blank=True, default=list)
+
+    is_my_own_product = models.BooleanField(default=False)
+    customer_id = models.CharField(null=True, blank=True, max_length=36)
 
     is_recommended = models.BooleanField(default=False)
     has_html_posting = models.BooleanField(default=False)

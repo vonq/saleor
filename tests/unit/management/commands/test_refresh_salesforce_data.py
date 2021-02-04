@@ -41,7 +41,7 @@ class CommandTests(TestCase):
         l2 = Location(desq_name_en="Netherlands")
         l2.save()
 
-        p6 = Product(salesforce_id="6")
+        p6 = Product(salesforce_id="6", desq_product_id="5432")
         p6.save()
 
     @patch("algoliasearch_django.registration.AlgoliaEngine.save_record")

@@ -39,6 +39,12 @@ class Command(BaseCommand):
         "is_recommended": "is_recommended_product",
         "has_html_posting": "has_html_posting",
         "tracking_method": "tracking_method",
+        "purchase_price_method": "purchase_price_method",
+        "pricing_method": "pricing_method",
+        "purchase_price": "purchase_price",
+        "is_my_own_product": "is_my_own_product",
+        "customer_id": "customer_id",
+        "salesforce_id": "salesforce_id",
     }
 
     channel_fields_to_update_map = {
@@ -88,11 +94,18 @@ class Command(BaseCommand):
             product.channel = channel
 
     def __update_product(self, new: dict) -> Product:
+        product_id = (
+            new.get("desq_id") if new.get("desq_id") else new.get("salesforce_id")
+        )
         current_product, product_created_flag = Product.objects.get_or_create(
-            salesforce_id=new["salesforce_id"]
+            product_id=product_id
         )
         if product_created_flag:
-            self.stdout.write("Creating product {}".format(new.get("jmp_product_name")))
+            self.stdout.write(
+                "Creating product {} id {}".format(
+                    new.get("jmp_product_name"), product_id
+                )
+            )
         self.__update_product_fields(current=current_product, new=new)
         return current_product
 

@@ -13,7 +13,10 @@ class ModelTranslationTestCase(TestCase):
         )
 
         industry = Industry(
-            name_en="Construction", name_de="Konstruktion", name_nl="bouw", vonq_taxonomy_value_id=vonq_industry.id
+            name_en="Construction",
+            name_de="Konstruktion",
+            name_nl="bouw",
+            vonq_taxonomy_value_id=vonq_industry.id,
         )
         industry.save()
 

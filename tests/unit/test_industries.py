@@ -11,19 +11,10 @@ class JobFunctionViewTestCase(AuthenticatedTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        vonq_industry = VonqIndustry.objects.create(
-            mapi_id=1,
-            name="Something"
-        )
+        vonq_industry = VonqIndustry.objects.create(mapi_id=1, name="Something")
 
-        i1 = Industry(
-            name="B Industry",
-            vonq_taxonomy_value_id=vonq_industry.id
-        )
-        i2 = Industry(
-            name="A Industry",
-            vonq_taxonomy_value_id=vonq_industry.id
-        )
+        i1 = Industry(name="B Industry", vonq_taxonomy_value_id=vonq_industry.id)
+        i2 = Industry(name="A Industry", vonq_taxonomy_value_id=vonq_industry.id)
         i2.save()
         i1.save()
 

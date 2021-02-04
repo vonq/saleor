@@ -39,13 +39,13 @@ admin.site.register(User, UserAdmin)
 
 
 class JobFunctionTreeModelInlineForm(forms.ModelForm):
-  jobfunction = TreeNodeChoiceField(queryset=JobFunction.objects.all())
+    jobfunction = TreeNodeChoiceField(queryset=JobFunction.objects.all())
 
 
 class JobFunctionModelInline(admin.TabularInline):
-  model = Product.job_functions.through
-  form = JobFunctionTreeModelInlineForm
-  extra = 0
+    model = Product.job_functions.through
+    form = JobFunctionTreeModelInlineForm
+    extra = 0
 
 
 class ProductForm(forms.ModelForm):
