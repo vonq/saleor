@@ -3,7 +3,7 @@ from django.contrib.auth.models import Group, Permission
 from django.test import TestCase, tag
 
 from api.products.models import Product, Industry, JobFunction
-
+from api.vonqtaxonomy.models import JobCategory as VonqJobCategory, Industry as VonqIndustry
 User = get_user_model()
 
 
@@ -32,8 +32,17 @@ class AdminTestCase(TestCase):
             title="Example product",
         )
 
-        ind = Industry.objects.create(name="Something")
-        jf = JobFunction.objects.create(name="Something else")
+        vonq_industry = VonqIndustry.objects.create(
+            mapi_id=1,
+            name="Something"
+        )
+        vonq_function = VonqJobCategory.objects.create(
+            mapi_id=1,
+            name="Something"
+        )
+
+        ind = Industry.objects.create(name="Something", vonq_taxonomy_value_id=vonq_industry.id)
+        jf = JobFunction.objects.create(name="Something else", vonq_taxonomy_value_id=vonq_function.id)
         self.product.industries.add(ind)
         self.product.job_functions.add(jf)
         self.product.save()

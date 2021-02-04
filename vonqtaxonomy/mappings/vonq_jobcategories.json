@@ -1,0 +1,1107 @@
+[
+  {
+    "id": 1,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Sekretariat / B\u00fcroverwaltung / pers\u00f6nlicher Referent"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Secretarial / Office Management / Personal Assistant"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Secretarieel / Office Management / Personal Assistant"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Landwirtschaft / Forstwirtschaft / Fischerei"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Agriculture"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Landbouw / Tuinbouw / Visserij"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Recruitment / Arbeitsvermittlung"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Recruitment"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Recruitment / Arbeidsbemiddeling"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Baugewerbe - ausf\u00fchrende T\u00e4tigkeiten"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Construction - civil engineering"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Bouw - Uitvoerend"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Vertrieb - Account Management"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Sales - Account Management"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Commercieel - Account Management"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Bank- und Versicherungswesen"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Banking and/or Insurance"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Bank & Verzekeringen"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Einzelhandel"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Sales - Retail"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Commercieel - Detailhandel"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Gastgewerbe / Tourismus / Freizeit"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Hospitality / Tourism / Recreation"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Horeca / Toerisme / Recreatie"
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Produktion"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Production (Operators)"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Productie (Operators)"
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "E-Commerce / Search Engine Marketing"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "E-Commerce / Search Engine Marketing"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "E-Commerce / Search Engine Marketing & Optimisation"
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Recht"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Legal"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Juridisch"
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Logistik: Inventur, Lager, Fahrer"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Logistics: Inventory, Warehouse and Drivers"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Logistiek: Voorraadbeheer, Magazijn en Chauffeurs"
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Bildungswesen / Coaching / Trainer"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Education / Coaching / Trainers"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Onderwijs / Coaching / Trainers"
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Marketing"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Marketing"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Marketing"
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Technik - ausf\u00fchrende T\u00e4tigkeiten"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Engineering - Execution"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Techniek - Uitvoerend"
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Gesundheitswesen - \u00c4rzte / Chirurgen"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Health care - Doctors / Surgeons"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Zorg - Artsen / Chirurgen"
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Sicherheitsdienst"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Security"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Beveiliging"
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Beratung / Consultancy"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Advice / consultancy"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Advies / Consultancy"
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Baugewerbe - Architektur"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Construction - Architecture"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Bouw - Architectuur"
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Baugewerbe - Arbeitsvorbereitung"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Construction - Work preparation / Engineering"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Bouw - Werkvoorbereiding"
+      }
+    ]
+  },
+  {
+    "id": 26,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Vertrieb - B\u00fcropersonal / Telesales / Call Center"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Sales - Office Staff / Telesales / Call Centre"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Commercieel - Binnendienst / Telesales / Callcenter"
+      }
+    ]
+  },
+  {
+    "id": 27,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Kommunikation / PR"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Communications / PR"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Communicatie / PR"
+      }
+    ]
+  },
+  {
+    "id": 28,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Management / Direktion/ Unternehmensleitung "
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Senior Management / Board"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Directie / Management / Bestuur"
+      }
+    ]
+  },
+  {
+    "id": 29,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Facility Management"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Facility Management"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Facilitair Beheer"
+      }
+    ]
+  },
+  {
+    "id": 30,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Immobilienbranche"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Real Estate"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Makelaardij"
+      }
+    ]
+  },
+  {
+    "id": 31,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Administration: Finanzen"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Administration: Finance"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Administratie: Financieel"
+      }
+    ]
+  },
+  {
+    "id": 33,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Finanzbuchhaltung / Betriebswirtschaft / Finanzwirtschaft"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Financial and economic / business administration / Financial Management"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Financieel economisch / Bedrijfskundig / Financieel Management"
+      }
+    ]
+  },
+  {
+    "id": 35,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "IT - Hardware / Netzwerk"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "IT - Hardware / Network"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "ICT - Hardware / Netwerk"
+      }
+    ]
+  },
+  {
+    "id": 36,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "IT - Services & Support"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "IT - Services & support"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "ICT - Services & Support"
+      }
+    ]
+  },
+  {
+    "id": 37,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "IT - Software Development"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "IT - Software Development"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "ICT - Software ontwikkeling"
+      }
+    ]
+  },
+  {
+    "id": 39,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Logistik: Einkauf & Supply Chain"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Logistics: Procurement & Supply chain"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Logistiek: Inkoop & Supply Chain"
+      }
+    ]
+  },
+  {
+    "id": 40,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Labor"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Laboratory"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Laboratorium"
+      }
+    ]
+  },
+  {
+    "id": 41,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Personalwesen"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Human Resources"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Personeel & Organisatie / HRM"
+      }
+    ]
+  },
+  {
+    "id": 44,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Ingenieurwesen - Projektierung"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Engineering - Design"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Techniek - Ontwerp / design"
+      }
+    ]
+  },
+  {
+    "id": 45,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Ingenieurwesen - Arbeitsvorbereitung"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Engineering - Work preparation"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Techniek - Werkvoorbereiding (Berekening/Planning)"
+      }
+    ]
+  },
+  {
+    "id": 46,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Sport"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Sport"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Sport"
+      }
+    ]
+  },
+  {
+    "id": 47,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Buchhaltung / Controlling / Steuern"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Accountancy / Controlling / Tax"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Accountancy / Controlling / Fiscaal"
+      }
+    ]
+  },
+  {
+    "id": 48,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Vertrieb - Support / Helpdesk"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Sales - Support / Helpdesk"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Commercieel - Ondersteunend / Support / Helpdesk"
+      }
+    ]
+  },
+  {
+    "id": 49,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Projektmanagement"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Project management"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Projectmanagement"
+      }
+    ]
+  },
+  {
+    "id": 51,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Mode / Styling / Kosmetik"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Fashion / Styling / Cosmetics"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Mode / Styling / Cosmetica"
+      }
+    ]
+  },
+  {
+    "id": 52,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Schifffahrt"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Maritime"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Maritiem"
+      }
+    ]
+  },
+  {
+    "id": 53,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Grafisch (Druckerei)"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Graphics (Printing)"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Grafisch (Drukkerij)"
+      }
+    ]
+  },
+  {
+    "id": 55,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Qualit\u00e4tsmanagement / Arbeitssicherheit / Umwelt / Sicherheit"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Quality / Health / Environment / Safety"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Kwaliteit / Arbo / Milieu / Veiligheid"
+      }
+    ]
+  },
+  {
+    "id": 56,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "St\u00e4dtebau und Stadtplanung"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Land Management / Planning"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Planologie / Ruimtelijke ordening"
+      }
+    ]
+  },
+  {
+    "id": 57,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Kunst & Kultur"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Art / Culture"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Kunst en Cultuur"
+      }
+    ]
+  },
+  {
+    "id": 58,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Sozialarbeit"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Social Work"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Maatschappelijk werk"
+      }
+    ]
+  },
+  {
+    "id": 59,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Baugewerbe - Ingenieurwesen"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Construction - Engineering"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Bouw - Engineering"
+      }
+    ]
+  },
+  {
+    "id": 60,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Technik - Ingenieurwesen"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Engineering - Engineering"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Techniek - Engineering"
+      }
+    ]
+  },
+  {
+    "id": 61,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Journalismus / Redaktion / Texten"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Journalism / Editorial / Copywriting"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Journalistiek / Redactie / Copywriting"
+      }
+    ]
+  },
+  {
+    "id": 62,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Reinigung / Hauspflege"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Cleaning / Home Care"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Schoonmaak / Interieurverzorging"
+      }
+    ]
+  },
+  {
+    "id": 63,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Grafisch (Gestaltung / DTP)"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Graphics (Design / DTP)"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Grafisch (Ontwerp / Vormgeving / DTP)"
+      }
+    ]
+  },
+  {
+    "id": 64,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Gesundheitswesen - Psychisch"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Health Care - Mental"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Zorg - Geestelijke gezondheidszorg"
+      }
+    ]
+  },
+  {
+    "id": 65,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Wissenschaft, Forschung & Entwicklung"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Science, research & development"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Wetenschap, Research & Development"
+      }
+    ]
+  },
+  {
+    "id": 66,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Tiere (Versorung & Veterin\u00e4r)"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Animal care"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Dieren (Medisch en Verzorging)"
+      }
+    ]
+  },
+  {
+    "id": 67,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Gesundheitswesen - Pflege"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Health care - Physical"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Zorg - Lichamelijke gezondheidszorg"
+      }
+    ]
+  },
+  {
+    "id": 68,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Lohnbuchhaltung"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Payroll administration"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Salarisadministratie"
+      }
+    ]
+  },
+  {
+    "id": 69,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Administration: Datenverarbeitung EDV"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Administration: Data entry"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Administratie: Data entry"
+      }
+    ]
+  },
+  {
+    "id": 70,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Vertrieb: Business Development"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Sales: Business Development"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Commercieel - Business Development"
+      }
+    ]
+  },
+  {
+    "id": 71,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Wohngenossenschaft / sozialer Wohnungsbau"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Public Housing"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Volkshuisvesting"
+      }
+    ]
+  },
+  {
+    "id": 72,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Politik "
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Politics / Policies"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Politiek / Beleid"
+      }
+    ]
+  },
+  {
+    "id": 73,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Apotheke"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Pharmacy"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Farmacie"
+      }
+    ]
+  },
+  {
+    "id": 74,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Wohlt\u00e4tigkeitsorganisation"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Charity / Fundraising"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Goede doelen / Fondsenwerving"
+      }
+    ]
+  },
+  {
+    "id": 75,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Gesundheitswesen - Kinder/ -betreuung"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Health care - Children (day care)"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Zorg - Kinderen (dagverblijf)"
+      }
+    ]
+  },
+  {
+    "id": 77,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Pilot"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Pilot"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Piloot"
+      }
+    ]
+  },
+  {
+    "id": 78,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Radio & Fernsehen"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Radio & Television"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Radio & Televisie"
+      }
+    ]
+  }
+]

@@ -2,6 +2,7 @@ from django.test import tag
 from rest_framework.reverse import reverse
 
 from api.products.models import JobFunction, JobTitle
+from api.vonqtaxonomy.models import JobCategory as VonqJobCategory
 from api.tests import AuthenticatedTestCase
 
 
@@ -10,7 +11,13 @@ class JobTitleSearchTestCase(AuthenticatedTestCase):
     def setUp(self) -> None:
         super().setUp()
 
+        pkb_job_category = VonqJobCategory.objects.create(
+            mapi_id=1,
+            name="Something"
+        )
+
         software_development = JobFunction(name="Software Development")
+        software_development.vonq_taxonomy_value = pkb_job_category
         software_development.save()
         self.software_development_id = software_development.id
 

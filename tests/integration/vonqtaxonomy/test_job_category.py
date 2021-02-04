@@ -10,11 +10,11 @@ from api.vonqtaxonomy.models import JobCategory as VonqJobCategory
 class JobCategoryTaxonomyTestCase(AuthenticatedTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.industry = PkbJobFunction(name="Badabim")
-        self.industry.save()
-
         vonq_industry = VonqJobCategory(name="Badabum", name_nl="Badabum in Dutch", mapi_id=1)
         vonq_industry.save()
+
+        self.industry = PkbJobFunction(name="Badabim", vonq_taxonomy_value_id=vonq_industry.id)
+        self.industry.save()
 
         self.industry.vonq_taxonomy_value = vonq_industry
         self.industry.save()
