@@ -54,6 +54,8 @@ def make_salesforce_product(product_instance):
         "Recommended_product__c": product_instance.is_recommended,
         "HTML_Required__c": product_instance.has_html_posting,
         "Tracking_Method__c": cast_none(product_instance.tracking_method),
+        "Pricing_Method__c": cast_none(product_instance.pricing_method),
+        "PurchasPriceMethod__c": cast_none(product_instance.purchase_price_method)
     }
 
 
@@ -74,6 +76,7 @@ def update_pricebook(client, product_id, product_instance):
         {
             "UnitPrice": product_instance.unit_price,
             "Rate_Card_supplier__c": product_instance.rate_card_price,
+            "Purchase_Price__c": product_instance.purchase_price,
         },
     )
 
