@@ -147,8 +147,10 @@ def update_title(request):
 def dashboard(request):
     return render(request, "data_quality_dashboard.html")
 
+
 def search_relevancy(request):
     return render(request, "search_relevancy_dashboard.html")
+
 
 @permission_required("products.view_product")
 def get_boards(request):

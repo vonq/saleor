@@ -37,7 +37,8 @@ def make_salesforce_product(product_instance):
     return {
         # a newly created product won't have a salesforce_id field, only a product_id
         "Uuid__c": str(product_instance.salesforce_id)
-        or str(product_instance.product_id),
+        if product_instance.salesforce_id
+        else str(product_instance.product_id),
         "Name": product_instance.title_en,
         "Channel__c": getattr(product_instance.channel, "salesforce_id", None),
         "Description": product_instance.description,
@@ -55,7 +56,7 @@ def make_salesforce_product(product_instance):
         "HTML_Required__c": product_instance.has_html_posting,
         "Tracking_Method__c": cast_none(product_instance.tracking_method),
         "Pricing_Method__c": cast_none(product_instance.pricing_method),
-        "PurchasPriceMethod__c": cast_none(product_instance.purchase_price_method)
+        "PurchasPriceMethod__c": cast_none(product_instance.purchase_price_method),
     }
 
 
