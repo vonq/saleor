@@ -16,6 +16,7 @@ urlpatterns = [
     ),
     path("channel-annotation", views.channel_annotation, name="channel_annotation"),
     path("dashboard", views.dashboard, name="dashboard"),
+    path("search-relevancy", views.search_relevancy, name="search_relevancy"),
     path("get-titles", views.get_job_titles_json, name="get_job_titles_json"),
     path("locations", views.get_locations_json, name="get_locations_json"),
     path("job-functions", views.get_job_functions_json, name="get_job_functions_json"),

@@ -4,7 +4,8 @@ var DataQualityApp = new Vue({
     data: {
         locations: [],
         products: null,
-        jobFunctionTree: {},
+        jobFunctions: [],
+        industries: [],
         locationTree: {},
         parent_lookup: {},
         branches: {},
@@ -23,8 +24,8 @@ var DataQualityApp = new Vue({
                 'color': 'level-info',
                 'ordering': 2
             }
-        }
-
+        },
+        searchCases: []
     },
     mounted: function () {
         vm = this
@@ -115,6 +116,15 @@ var DataQualityApp = new Vue({
                 this.pruneRedundantProductLocations(product)
             }
         },
+        baseQuery: async function(queryString, result) {
+            return d3.json(queryString, {
+                method: 'GET',
+                headers: {
+                    "Content-type": "application/json; charset=UTF-8",
+                    "X-CSRFToken": this.getCookie('csrftoken')
+                },
+            })
+        },
         classesFor: function(check) {
             let obj = {}
             obj[this.checkLevels[check.level].selector] = true
@@ -125,6 +135,7 @@ var DataQualityApp = new Vue({
         checks : function() {
             let canonical_names = this.locations.map(l => l.canonical_name)
             let many_location_threshold = 20
+
             return [
                     {
                         'label': 'Approved Locations with no parent',

@@ -1,0 +1,18 @@
+
+.table-results>:not(caption)>*>*, tr, td, tbody {
+    font-size: xx-small;
+    padding: 0rem 0.125rem;
+}
+
+.sticky-key {
+    position:sticky;
+    top:0;
+    background-color: #fff;
+    margin-bottom: 0.5rem;;
+}
+
+.sticky-key>div {
+    padding: 0rem 0.125rem;
+    font-size: small;
+}
+
