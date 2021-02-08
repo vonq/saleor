@@ -238,5 +238,5 @@ def push_product(product_instance):
         logger.error(resp)
         return
 
-    product_instance.salesforce_id = resp["Uuid__c"]
+    product_instance.salesforce_id = product["Uuid__c"]
     product_instance.mark_as_synced()
