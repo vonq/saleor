@@ -56,7 +56,7 @@ def make_salesforce_product(product_instance):
         "HTML_Required__c": product_instance.has_html_posting,
         "Tracking_Method__c": cast_none(product_instance.tracking_method),
         "Pricing_Method__c": cast_none(product_instance.pricing_method),
-        "PurchasPriceMethod__c": cast_none(product_instance.purchase_price_method),
+        "PurchasePriceMethod__c": cast_none(product_instance.purchase_price_method),
     }
 
 
