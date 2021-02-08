@@ -18,6 +18,10 @@ class SyncProductError(Exception):
     pass
 
 
+class CreatePricebookEntryError(Exception):
+    pass
+
+
 def login():
     # TODO: Switch to a security token
     #       to avoid the extra login step.
@@ -28,7 +32,6 @@ def login():
         username=settings.SALESFORCE_API_USERNAME,
         password=settings.SALESFORCE_API_PASSWORD,
     )
-
     client = get_client(session_id=session_id, instance_url=settings.SALESFORCE_DOMAIN)
     return client
 
@@ -227,16 +230,45 @@ def update_product(product_instance):
     product_instance.mark_as_synced()
 
 
-def push_product(product_instance):
-    client = login()
-
-    product = make_salesforce_product(product_instance)
-
-    resp = client.Product2.create(product)
+def create_pricebook_entry(client, product_instance, product_id):
+    resp = client.PriceBookEntry.create(
+        {
+            "Product2Id": product_id,
+            "Pricebook2Id": get_standard_pricebook_id(client),
+            "IsActive": True,
+            "UnitPrice": product_instance.unit_price,
+            "Rate_Card_supplier__c": product_instance.rate_card_price,
+            "Purchase_Price__c": product_instance.purchase_price,
+        }
+    )
 
     if not resp["success"]:
         logger.error(resp)
-        return
+        raise CreatePricebookEntryError(
+            f"Could not create pricebook entry for product {product_id}"
+        )
 
+
+def get_standard_pricebook_id(client):
+    resp = client.query("select Id, IsActive from PriceBook2 where IsStandard=True")
+    return resp["records"][0]["Id"]
+
+
+def create_salesforce_product(client, product_instance):
+    product = make_salesforce_product(product_instance)
+    resp = client.Product2.create(product)
+    if not resp["success"]:
+        logger.error(resp)
+        raise SyncProductError(f"Error creating product {product_instance.product_id}")
     product_instance.salesforce_id = product["Uuid__c"]
+    return resp["id"]
+
+
+def push_product(product_instance):
+    client = login()
+
+    product_id = create_salesforce_product(client, product_instance)
+
+    create_pricebook_entry(client, product_instance, product_id)
+
     product_instance.mark_as_synced()
