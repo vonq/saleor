@@ -541,6 +541,11 @@ class IndexSearchableProductMixin:
     def is_product(self):
         return self.salesforce_product_type in Product.SalesforceProductType.products()
 
+    @property
+    def channel_type(self):
+        if self.channel and self.channel.type:
+            return self.channel.type
+
 
 class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin):
     def set_product_id(self):

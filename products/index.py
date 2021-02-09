@@ -22,6 +22,7 @@ class ProductIndex(AlgoliaIndex):
         "salesforce_product_category",
         "similarweb_top_country_shares",
         # custom properties
+        "channel_type",
         "searchable_industries_ids",
         "searchable_industries_names",
         "searchable_job_functions_ids",
@@ -75,6 +76,7 @@ class ProductIndex(AlgoliaIndex):
             "is_addon",
             "is_product",
             "order_frequency",
+            "channel_type",
         ],
         "attributesToSnippet": None,
         "attributesToHighlight": None,

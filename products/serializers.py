@@ -7,7 +7,7 @@ from rest_framework_recursive.fields import RecursiveField
 from api.currency.conversion import convert
 from api.currency.models import ExchangeRate
 from api.products.docs import CommonParameters
-from api.products.models import Location, JobFunction, JobTitle, Industry
+from api.products.models import Location, JobFunction, JobTitle, Industry, Channel
 
 
 class LocationSerializer(serializers.ModelSerializer):
@@ -205,6 +205,7 @@ class ProductSearchSerializer(serializers.Serializer):
     currency = serializers.CharField(required=False, max_length=3)
     name = serializers.CharField(required=False)
     recommended = serializers.BooleanField(required=False, default=False)
+    channelType = serializers.CharField(required=False)
 
     @property
     def is_recommendation(self) -> bool:
@@ -222,6 +223,7 @@ class ProductSearchSerializer(serializers.Serializer):
                 self.validated_data.get("durationFrom"),
                 self.validated_data.get("durationTo"),
                 self.validated_data.get("name"),
+                self.validated_data.get("channelType"),
             )
         )
 
@@ -244,6 +246,11 @@ class ProductSearchSerializer(serializers.Serializer):
 
     def validate_industryId(self, value):
         return self.is_a_valid_integer_array(value)
+
+    def validate_channelType(self, value):
+        if value in Channel.Type.values:
+            return value
+        raise ValidationError(detail="Invalid channel type!")
 
     def validate(self, attrs):
         if attrs.get("jobTitleId") and attrs.get("jobFunctionId"):

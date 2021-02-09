@@ -36,6 +36,7 @@ from api.products.filters import (
     AddonsOnlyFacetFilter,
     DurationMoreThanFacetFilter,
     DurationLessThanFacetFilter,
+    ChannelTypeFilter,
 )
 from api.products.geocoder import Geocoder
 from api.products.models import (
@@ -187,6 +188,7 @@ class ProductsViewSet(viewsets.ModelViewSet):
         IsActiveFacetFilter,
         StatusFacetFilter,
         ProductsOnlyFacetFilter,
+        ChannelTypeFilter,
     )
 
     @property

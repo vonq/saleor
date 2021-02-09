@@ -1000,3 +1000,78 @@ class AddonSearchTestCase(AuthenticatedTestCase):
         self.assertTrue(
             all(["addon" in product["title"] for product in resp.json()["results"]])
         )
+
+
+@tag("algolia")
+@tag("integration")
+class ChannelTypeSearchTestCase(AuthenticatedTestCase):
+    @classmethod
+    @override_settings(
+        ALGOLIA={
+            "INDEX_SUFFIX": TEST_INDEX_SUFFIX,
+            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
+            "API_KEY": settings.ALGOLIA["API_KEY"],
+            "AUTO_INDEXING": True,
+        }
+    )
+    def setUpClass(cls):
+        super().setUpClass()
+        algolia_engine.reset(settings.ALGOLIA)
+        if not algolia_engine.is_registered(Product):
+            algolia_engine.register(Product, ProductIndex)
+            algolia_engine.reindex_all(Product)
+
+        jobboard_channel = Channel.objects.create(type=Channel.Type.JOB_BOARD)
+        community_channel = Channel.objects.create(type=Channel.Type.COMMUNITY)
+        publication_channel = Channel.objects.create(type=Channel.Type.PUBLICATION)
+
+        job_board = Product.objects.create(
+            title="This is a job board",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            is_active=True,
+            status="Negotiated",
+            channel_id=jobboard_channel.id,
+        )
+        community_product = Product.objects.create(
+            title="This is a community product",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            status="Negotiated",
+            is_active=True,
+            channel_id=community_channel.id,
+        )
+
+        publication_product = Product.objects.create(
+            title="This is a publication product",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            status="Negotiated",
+            is_active=True,
+            channel_id=publication_channel.id,
+        )
+
+        time.sleep(4)
+
+    def setUp(self) -> None:
+        super().setUp()
+
+    @classmethod
+    @override_settings(
+        ALGOLIA={
+            "INDEX_SUFFIX": TEST_INDEX_SUFFIX,
+            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
+            "API_KEY": settings.ALGOLIA["API_KEY"],
+            "AUTO_INDEXING": True,
+        }
+    )
+    def tearDownClass(cls):
+        super().tearDownClass()
+        algolia_engine.client.delete_index(
+            f"{ProductIndex.index_name}_{TEST_INDEX_SUFFIX}"
+        )
+        algolia_engine.reset(settings.ALGOLIA)
+
+    def test_can_filter_by_channel_type(self):
+        resp = self.client.get(
+            reverse("api.products:products-list") + "?channelType=job%20board"
+        )
+        self.assertEqual(len(resp.json()["results"]), 1)
+        self.assertEqual(resp.json()["results"][0]["title"], "This is a job board")

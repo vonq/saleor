@@ -5,7 +5,7 @@ from drf_yasg2 import openapi
 from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request
 
-from api.products.models import JobFunction, Location
+from api.products.models import JobFunction, Location, Channel
 
 
 class FacetFilter:
@@ -267,6 +267,22 @@ class InclusiveJobFunctionChildrenFilter(FacetFilter):
             or values
         )
         super().__init__(*child_job_functions)
+
+
+class ChannelTypeFilter(FacetFilter):
+    filter_name = "channel_type"
+    parameter_name = "channelType"
+    parameter = openapi.Parameter(
+        parameter_name,
+        in_=openapi.IN_QUERY,
+        description="Filter by channel type.",
+        type=openapi.TYPE_STRING,
+        enum=Channel.Type.values,
+        required=False,
+        explode=False,
+    )
+    operator = "AND"
+    score = 0
 
 
 class FacetFilterCollection:
