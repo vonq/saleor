@@ -16,16 +16,11 @@
              <h1>Search Relevancy Dashboard</h1>
         </div>
         <div class="col-5">
-            <div style="font-size: xx-small; float:right" class="">
+            <div class="babbage-quote">
                 Propose to an Englishman any principle, or any instrument, however admirable, and you will observe that the whole effort of the English mind is directed to find a difficulty, a defect, or an impossibility in it. If you speak to him of a machine for peeling a potato, he will pronounce it impossible: if you peel a potato with it before his eyes, he will declare it useless, because it will not slice a pineapple. &mdash; Charles Babbage
             </div>
         </div>
         <div class="col-12">
-
-            <div class="sticky-key">
-                <div v-for="rule, i in searchCases[0].rules" class="key-row" v-bind:style="{'backgroundColor':shades[i]}">[[rule.label]]</div>
-            </div>
-
             <div v-for="searchCase,i in searchCases" class="accordian">
                 <div class="accordion-item">
                     <h2 class="accordion-header">
@@ -33,25 +28,18 @@
                             [[ searchCase.query.jobFunction.name ]], [[ searchCase.query.location.name ]], [[ searchCase.query.industry.name ]]
                         </button>
                     </h2>
-                    <div :id="'collapseSearchCase'+i" class="accordion-collapse collapse accordion-flush" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
-                        <div class="accordion-body">
-                            <table class="table table-sm table-results">
-                            <thead>
-                                <tr><td></td><td>job functions</td><td>locations</td><td>industries</td></tr>
-                            </thead>
-                            <tbody>
-                                <tr v-bind:style="{'backgroundColor': resultShade(result)}" v-for="result,resultIndex in searchCase.results"><td>[[resultIndex]]</td>
-                                    <td>[[names(result.job_functions)]]</td>
-                                    <td>[[names(result.locations)]]</td><td>[[names(result.industries)]]</td>
-                                </tr>
-                            </table>
-                            <h2>Late matches</h2>
-                            <div v-for="outcome in searchCase.outcomes">
-                                <div v-if="outcome.lateMatches.length > 0">
-                                <h3>[[outcome.rule.priority]]. [[ outcome.rule.label ]] ([[outcome.rule.endpoint]])</h3>
-                                <ul>
-                                <li v-for="lateMatch in outcome.lateMatches">Board at position [[lateMatch.resultIndex]] could be at position [[lateMatch.endpoint]]</li>
-                            </div>
+                    <div class="accordion-body">
+                        <div class="row result-header">
+                            <div class='col-1'>#</div>
+                            <div class='col-4'>[[ searchCase.query.jobFunction.name ]]</div>
+                            <div class='col-4'>[[ searchCase.query.location.name ]]</div>
+                            <div class='col-3'>[[ searchCase.query.industry.name ]]</div>
+                        </div>
+                        <div class="row result-row" v-for="result,resultIndex in searchCase.results">
+                            <div class='col-1'>[[resultIndex]]</div>
+                            <div class='col-4' v-bind:class="{'result-mismatch':!result.outcomes.functionMatch}">[[names(result.job_functions)]]</div>
+                            <div class='col-4' v-bind:class="{'result-mismatch':!result.outcomes.locationMatch}">[[names(result.locations)]]</div>
+                            <div class='col-3'>[[names(result.industries)]]</div>
                         </div>
                     </div>
                 </div>
@@ -60,7 +48,8 @@
     </div>
 </div>
 <script src="/static/vue.min.js"></script>
-<script src="/static/d3.v5.min.js"></script>
+<script src="https://d3js.org/d3.v5.js"></script>
+<script src="https://d3js.org/d3-hierarchy.v2.min.js"></script>
 <script src="/static/search_relevancy_dashboard.js"></script>
 </body>
 </html>

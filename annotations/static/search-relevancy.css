@@ -1,7 +1,18 @@
 
 .table-results>:not(caption)>*>*, tr, td, tbody {
-    font-size: xx-small;
+    font-size: small;
     padding: 0rem 0.125rem;
+}
+
+.result-row, .result-header {
+    font-size: x-small;
+    padding: 0rem 0.125rem;
+    margin: 0.125rem 0;
+    border-bottom: 1px solid lightgrey;
+}
+
+.result-header {
+    font-size: medium;
 }
 
 .sticky-key {
@@ -12,7 +23,19 @@
 }
 
 .sticky-key>div {
-    padding: 0rem 0.125rem;
+    padding: 0 0.5rem;
     font-size: small;
 }
 
+.key-row {
+    border-left: 1.0rem solid;
+}
+
+.result-mismatch {
+    background-color: lightpink;
+}
+
+.babbage-quote {
+    font-size: xx-small; 
+    float:right;
+}
