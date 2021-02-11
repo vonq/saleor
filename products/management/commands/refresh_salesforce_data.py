@@ -42,9 +42,9 @@ class Command(BaseCommand):
         "purchase_price_method": "purchase_price_method",
         "pricing_method": "pricing_method",
         "purchase_price": "purchase_price",
-        "is_my_own_product": "is_my_own_product",
         "customer_id": "customer_id",
         "salesforce_id": "salesforce_id",
+        "salesforce_product_solution": "product_solution",
     }
 
     channel_fields_to_update_map = {

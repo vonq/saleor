@@ -21,6 +21,7 @@ class ProductIndex(AlgoliaIndex):
         "available_in_ats",
         "salesforce_product_category",
         "similarweb_top_country_shares",
+        "customer_id",
         # custom properties
         "channel_type",
         "searchable_industries_ids",
@@ -42,6 +43,7 @@ class ProductIndex(AlgoliaIndex):
         "is_addon",
         "is_product",
         "order_frequency",
+        "is_my_own_product",
     )
     settings = {
         "minWordSizefor1Typo": 4,
@@ -77,6 +79,8 @@ class ProductIndex(AlgoliaIndex):
             "is_product",
             "order_frequency",
             "channel_type",
+            "customer_id",
+            "is_my_own_product",
         ],
         "attributesToSnippet": None,
         "attributesToHighlight": None,

@@ -615,6 +615,15 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         CUSTOMER_SPECIFIC = "Customer Specific Product", _("Customer Specific Product")
         NONE = None, _("--None--")
 
+    class SalesforceProductSolution(models.TextChoices):
+        AWARENESS = "Awareness", _("Awareness")
+        JOB_MARKETING = "Job Marketing", _("Job Marketing")
+        ALWAYS_ON = "Always on", _("Always on")
+        MY_OWN_CHANNEL = "My Own Channel", _("My Own Channel")
+        SUBSCRIPTION = "Subscription", _("Subscription")
+        INTERNAL = "Internal", _("Internal")
+        NONE = None, _("--None--")
+
     class Status(models.TextChoices):
         BLACKLISTED = (
             "Blacklisted",
@@ -722,6 +731,17 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
             return f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/{self.logo.name}"
         return self.salesforce_logo_url
 
+    @property
+    def is_my_own_product(self):
+        if (
+            self.salesforce_product_solution
+            == self.SalesforceProductSolution.MY_OWN_CHANNEL
+            and self.salesforce_product_category
+            == self.SalesforceProductCategory.CUSTOMER_SPECIFIC
+        ):
+            return True
+        return False
+
     title = models.CharField(max_length=200, null=True)
     url = models.URLField(max_length=300, null=True, blank=True)
     channel = models.ForeignKey(
@@ -813,6 +833,11 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         default=SalesforceProductCategory.NONE,
         null=True,
     )
+    salesforce_product_solution = models.TextField(
+        choices=SalesforceProductSolution.choices,
+        default=SalesforceProductSolution.NONE,
+        null=True,
+    )
     salesforce_industries = ArrayField(
         base_field=models.CharField(max_length=80, blank=True), default=list
     )
@@ -821,7 +846,6 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
     )
     salesforce_cross_postings = models.JSONField(null=True, blank=True, default=list)
 
-    is_my_own_product = models.BooleanField(default=False)
     customer_id = models.CharField(null=True, blank=True, max_length=36)
 
     is_recommended = models.BooleanField(default=False)

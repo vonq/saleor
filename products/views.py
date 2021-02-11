@@ -37,6 +37,8 @@ from api.products.filters import (
     DurationMoreThanFacetFilter,
     DurationLessThanFacetFilter,
     ChannelTypeFilter,
+    CustomerIdFilter,
+    IsMyOwnProductFilter,
 )
 from api.products.geocoder import Geocoder
 from api.products.models import (
@@ -172,6 +174,7 @@ class ProductsViewSet(viewsets.ModelViewSet):
     search_results_count: int = None
 
     is_recommendation: bool = False
+    is_my_own_product_request: bool = False
 
     search_filters: Tuple[Type[FacetFilter]] = (
         InclusiveLocationIdFacetFilter,
@@ -211,6 +214,10 @@ class ProductsViewSet(viewsets.ModelViewSet):
         )
 
         if self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]:
+            queryset = queryset.filter(available_in_jmp=True).exclude(
+                salesforce_product_category=Product.SalesforceProductCategory.CUSTOMER_SPECIFIC,
+                salesforce_product_solution=Product.SalesforceProductSolution.MY_OWN_CHANNEL,
+            )
             queryset = queryset.filter(available_in_jmp=True)
 
         if self.is_recommendation:
@@ -221,9 +228,22 @@ class ProductsViewSet(viewsets.ModelViewSet):
         return queryset.order_by("-order_frequency")
 
     def get_all_filters(self):
-        if self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]:
-            all_filters = self.search_filters + (IsAvailableInJmpFacetFilter,)
-            return all_filters
+        if self.request.user.profile.type == Profile.Type.MAPI:
+            return self.search_filters + (
+                IsAvailableInJmpFacetFilter,
+                IsMyOwnProductFilter,
+            )
+        elif self.request.user.profile.type == Profile.Type.JMP:
+            if self.is_my_own_product_request:
+                return self.search_filters + (
+                    IsAvailableInJmpFacetFilter,
+                    CustomerIdFilter,
+                )
+            else:
+                return self.search_filters + (
+                    IsAvailableInJmpFacetFilter,
+                    IsMyOwnProductFilter,
+                )
         return self.search_filters
 
     @staticmethod
@@ -383,6 +403,7 @@ class ProductsViewSet(viewsets.ModelViewSet):
         search_serializer = ProductSearchSerializer(data=self.request.query_params)
         search_serializer.is_valid(raise_exception=True)
         self.is_recommendation = search_serializer.is_recommendation
+        self.is_my_own_product_request = search_serializer.is_my_own_product_request
 
         queryset = self.get_queryset()
         if search_serializer.is_search_request:

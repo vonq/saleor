@@ -394,6 +394,26 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         social_channel = Channel(type=Channel.Type.SOCIAL_MEDIA)
         social_channel.save()
 
+        my_own_product = Product(
+            title="my_own_product",
+            is_active=True,
+            salesforce_id="my_own_product",
+            customer_id="f17d9484-b9ba-5262-8f8e-b986e4b8c79d",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            salesforce_product_solution=Product.SalesforceProductSolution.MY_OWN_CHANNEL,
+            salesforce_product_category=Product.SalesforceProductCategory.CUSTOMER_SPECIFIC,
+        )
+        my_own_product.save()
+        not_my_own_product = Product(
+            title="not_my_own_product",
+            is_active=True,
+            salesforce_id="not_my_own_product",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            salesforce_product_solution=Product.SalesforceProductSolution.JOB_MARKETING,
+            salesforce_product_category=Product.SalesforceProductCategory.GENERIC,
+        )
+        not_my_own_product.save()
+
         for channel in [
             jobboard_channel,
             community_channel,
@@ -440,6 +460,49 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         )
         algolia_engine.reset(settings.ALGOLIA)
 
+    def test_mapi_does_not_receive_my_own_products_by_default(self):
+        User = get_user_model()
+        mapi_user = User.objects.create(username="mapi", password="test")
+        mapi_user.profile.type = "mapi"
+        self.client.force_login(mapi_user)
+        resp = self.client.get(reverse("api.products:products-list") + f"?name=own")
+        results = resp.json()["results"]
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["title"], "not_my_own_product")
+
+    def test_jmp_does_not_receive_my_own_products_by_default(self):
+        User = get_user_model()
+        jmp_user = User.objects.create(username="jmp", password="test")
+        jmp_user.profile.type = "jmp"
+        self.client.force_login(jmp_user)
+        resp = self.client.get(reverse("api.products:products-list") + f"?name=own")
+        results = resp.json()["results"]
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["title"], "not_my_own_product")
+
+    def test_jmp_can_retrieve_my_own_products_with_customer_id(self):
+        User = get_user_model()
+        jmp_user = User.objects.create(username="jmp", password="test")
+        jmp_user.profile.type = "jmp"
+        self.client.force_login(jmp_user)
+        resp = self.client.get(
+            reverse("api.products:products-list")
+            + f"?customerId=f17d9484-b9ba-5262-8f8e-b986e4b8c79d"
+        )
+        results = resp.json()["results"]
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["title"], "my_own_product")
+
+    def test_my_own_products_are_hidden_when_no_parameters(self):
+        User = get_user_model()
+        jmp_user = User.objects.create(username="jmp", password="test")
+        jmp_user.profile.type = "jmp"
+        self.client.force_login(jmp_user)
+        resp = self.client.get(reverse("api.products:products-list"))
+        results = resp.json()["results"]
+        product_titles = [result["title"] for result in results]
+        self.assertFalse("my_own_product" in product_titles)
+
     def test_can_recommend_products(self):
         def get_number_of_products_for_channel_type(response, channel_type):
             return len([r for r in response if r["channel"]["type"] == channel_type])
@@ -484,7 +547,6 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         response = resp.json()["results"]
 
         for i in range(0, len(response) - 1):
-
             self.assertTrue(
                 get_order_frequency(response[i]["product_id"])
                 >= get_order_frequency(response[i + 1]["product_id"])

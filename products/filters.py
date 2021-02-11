@@ -285,6 +285,31 @@ class ChannelTypeFilter(FacetFilter):
     score = 0
 
 
+class CustomerIdFilter(FacetFilter):
+    filter_name = "customer_id"
+    parameter_name = "customerId"
+    parameter = openapi.Parameter(
+        parameter_name,
+        in_=openapi.IN_QUERY,
+        description="Filter by customer id",
+        type=openapi.TYPE_STRING,
+        required=False,
+        explode=False,
+    )
+    operator = "AND"
+    score = 0
+
+
+class IsMyOwnProductFilter(FacetFilter):
+    filter_name = "is_my_own_product"
+    parameter_name = "is_my_own_product"
+    parameter = None
+    operator = "AND"
+
+    def __init__(self):
+        self.filters = "is_my_own_product:false"
+
+
 class FacetFilterCollection:
     def __init__(self, *facet_filters: FacetFilter, limit: int = 50, offset: int = 0):
         self.facet_filters = facet_filters

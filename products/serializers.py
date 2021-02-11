@@ -9,6 +9,8 @@ from api.currency.models import ExchangeRate
 from api.products.docs import CommonParameters
 from api.products.models import Location, JobFunction, JobTitle, Industry, Channel
 
+from uuid import UUID
+
 
 class LocationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
@@ -206,10 +208,15 @@ class ProductSearchSerializer(serializers.Serializer):
     name = serializers.CharField(required=False)
     recommended = serializers.BooleanField(required=False, default=False)
     channelType = serializers.CharField(required=False)
+    customerId = serializers.CharField(required=False)
 
     @property
     def is_recommendation(self) -> bool:
-        return self.validated_data.get("recommended")
+        return bool(self.validated_data.get("recommended"))
+
+    @property
+    def is_my_own_product_request(self) -> bool:
+        return bool(self.validated_data.get("customerId"))
 
     @property
     def is_search_request(self) -> bool:
@@ -224,6 +231,7 @@ class ProductSearchSerializer(serializers.Serializer):
                 self.validated_data.get("durationTo"),
                 self.validated_data.get("name"),
                 self.validated_data.get("channelType"),
+                self.validated_data.get("customerId"),
             )
         )
 
@@ -251,6 +259,13 @@ class ProductSearchSerializer(serializers.Serializer):
         if value in Channel.Type.values:
             return value
         raise ValidationError(detail="Invalid channel type!")
+
+    def validate_customerId(self, value):
+        try:
+            UUID(value)
+            return value
+        except ValueError:
+            raise ValidationError(detail="Invalid customer id!")
 
     def validate(self, attrs):
         if attrs.get("jobTitleId") and attrs.get("jobFunctionId"):
