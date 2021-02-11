@@ -25,7 +25,8 @@ def get_job_category_mapping(request):
 
     return JsonResponse(
         {
-            "name": job_category.name_nl  # Items from VONQ taxonomy in IGB are all in Dutch,
+            "name": job_category.name_nl,  # Items from VONQ taxonomy in IGB are all in Dutch,,
+            "id": job_category.mapi_id,
         }
     )
 
@@ -45,5 +46,8 @@ def get_industry_mapping(request):
         return JsonResponse({"error": "Mapping not found"}, status=404)
 
     return JsonResponse(
-        {"name": industry.name_nl}  # Items from VONQ taxonomy in IGB are all in Dutch,
+        {
+            "name": industry.name_nl,  # Items from VONQ taxonomy in IGB are all in Dutch,
+            "id": industry.mapi_id,
+        }
     )

@@ -29,6 +29,7 @@ class JobCategoryTaxonomyTestCase(AuthenticatedTestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["name"], "Badabum in Dutch")
+        self.assertEqual(response.json()["id"], 1)
 
     def test_returns_right_value_case_insensitive(self):
         response = self.client.get(
