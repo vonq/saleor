@@ -6,6 +6,17 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request
 
 from api.products.models import JobFunction, Location, Channel
+from api.products.search.scores import (
+    descendant_job_functions_score,
+    exact_location_score,
+    inclusive_location_score,
+    industry_score,
+    is_generic_score,
+    is_international_score,
+    job_function_score,
+    primary_similarweb_location,
+    secondary_similarweb_location,
+)
 
 
 class FacetFilter:
@@ -30,8 +41,9 @@ def get_facet_filter(
 
 
 class InclusiveLocationIdFacetFilter(FacetFilter):
-    filter_name = "searchable_locations_context_mapbox_ids"
+    filter_name = "searchable_locations_mapbox_ids"
     parameter_name = "includeLocationId"
+    operator = "AND"
     parameter = openapi.Parameter(
         parameter_name,
         in_=openapi.IN_QUERY,
@@ -41,19 +53,20 @@ class InclusiveLocationIdFacetFilter(FacetFilter):
         required=False,
         explode=False,
     )
-    score = 9
+    score = inclusive_location_score
 
     def __init__(self, *values):
         """
         Here we're passed a list of location ids, for which we want to
         retrieve their CONTEXT!
         """
-        locations_and_contexts = Location.list_context_locations_ids(values) or values
+        locations_and_contexts = Location.list_context_locations_ids(values)
         super().__init__(*locations_and_contexts)
 
 
 class ExactLocationIdFacetFilter(FacetFilter):
     filter_name = "searchable_locations_ids"
+    operator = "AND"
     parameter_name = "exactLocationId"
     parameter = openapi.Parameter(
         parameter_name,
@@ -63,14 +76,14 @@ class ExactLocationIdFacetFilter(FacetFilter):
         required=False,
         explode=False,
     )
-    score = 9
+    score = exact_location_score
 
 
 class PrimarySimilarWebFacetFilter(FacetFilter):
     filter_name = "primary_similarweb_location"
     parameter_name = "includeLocationId"
     parameter = None
-    score = 9
+    score = primary_similarweb_location
 
     def __init__(self, *values):
         # filter out null country codes
@@ -89,7 +102,7 @@ class SecondarySimilarWebFacetFilter(PrimarySimilarWebFacetFilter):
     filter_name = "secondary_similarweb_location"
     parameter_name = "includeLocationId"
     parameter = None
-    score = 7
+    score = secondary_similarweb_location
 
 
 class IsActiveFacetFilter(FacetFilter):
@@ -110,6 +123,30 @@ class IsAvailableInJmpFacetFilter(FacetFilter):
 
     def __init__(self):
         self.filters = "available_in_jmp:true"
+
+
+class IsGenericFacetFilter(FacetFilter):
+    filter_name = "is_generic"
+    parameter_name = "is_generic"
+    parameter = None
+    operator = "OR"
+
+    def __init__(self):
+        super().__init__("true")
+
+    score = is_generic_score
+
+
+class IsInternationalFacetFilter(FacetFilter):
+    filter_name = "is_international"
+    parameter_name = "is_international"
+    parameter = None
+    operator = "OR"
+
+    def __init__(self):
+        super().__init__("true")
+
+    score = is_international_score
 
 
 class StatusFacetFilter(FacetFilter):
@@ -186,7 +223,7 @@ class JobFunctionsFacetFilter(FacetFilter):
         type=openapi.TYPE_STRING,
         required=False,
     )
-    score = 10
+    score = job_function_score
 
 
 class JobTitlesFacetFilter(FacetFilter):
@@ -229,7 +266,6 @@ class DescendentJobTitlesFacetFilter(FacetFilter):
         )
 
         super().__init__(*descendant_job_functions)
-        pass
 
 
 class IndustryFacetFilter(FacetFilter):
@@ -244,13 +280,13 @@ class IndustryFacetFilter(FacetFilter):
         required=False,
         explode=False,
     )
-    score = 8
+    score = industry_score
 
 
 class InclusiveJobFunctionChildrenFilter(FacetFilter):
     filter_name = "searchable_job_functions_ids"
     parameter_name = "jobFunctionId"
-    score = 10
+    score = descendant_job_functions_score
     parameter = None
     operator = "OR"
 
@@ -353,7 +389,7 @@ class FacetFilterCollection:
                 "searchable_locations_ids",
             ],
             "filters": filters,
-            "sumOrFiltersScores": True,
+            "sumOrFiltersScores": False,
             "length": self.limit,
             "offset": self.offset,
         }

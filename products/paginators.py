@@ -1,6 +1,6 @@
 from rest_framework.pagination import LimitOffsetPagination
 
-from api.products.index import ProductIndex
+from api.products.search.index import ProductIndex
 
 
 class StandardResultsSetPagination(LimitOffsetPagination):

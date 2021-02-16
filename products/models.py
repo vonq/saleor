@@ -438,6 +438,10 @@ class IndexSearchableProductMixin:
         return [location.id for location in self.all_locations]
 
     @property
+    def searchable_locations_mapbox_ids(self):
+        return [location.mapbox_id for location in self.all_locations]
+
+    @property
     def searchable_locations_names(self):
         return [location.fully_qualified_place_name for location in self.all_locations]
 
@@ -454,14 +458,18 @@ class IndexSearchableProductMixin:
             return location.id
 
         return list(
-            itertools.chain.from_iterable(
-                [
-                    [
-                        location_id_from_mapbox_id(location_id)
-                        for location_id in location.mapbox_context
-                    ]
-                    for location in self.all_locations
-                ]
+            set(
+                list(
+                    itertools.chain.from_iterable(
+                        [
+                            [
+                                location_id_from_mapbox_id(location_id)
+                                for location_id in location.mapbox_context
+                            ]
+                            for location in self.all_locations
+                        ]
+                    )
+                )
             )
         )
 
@@ -476,7 +484,7 @@ class IndexSearchableProductMixin:
 
         mapbox_ids = [location.mapbox_id for location in self.all_locations]
 
-        return list(itertools.chain(mapbox_context_ids, mapbox_ids))
+        return list(set(list(itertools.chain(mapbox_context_ids, mapbox_ids))))
 
     @property
     def searchable_locations_context_names(self):
@@ -491,14 +499,18 @@ class IndexSearchableProductMixin:
             return location.fully_qualified_place_name or location.mapbox_placename
 
         return list(
-            itertools.chain.from_iterable(
-                [
-                    [
-                        fully_qualified_place_name_from_mapbox_id(location_id)
-                        for location_id in location.mapbox_context
-                    ]
-                    for location in self.all_locations
-                ]
+            set(
+                list(
+                    itertools.chain.from_iterable(
+                        [
+                            [
+                                fully_qualified_place_name_from_mapbox_id(location_id)
+                                for location_id in location.mapbox_context
+                            ]
+                            for location in self.all_locations
+                        ]
+                    )
+                )
             )
         )
 
@@ -545,6 +557,20 @@ class IndexSearchableProductMixin:
     def channel_type(self):
         if self.channel and self.channel.type:
             return self.channel.type
+
+    @property
+    def is_generic(self):
+        return (
+            self.industries.count() == 0
+            # TODO migrate industry values instead, use "all" root job function
+            or self.industries.filter(name_en="Generic").exists()
+        ) and self.job_functions.count() == 0
+
+    @property
+    def is_international(self):
+        return self.locations.count() == 0 or any(
+            [location.within is None for location in self.locations.all()]
+        )
 
 
 class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin):

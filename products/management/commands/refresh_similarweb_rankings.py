@@ -1,3 +1,4 @@
+import json
 import time
 from urllib.parse import urlparse
 
@@ -37,14 +38,18 @@ class Command(BaseCommand):
         client = SimilarWebApiClient()
 
         for product in products:
-            url = product.url
-            if not url:
+            domain = urlparse(product.url).netloc
+            if domain is None:
+                continue
+            domain = domain.replace("www.", "")
+
+            if len(domain) == 0:
                 self.stdout.write(
-                    self.style.ERROR(f"Product {product.title} has no url")
+                    self.style.ERROR(
+                        f"Product {product.title} has no or bad url ({url})"
+                    )
                 )
                 continue
-
-            domain = urlparse(url).netloc
 
             time.sleep(1)
             try:
@@ -52,10 +57,16 @@ class Command(BaseCommand):
             except ApiUnavailableException as e:
                 self.stdout.write(
                     self.style.ERROR(
-                        f"Product {product.title} triggered a SW error: {e}"
+                        f"Product {product.title}, {domain} triggered a SW error: {e}"
                     )
                 )
                 continue
+            except json.decoder.JSONDecodeError as e:
+                self.stdout.write(
+                    self.style.ERROR(
+                        f"Product {product.title}, {domain} triggered a SW JSON reading error: {e}"
+                    )
+                )
             # convert a list of two-keys dicts into a dict of k,v
             product.similarweb_top_country_shares = {
                 item["country"]: item["share"] for item in resp

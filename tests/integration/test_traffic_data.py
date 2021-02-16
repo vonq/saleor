@@ -6,7 +6,7 @@ from django.test import tag, override_settings
 from rest_framework.reverse import reverse
 
 from api.products.geocoder import Geocoder
-from api.products.index import ProductIndex
+from api.products.search.index import ProductIndex
 from api.products.models import Product, Location
 from api.tests import AuthenticatedTestCase
 
@@ -173,7 +173,7 @@ class TrafficLocationsDataTestCase(AuthenticatedTestCase):
         resp = self.client.get(
             reverse("api.products:products-list") + f"?includeLocationId={berlin_id}"
         )
-        self.assertEqual(len(resp.json()["results"]), 5)
+        self.assertEqual(len(resp.json()["results"]), 2)
 
         # the first result is the European board – since DE is its primary SW location
         self.assertEqual(resp.json()["results"][0]["title"], "European Jobs Board")

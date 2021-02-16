@@ -17,12 +17,14 @@ from rest_framework.utils import json
 
 from api.products.apps import ProductsConfig
 from api.products.docs import CommonParameters
-from api.products.filters import (
+from api.products.search.filters import (
     FacetFilter,
     InclusiveJobFunctionChildrenFilter,
     InclusiveLocationIdFacetFilter,
     FacetFilterCollection,
     ExactLocationIdFacetFilter,
+    IsGenericFacetFilter,
+    IsInternationalFacetFilter,
     JobFunctionsFacetFilter,
     JobTitlesFacetFilter,
     DescendentJobTitlesFacetFilter,
@@ -55,7 +57,8 @@ from api.products.paginators import (
     AutocompleteResultsSetPagination,
     SearchResultsPagination,
 )
-from api.products.search import query_search_index, get_results_ids
+from api.products.search.search import query_search_index, get_results_ids
+
 from api.products.serializers import (
     ProductSerializer,
     LocationSerializer,
@@ -189,6 +192,8 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         DurationMoreThanFacetFilter,
         DurationLessThanFacetFilter,
         IsActiveFacetFilter,
+        IsInternationalFacetFilter,
+        IsGenericFacetFilter,
         StatusFacetFilter,
         ProductsOnlyFacetFilter,
         ChannelTypeFilter,
@@ -221,9 +226,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             queryset = queryset.filter(available_in_jmp=True)
 
         if self.is_recommendation:
-            queryset = self.add_recommendation_filter(
-                queryset.order_by("-order_frequency")
-            )
+            queryset = self.add_recommendation_filter(queryset)
 
         return queryset.order_by("-order_frequency")
 
@@ -248,12 +251,16 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
 
     @staticmethod
     def add_recommendation_filter(queryset):
+        is_generic = lambda: Q(job_functions=None, industries=None) | Q(
+            # Generic industry
+            industries__in=[29]
+        )
         jobboard_generic_filter = queryset.filter(
             channel__type=Channel.Type.JOB_BOARD
-        ).filter(job_functions=None)[:1]
+        ).filter(is_generic())[:1]
         jobboard_niche_filter = queryset.filter(
             channel__type=Channel.Type.JOB_BOARD
-        ).exclude(job_functions=None)[:1]
+        ).exclude(is_generic())[:1]
         publication_filter = queryset.filter(channel__type=Channel.Type.PUBLICATION)[:2]
         community_filter = queryset.filter(channel__type=Channel.Type.COMMUNITY)[:2]
         social_filter = queryset.filter(channel__type=Channel.Type.SOCIAL_MEDIA)[:2]
@@ -262,7 +269,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             jobboard_niche_filter,
             community_filter,
             social_filter,
-        ).order_by("-order_frequency")
+        )
 
     def search_queryset(self, queryset):
         if self.is_recommendation:
