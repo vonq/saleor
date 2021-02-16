@@ -159,7 +159,7 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         return Response(serializer.data)
 
 
-class ProductsViewSet(viewsets.ModelViewSet):
+class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = ProductSerializer
     http_method_names = ("get", "post")
@@ -325,6 +325,30 @@ class ProductsViewSet(viewsets.ModelViewSet):
         return Response(status=HTTP_404_NOT_FOUND)
 
     @swagger_auto_schema(
+        operation_id="Retrieve multiple Product details",
+        operation_summary="This endpoint retrieves a list of Products, given a comma-separated list of their ids.",
+        operation_description="Sometimes you already have access to the Identification code of any particular Product and you want to retrieve the most up-to-date information about it.",
+        manual_parameters=(CommonParameters.ACCEPT_LANGUAGE,),
+        tags=[ProductsConfig.verbose_name],
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        permission_classes=[IsAuthenticated],
+        url_path="multiple/(?P<product_ids>(.+,?)+)",
+    )
+    def multiple(self, request, **kwargs):
+        product_ids = kwargs.get("product_ids")
+        if not product_ids:
+            raise NotFound
+
+        product_ids = product_ids.split(",")
+        queryset = self.get_queryset().filter(product_id__in=product_ids)
+        page = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
+    @swagger_auto_schema(
         operation_description="""
         This endpoint exposes a list of Products with the options to search by Location, Job Title, Job Function and Industry. as it is configured for every Partner individually.
         Products are ranked by their relevancy to the search terms.
@@ -437,6 +461,7 @@ class AddonsViewSet(ProductsViewSet):
         StatusFacetFilter,
         AddonsOnlyFacetFilter,
     )
+    http_method_names = ("get",)
 
     def get_queryset(self):
         active_products = (

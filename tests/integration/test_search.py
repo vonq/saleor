@@ -942,6 +942,18 @@ class ProductSearchTestCase(AuthenticatedTestCase):
 
         self.assertEqual(resp.status_code, 404)
 
+    def test_can_retrieve_multiple_products(self):
+        resp = self.client.get(
+            reverse(
+                "api.products:products-multiple",
+                kwargs={
+                    "product_ids": f"{self.active_product.product_id},{self.available_in_jmp_product.product_id}"
+                },
+            )
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.json()["results"]), 2)
+
     def test_can_search_for_product_name(self):
         resp = self.client.get(reverse("api.products:products-list") + f"?name=global")
 
