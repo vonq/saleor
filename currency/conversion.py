@@ -7,7 +7,7 @@ import requests
 def convert(original_value: Optional[float], conversion_rate: float):
     if not original_value:
         return
-    return round(original_value * conversion_rate, 3)
+    return round(original_value * conversion_rate, 2)
 
 
 def get_exchance_rate_for(code, feed):
