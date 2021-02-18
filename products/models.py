@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import FieldError
 from django.db import models
-from django.db.models import QuerySet, Q, Max, Func, F, Count, Case, When
+from django.db.models import QuerySet, Q, Max, Func, F, Case, When
 from django.db.models.functions import Cast
 from modeltranslation.fields import TranslationFieldDescriptor
 from mptt.models import MPTTModel
@@ -199,6 +199,10 @@ class Location(models.Model):
         related_name="mapbox_location",
     )  # link up
 
+    mapbox_bounding_box = ArrayField(
+        base_field=models.FloatField(null=False, blank=False), default=list
+    )
+
     approved = models.BooleanField(default=False)
 
     def __str__(self):
@@ -221,6 +225,7 @@ class Location(models.Model):
         location.mapbox_text = mapbox_response["text"]
         location.mapbox_place_type = []
         location.country_code = cls.get_country_short_code(mapbox_response)
+        location.mapbox_bounding_box = mapbox_response.get("bbox", [])
         for place_type in mapbox_response["place_type"]:
             location.mapbox_place_type.append(place_type)
         if "short_code" in mapbox_response["properties"]:

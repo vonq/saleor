@@ -8,6 +8,7 @@ from api.currency.conversion import convert
 from api.currency.models import ExchangeRate
 from api.products.docs import CommonParameters
 from api.products.models import Location, JobFunction, JobTitle, Industry, Channel
+from api.products.area import bounding_box_area
 
 from uuid import UUID
 
@@ -21,6 +22,15 @@ class LocationSerializer(serializers.ModelSerializer):
     canonical_name = serializers.CharField(allow_null=True)
     within = RecursiveField(allow_null=True)
 
+    area = serializers.SerializerMethodField()
+    bounding_box = serializers.ListField(
+        child=serializers.FloatField(), source="mapbox_bounding_box"
+    )
+
+    def get_area(self, location):
+        if location.mapbox_bounding_box:
+            return bounding_box_area(location)
+
     class Meta:
         model = Location
         fields = (
@@ -29,6 +39,8 @@ class LocationSerializer(serializers.ModelSerializer):
             "canonical_name",
             "place_type",
             "within",
+            "area",
+            "bounding_box",
         )
         read_only_fields = fields
 
