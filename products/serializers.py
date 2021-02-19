@@ -153,15 +153,21 @@ class ProductSerializer(serializers.Serializer):
 
     @staticmethod
     def get_logo_url(product):
-        return [{"size": "300x200", "url": product.logo_url}]
+        if product.logo:
+            return [{"size": "300x200", "url": product.logo_url}]
+        return None
 
     @staticmethod
     def get_logo_square_url(product):
-        return [{"size": "68x68", "url": product.logo_square_url}]
+        if product.logo_square:
+            return [{"size": "68x68", "url": product.logo_square_url}]
+        return None
 
     @staticmethod
     def get_logo_rectangle_url(product):
-        return [{"size": "270x90", "url": product.logo_rectangle_url}]
+        if product.logo_rectangle:
+            return [{"size": "270x90", "url": product.logo_rectangle_url}]
+        return None
 
     @staticmethod
     def get_duration(product):
