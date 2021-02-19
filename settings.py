@@ -77,6 +77,8 @@ INSTALLED_APPS = [
     "api.annotations",
     "api.vonqtaxonomy",
     "api.currency",
+    "easy_thumbnails",
+    "image_cropping",
 ]
 
 ALGOLIA = {
@@ -230,7 +232,6 @@ if not is_development():
         environment=ENV,
         send_default_pii=True,
     )
-
 
 Q_CLUSTER = {
     "name": "DjangORM",

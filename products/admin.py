@@ -6,6 +6,7 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from django.db.models import Count
+from image_cropping import ImageCroppingMixin
 from modeltranslation.admin import TranslationAdmin
 from mptt.admin import MPTTModelAdmin
 from mptt.forms import TreeNodeChoiceField
@@ -63,12 +64,15 @@ class ProductForm(forms.ModelForm):
 
 
 @admin.register(Product)
-class ProductAdmin(PermissionBasedFieldsMixin, TranslationAdmin):
+class ProductAdmin(ImageCroppingMixin, PermissionBasedFieldsMixin, TranslationAdmin):
     form = ProductForm
+    crop_fields = ["cropped_logo"]
     readonly_fields = [
         "product_id",
         # "salesforce_industries",
         "logo_url",
+        "logo_square_url",
+        "logo_rectangle_url",
         "salesforce_id",
         "salesforce_sync_status",
         "salesforce_last_sync",
@@ -94,6 +98,10 @@ class ProductAdmin(PermissionBasedFieldsMixin, TranslationAdmin):
         "tracking_method",
         "logo_url",
         "logo",
+        "cropping_square",
+        "logo_square_url",
+        "cropping_rectangle",
+        "logo_rectangle_url",
         "salesforce_product_type",
         "salesforce_cross_postings",
         # "salesforce_industries",

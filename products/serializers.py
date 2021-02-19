@@ -156,6 +156,14 @@ class ProductSerializer(serializers.Serializer):
         return [{"size": "300x200", "url": product.logo_url}]
 
     @staticmethod
+    def get_logo_square_url(product):
+        return [{"size": "68x68", "url": product.logo_square_url}]
+
+    @staticmethod
+    def get_logo_rectangle_url(product):
+        return [{"size": "270x90", "url": product.logo_rectangle_url}]
+
+    @staticmethod
     def get_duration(product):
         return {"range": "days", "period": product.duration_days}
 
@@ -202,6 +210,8 @@ class ProductSerializer(serializers.Serializer):
     homepage = serializers.SerializerMethodField()
     type = serializers.SerializerMethodField()
     logo_url = serializers.SerializerMethodField()
+    logo_square_url = serializers.SerializerMethodField()
+    logo_rectangle_url = serializers.SerializerMethodField()
     title = serializers.SerializerMethodField()
     channel = LimitedChannelSerializer(read_only=True)
     product_id = serializers.CharField(read_only=True)

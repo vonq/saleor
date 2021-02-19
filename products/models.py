@@ -3,7 +3,7 @@ import re
 import uuid
 import datetime
 from typing import List, Iterable
-
+from storages.backends.s3boto3 import S3Boto3Storage
 from dateutil.tz import UTC
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
@@ -11,17 +11,20 @@ from django.core.exceptions import FieldError
 from django.db import models
 from django.db.models import QuerySet, Q, Max, Func, F, Case, When
 from django.db.models.functions import Cast
+from image_cropping import ImageRatioField
 from modeltranslation.fields import TranslationFieldDescriptor
 from mptt.models import MPTTModel
-
+from PIL import Image
 from api.field_permissions.models import FieldPermissionModelMixin
 from api.products.geocoder import Geocoder
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
 from api.settings import AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME
-
-from django.core.validators import FileExtensionValidator
+import requests
 from django.core.exceptions import ValidationError
+import tempfile
+from io import BytesIO
+from django.core.files import File
 
 
 class SFSyncable(models.Model):
@@ -596,16 +599,44 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         if product_id != self.product_id:
             self.product_id = product_id
 
+    def generate_cropped_images(self):
+        def crop_image(cropping_str, image, name):
+            cropping = cropping_str.split(",")
+            cropping = tuple([int(t) for t in cropping])
+            img_io = BytesIO()
+            cropped_img = image.crop(cropping)
+            cropped_img.save(img_io, format="png")
+            return File(img_io, name=name)
+
+        current_obj = Product.objects.filter(id=self.id).first()
+        if self.logo and (
+            not current_obj
+            or self.cropping_square != current_obj.cropping_square
+            or self.cropping_rectangle != current_obj.cropping_rectangle
+            or self.logo != current_obj.logo
+        ):
+            if not current_obj or self.logo != current_obj.logo:
+                # Saves to upload the new logo
+                super(Product, self).save()
+            response = requests.get(self.logo_url)
+            with tempfile.NamedTemporaryFile() as fp:
+                fp.write(response.content)
+                fp.seek(0)
+                img = Image.open(fp.name)
+                self.logo_rectangle = crop_image(
+                    self.cropping_rectangle, img, "rectangle.png"
+                )
+                self.logo_square = crop_image(self.cropping_square, img, "square.png")
+
     def save(self, *args, **kwargs):
         self.set_product_id()
+        self.generate_cropped_images()
         super(Product, self).save(*args, **kwargs)
 
     class Logo:
         @staticmethod
         def logo_path(instance, filename):
             return "{0}/{1}".format(instance.product_id, filename)
-
-        allowed_extensions = ["png", "jpg", "gif", "svg", "jpeg"]
 
         @staticmethod
         def validate_logo_size(value):
@@ -763,6 +794,18 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         return self.salesforce_logo_url
 
     @property
+    def logo_square_url(self):
+        if self.logo:
+            return f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/{self.logo_square.name}"
+        return None
+
+    @property
+    def logo_rectangle_url(self):
+        if self.logo:
+            return f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/{self.logo_rectangle.name}"
+        return None
+
+    @property
     def is_my_own_product(self):
         if (
             self.salesforce_product_solution
@@ -799,15 +842,30 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
     salesforce_logo_url = models.CharField(
         max_length=300, null=True, blank=True, default=None
     )
-    logo = models.FileField(
+    cropping_square = ImageRatioField("logo", "68x68")
+    cropping_rectangle = ImageRatioField("logo", "270x90")
+
+    logo = models.ImageField(
         null=True,
         blank=True,
         upload_to=Logo.logo_path,
+        storage=S3Boto3Storage(),
         validators=[
-            FileExtensionValidator(allowed_extensions=Logo.allowed_extensions),
             Logo.validate_logo_size,
         ],
         help_text="Rules: Logo size must be 1MB max. Logo file must be an image.",
+    )
+    logo_square = models.ImageField(
+        null=True,
+        blank=True,
+        upload_to=Logo.logo_path,
+        storage=S3Boto3Storage(),
+    )
+    logo_rectangle = models.ImageField(
+        null=True,
+        blank=True,
+        upload_to=Logo.logo_path,
+        storage=S3Boto3Storage(),
     )
     is_active = models.BooleanField(default=False)
 

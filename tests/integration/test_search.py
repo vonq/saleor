@@ -702,6 +702,8 @@ class ProductSearchTestCase(AuthenticatedTestCase):
                 "type",
                 "cross_postings",
                 "channel",
+                "logo_square_url",
+                "logo_rectangle_url",
             ],
         )
 
