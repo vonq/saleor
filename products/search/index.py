@@ -49,8 +49,8 @@ class ProductIndex(AlgoliaIndex):
         "is_my_own_product",
     )
     settings = {
-        "minWordSizefor1Typo": 4,
-        "minWordSizefor2Typos": 8,
+        "minWordSizefor1Typo": 3,
+        "minWordSizefor2Typos": 5,
         "hitsPerPage": 20,
         "maxValuesPerFacet": 100,
         "searchableAttributes": [
