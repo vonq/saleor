@@ -27,7 +27,15 @@ from io import BytesIO
 from django.core.files import File
 
 
-class SFSyncable(models.Model):
+class CreatedUpdatedModelMixin(models.Model):
+    class Meta:
+        abstract = True
+
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+
+class SFSyncable(CreatedUpdatedModelMixin):
     class Meta:
         abstract = True
 
@@ -132,7 +140,7 @@ class JobTitle(models.Model):
         return self.name
 
 
-class Location(models.Model):
+class Location(CreatedUpdatedModelMixin):
     # https://docs.mapbox.com/api/search/#data-types
     TYPE_CHOICES = [
         ("place", "City, town or village"),
@@ -339,8 +347,9 @@ class PostingRequirement(models.Model):
         CAREER_LEVEL = "Career Level", _("Career level")
         LANGUAGE_SPECIFIC = "Language Specific", _("Language Specific")
         CONTACT_INFO = "Contact Information", _("Contact Information")
-        COMPANY_REGISTRATION_INFO = "Company Registration Information", _(
-            "Company Registration Information"
+        COMPANY_REGISTRATION_INFO = (
+            "Company Registration Information",
+            _("Company Registration Information"),
         )
         FB_PROFILE = "Facebook Profile", _("Facebook Profile")
         LI_PROFILE = "LinkedIn Profile", _("LinkedIn Profile")
@@ -733,15 +742,18 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         ADDITIONAL = "Additional", _("Additional")
         INDEED_ALWAYS_ON = "Indeed Always On", _("Indeed Always On")
         TRAFFIQ_SEA_VONQ = "TraffiQ / SEA (VONQ Team)", _("TraffiQ / SEA (VONQ Team)")
-        TRAFFIQ_SEA_EXPAND_ONLINE = "TraffiQ / SEA (Expand Online)", _(
-            "TraffiQ / SEA (Expand Online)"
+        TRAFFIQ_SEA_EXPAND_ONLINE = (
+            "TraffiQ / SEA (Expand Online)",
+            _("TraffiQ / SEA (Expand Online)"),
         )
-        PROJECT_MANAGEMENT = "Project Management (e.g. hours)", _(
-            "Project Management (e.g. hours)"
+        PROJECT_MANAGEMENT = (
+            "Project Management (e.g. hours)",
+            _("Project Management (e.g. hours)"),
         )
         ADDON_FINANCIAL = "Addon: financial", _("Addon: financial")
-        INTERNAL_TRACKING_TECHNICAL = "Internal / Tracking / Technical", _(
-            "Internal / Tracking / Technical"
+        INTERNAL_TRACKING_TECHNICAL = (
+            "Internal / Tracking / Technical",
+            _("Internal / Tracking / Technical"),
         )
         KICKBACKS = "Kickbacks", _("Kickbacks")
         SUBSCRIPTION = "Subscription", _("Subscription")
@@ -971,7 +983,7 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         return str(self.title) + " : " + str(self.url)
 
 
-class Profile(models.Model):
+class Profile(CreatedUpdatedModelMixin):
     class Type(models.TextChoices):
         JMP = "jmp", _("JMP")
         MAPI = "mapi", _("MAPI")
