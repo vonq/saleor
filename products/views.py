@@ -193,8 +193,10 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         DurationMoreThanFacetFilter,
         DurationLessThanFacetFilter,
         IsActiveFacetFilter,
-        IsInternationalFacetFilter,
-        IsGenericFacetFilter,
+        # TODO: Re-enable them after we're done
+        #       with the search relevancy re-haul
+        # IsInternationalFacetFilter,
+        # IsGenericFacetFilter,
         StatusFacetFilter,
         ProductsOnlyFacetFilter,
         ChannelTypeFilter,

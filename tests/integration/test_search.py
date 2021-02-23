@@ -377,7 +377,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         high_frequency_product.save()
 
         high_frequency_product.locations.add(cls.brazil)
-        high_frequency_product.industries.add(cls.random_industry)
+        high_frequency_product.industries.add(cls.recruitment_industry)
         high_frequency_product.save()
 
         medium_frequency_product = Product(
