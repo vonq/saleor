@@ -207,12 +207,13 @@ def push_channel(channel_instance):
 
 def update_product(product_instance):
     client = login()
-    salesforce_product = client.Product2.get_by_custom_id(
-        "Uuid__c", product_instance.salesforce_id
-    )
-    if not salesforce_product:
+    try:
+        salesforce_product = client.Product2.get_by_custom_id(
+            "Uuid__c", product_instance.salesforce_id
+        )
+    except SalesforceResourceNotFound:
         raise RemoteProductNotFound(
-            f"Couldn't find any product with external id {product_instance.product_id}"
+            f"Couldn't find any product with external id {product_instance.salesforce_id}"
         )
 
     product = make_salesforce_product(product_instance)
