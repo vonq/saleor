@@ -6,6 +6,7 @@ from api.products.models import (
     Location,
     Channel,
     Product,
+    PostingRequirement,
 )
 
 
@@ -37,3 +38,8 @@ class ChannelTranslationOptions(TranslationOptions):
 @register(Product)
 class ProductTranslationOptions(TranslationOptions):
     fields = ("title", "description")
+
+
+@register(PostingRequirement)
+class PostingRequirementOptions(TranslationOptions):
+    fields = ("posting_requirement_type",)

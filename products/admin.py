@@ -20,6 +20,7 @@ from api.products.models import (
     JobFunction,
     Location,
     Industry,
+    PostingRequirement,
 )
 from api.products.models import Profile
 from api.products.signals import channel_updated, product_updated
@@ -98,6 +99,7 @@ class ProductAdmin(ImageCroppingMixin, PermissionBasedFieldsMixin, TranslationAd
         "tracking_method",
         "logo_url",
         "logo",
+        "posting_requirements",
         "cropping_square",
         "logo_square_url",
         "cropping_rectangle",
@@ -304,3 +306,8 @@ class LocationAdmin(TranslationAdmin):
 class IndustryAdmin(TranslationAdmin):
     list_display = ("name",)
     search_fields = ("name",)
+
+
+@admin.register(PostingRequirement)
+class PostingRequirementAdmin(TranslationAdmin):
+    list_display = ("posting_requirement_type",)

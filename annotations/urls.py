@@ -17,6 +17,9 @@ urlpatterns = [
     path("channel-annotation", views.channel_annotation, name="channel_annotation"),
     path("dashboard", views.dashboard, name="dashboard"),
     path("search-relevancy", views.search_relevancy, name="search_relevancy"),
+    path(
+        "posting-requirements", views.posting_requirements, name="posting_requirements"
+    ),
     path("get-titles", views.get_job_titles_json, name="get_job_titles_json"),
     path("locations", views.get_locations_json, name="get_locations_json"),
     path("job-functions", views.get_job_functions_json, name="get_job_functions_json"),
@@ -32,6 +35,11 @@ urlpatterns = [
     path("set-category-values", views.set_category_values, name="set_category_values"),
     path("set-locations", views.set_locations, name="set_locations"),
     path("set-channel", views.set_channel, name="set_channel"),
+    path(
+        "set-posting-requirements",
+        views.set_posting_requirements,
+        name="set_posting_requirements",
+    ),
     path("export-options", views.export_options_json, name="export_options_json"),
     path(
         "export-categories-csv",

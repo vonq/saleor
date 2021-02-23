@@ -18,7 +18,6 @@ var SearchRelevancyApp = new Vue({
                 // assuming canonical names of APPROVED locations are unique
                 this.locations = data.locations.filter(l=>l.approved)
                 })
-                // this.searchChecks()
                 this.baseQuery('/job-functions/').then(data => {
                     rooted_tree = {'name': 'All Functions', 'children': data} // this may need changing the API
                     this.jobFunctionTree = d3.hierarchy(rooted_tree)
@@ -87,6 +86,7 @@ var SearchRelevancyApp = new Vue({
                             result.outcomes = {}
                             result.outcomes.locationMatch = result.locations.some(l => linealRelation(location.name, l.canonical_name, locationTree))
                             result.outcomes.functionMatch = result.job_functions.some(f => linealRelation(jobFunction.name, f.name, vm.jobFunctionTree))
+                                                            || result.job_functions.length == 0 // until we have global job_function
                     })
                     vm.searchCases.push({
                         'query': {'location':location, 'jobFunction': jobFunction, 'industry': industry}, 

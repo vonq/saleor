@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import (
 
 from django.contrib.admin.models import LogEntry, CHANGE
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist
 
 from api.products.models import (
     Industry,
@@ -15,6 +16,7 @@ from api.products.models import (
     JobTitle,
     Location,
     Channel,
+    PostingRequirement,
 )
 
 import json
@@ -150,6 +152,40 @@ def dashboard(request):
 
 def search_relevancy(request):
     return render(request, "search_relevancy_dashboard.html")
+
+
+@permission_required("products.change_product")
+def posting_requirements(request):
+    return render(request, "posting_requirements.html")
+
+
+@permission_required("products.change_product")
+def set_posting_requirements(request):
+    try:
+        payload = json.loads(request.body)
+    except TypeError:
+        return JsonResponse(
+            {"status": "error", "message": "Request body cannot be parsed as a JSON"}
+        )
+
+    try:
+        product = Product.objects.get(salesforce_id=payload["uuid"])
+    except ObjectDoesNotExist:
+        return JsonResponse(
+            {"status": "error", "message": "No product with uuid " + payload["uuid"]}
+        )
+
+    values = payload["values"].split(",")
+    product.posting_requirements.clear()
+    for value in values:
+        posting_requirement, created = PostingRequirement.objects.get_or_create(
+            posting_requirement_type=value
+        )
+        product.posting_requirements.add(posting_requirement)
+
+    return JsonResponse(
+        {"status": "ok", "message": "Updated product #" + str(product.id)}
+    )
 
 
 @permission_required("products.view_product")

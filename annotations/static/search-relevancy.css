@@ -4,15 +4,21 @@
     padding: 0rem 0.125rem;
 }
 
+h1 {
+    font-weight: lighter;
+}
+
 .result-row, .result-header {
-    font-size: x-small;
+    font-size: small;
     padding: 0rem 0.125rem;
     margin: 0.125rem 0;
     border-bottom: 1px solid lightgrey;
 }
 
 .result-header {
-    font-size: medium;
+    font-size: large;
+    background-color: #4e555b;
+    color: #ffffff;
 }
 
 .sticky-key {
@@ -38,4 +44,6 @@
 .babbage-quote {
     font-size: xx-small; 
     float:right;
+    color: #878787;
+    text-align: end;
 }

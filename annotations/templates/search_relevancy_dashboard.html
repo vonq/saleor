@@ -21,13 +21,7 @@
             </div>
         </div>
         <div class="col-12">
-            <div v-for="searchCase,i in searchCases" class="accordian">
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button" type="button" data-bs-toggle="collapse" :data-bs-target="'#collapseSearchCase'+i" aria-expanded="true" :aria-controls="'collapseSearchCase'+i">
-                            [[ searchCase.query.jobFunction.name ]], [[ searchCase.query.location.name ]], [[ searchCase.query.industry.name ]]
-                        </button>
-                    </h2>
+            <div v-for="searchCase,i in searchCases">
                     <div class="accordion-body">
                         <div class="row result-header">
                             <div class='col-1'>#</div>
@@ -42,7 +36,6 @@
                             <div class='col-3'>[[names(result.industries)]]</div>
                         </div>
                     </div>
-                </div>
             </div>
         </div>
     </div>

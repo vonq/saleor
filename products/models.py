@@ -362,7 +362,9 @@ class PostingRequirement(models.Model):
         default=PostingRequirementType.NONE,
         null=True,
     )
-    # further attribute and validators to add
+
+    def __str__(self):
+        return str(self.posting_requirement_type)
 
 
 class IndexSearchableProductMixin:
