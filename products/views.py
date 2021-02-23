@@ -5,6 +5,7 @@ from typing import List, Iterable, Type, Tuple
 
 from django.db.models import Case, When
 from django.db.models import Q
+from django.http import JsonResponse
 from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
 from rest_framework import viewsets, mixins
@@ -70,14 +71,14 @@ from api.products.serializers import (
 )
 
 
-class IsMapiUser(BasePermission):
+class IsMapiOrJmpUser(BasePermission):
     def has_permission(self, request, view):
-        return all(
-            (
-                request.user,
-                request.user.is_authenticated,
-                request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI],
-            )
+        if not hasattr(request.user, "profile"):
+            return False
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI],
         )
 
 
@@ -312,7 +313,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         if request.user.profile.type == Profile.Type.JMP and not obj.available_in_jmp:
             raise NotFound()
 
-    @action(detail=False, methods=["post"], permission_classes=[IsMapiUser])
+    @action(detail=False, methods=["post"], permission_classes=[IsMapiOrJmpUser])
     def validate(self, request, **kwargs):
         """
         A simple endpoint to quickly check whether a list of product ids is valid
@@ -323,13 +324,19 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         try:
             validating_product_ids = json.loads(request.body)  # type: List[int]
         except JSONDecodeError:
-            return Response(status=HTTP_400_BAD_REQUEST)
+            return JsonResponse(
+                data={"error": "Invalid request body"}, status=HTTP_400_BAD_REQUEST
+            )
         all_products_valid = self.get_queryset().filter(
             product_id__in=validating_product_ids
         ).count() == len(validating_product_ids)
         if all_products_valid:
-            return Response(status=HTTP_200_OK)
-        return Response(status=HTTP_404_NOT_FOUND)
+            return JsonResponse(
+                data={"status": "Valid product ids"}, status=HTTP_200_OK
+            )
+        return JsonResponse(
+            data={"status": "Invalid product ids"}, status=HTTP_404_NOT_FOUND
+        )
 
     @swagger_auto_schema(
         operation_id="Retrieve multiple Product details",

@@ -4,11 +4,11 @@ from django.http import JsonResponse
 from rest_framework.decorators import permission_classes
 
 import api.vonqtaxonomy
-from api.products.views import IsMapiUser
+from api.products.views import IsMapiOrJmpUser
 from api.vonqtaxonomy.models import Industry, JobCategory
 
 
-@permission_classes((IsMapiUser,))
+@permission_classes((IsMapiOrJmpUser,))
 def get_job_category_mapping(request):
     text = request.GET.get("job_function_name")
     if not text:
@@ -31,7 +31,7 @@ def get_job_category_mapping(request):
     )
 
 
-@permission_classes((IsMapiUser,))
+@permission_classes((IsMapiOrJmpUser,))
 def get_industry_mapping(request):
     text = request.GET.get("industry_name")
     if not text:
