@@ -619,21 +619,40 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
             cropped_img.save(img_io, format="png")
             return File(img_io, name=name)
 
+        def should_crop_logo() -> bool:
+            """ Returns whether the cropping process should de executed. Functions are used for lazy evaluation """
+
+            def is_newly_uploaded_logo():
+                return not current_obj or self.logo != current_obj.logo
+
+            def selections_changed():
+                return (
+                    self.cropping_square != current_obj.cropping_square
+                    or self.cropping_rectangle != current_obj.cropping_rectangle
+                )
+
+            def selections_exist():
+                return self.cropping_square and self.cropping_rectangle
+
+            return (
+                self.logo
+                and selections_exist()
+                and (is_newly_uploaded_logo() or selections_changed())
+            )
+
+        def load_image(temporary_file_path, content):
+            temporary_file_path.write(content)
+            temporary_file_path.seek(0)
+            return Image.open(temporary_file_path.name)
+
         current_obj = Product.objects.filter(id=self.id).first()
-        if self.logo and (
-            not current_obj
-            or self.cropping_square != current_obj.cropping_square
-            or self.cropping_rectangle != current_obj.cropping_rectangle
-            or self.logo != current_obj.logo
-        ):
+        if should_crop_logo():
             if not current_obj or self.logo != current_obj.logo:
                 # Saves to upload the new logo
                 super(Product, self).save()
             response = requests.get(self.logo_url)
             with tempfile.NamedTemporaryFile() as fp:
-                fp.write(response.content)
-                fp.seek(0)
-                img = Image.open(fp.name)
+                img = load_image(fp, response.content)
                 self.logo_rectangle = crop_image(
                     self.cropping_rectangle, img, "rectangle.png"
                 )
