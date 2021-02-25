@@ -45,6 +45,7 @@ class Command(BaseCommand):
         "customer_id": "customer_id",
         "salesforce_id": "salesforce_id",
         "salesforce_product_solution": "product_solution",
+        "created": "created_date",
     }
 
     channel_fields_to_update_map = {
