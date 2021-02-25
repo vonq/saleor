@@ -68,6 +68,7 @@ class ProductForm(forms.ModelForm):
 class ProductAdmin(ImageCroppingMixin, PermissionBasedFieldsMixin, TranslationAdmin):
     form = ProductForm
     crop_fields = ["cropped_logo"]
+    list_display = ["external_product_name", "url", "created", "updated"]
     readonly_fields = [
         "product_id",
         # "salesforce_industries",
@@ -77,6 +78,8 @@ class ProductAdmin(ImageCroppingMixin, PermissionBasedFieldsMixin, TranslationAd
         "salesforce_id",
         "salesforce_sync_status",
         "salesforce_last_sync",
+        "updated",
+        "created",
     ]
     inlines = (JobFunctionModelInline,)
 
@@ -97,9 +100,9 @@ class ProductAdmin(ImageCroppingMixin, PermissionBasedFieldsMixin, TranslationAd
         "locations",
         # "similarweb_top_country_shares",
         "tracking_method",
+        "posting_requirements",
         "logo_url",
         "logo",
-        "posting_requirements",
         "cropping_square",
         "logo_square_url",
         "cropping_rectangle",
@@ -118,6 +121,8 @@ class ProductAdmin(ImageCroppingMixin, PermissionBasedFieldsMixin, TranslationAd
         "salesforce_sync_status",
         "salesforce_last_sync",
         "salesforce_id",
+        "created",
+        "updated",
     ]
     filter_horizontal = ("industries", "job_functions", "locations")
     search_fields = ("title", "description")
