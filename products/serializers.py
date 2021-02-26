@@ -304,6 +304,9 @@ class ProductSearchSerializer(serializers.Serializer):
 
 
 class ChannelSerializer(serializers.Serializer):
+    class Meta:
+        ref_name = "ChannelWithProducts"
+
     id = serializers.IntegerField(read_only=True)
     name = serializers.CharField(read_only=True)
     url = serializers.URLField(read_only=True)
