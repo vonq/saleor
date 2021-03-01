@@ -84,8 +84,20 @@ var titleTranslationApp = new Vue({
         },
         seenCount: function() {
             return this.titles.filter(t=>this.titleSeen(t)).length
+        },
+        setFromTranslators: function() {
+             d3.csv('/static/data/merged_job_title_translations.csv').then(data => {
+                 for(loaded_title of data) {
+                     let prior_title = this.titles.find(t=>t.name_en == loaded_title.name_en)
+                     if(prior_title.name_nl != loaded_title['Dutch Translator']
+                        || prior_title.name_de != loaded_title['German Translator']) {
+                         prior_title.name_nl = loaded_title['Dutch Translator']
+                         prior_title.name_de = loaded_title['German Translator']
+                        this.postUpdate(prior_title)
+                     }
+                 }
+             })
         }
-
     },
     watch: {
         pageIndex: function() {
