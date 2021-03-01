@@ -125,7 +125,7 @@ class ProductAdmin(ImageCroppingMixin, PermissionBasedFieldsMixin, TranslationAd
         "updated",
     ]
     filter_horizontal = ("industries", "job_functions", "locations")
-    search_fields = ("title", "description")
+    search_fields = ("channel__name", "title", "description")
     autocomplete_fields = ("channel",)
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
