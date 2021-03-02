@@ -9,6 +9,8 @@ from django.contrib.admin.models import LogEntry, CHANGE
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 
+from django.core.exceptions import ObjectDoesNotExist
+
 from api.products.models import (
     Industry,
     Product,
@@ -16,6 +18,7 @@ from api.products.models import (
     JobTitle,
     Location,
     Channel,
+    Category,
     PostingRequirement,
 )
 
@@ -29,12 +32,14 @@ def index(request):
 
 def product_annotation(request):
     industries = Industry.objects.all()
+    categories = Category.objects.all()
     jobFunctions = JobFunction.objects.all()
     return render(
         request,
         "product_annotation.html",
         {
             "industries": list(industries.values("name")),
+            "categories": list(categories.values("name")),
             "jobFunctions": list(jobFunctions.values("name")),
             "channelTypes": [choice[0] for choice in Channel.Type.choices],
         },
@@ -272,7 +277,7 @@ def get_product_json(request, id):
 
     locs = []
     for loc in product.locations.all():
-        locs.append(loc.fully_qualified_place_name())
+        locs.append(loc.fully_qualified_place_name)
 
     monthly_visits = (
         product.similarweb_estimated_monthly_visits
@@ -430,6 +435,25 @@ def set_category_values(request):
             ),
             "channelType": "",
         }
+    )
+
+
+@permission_required("products.change_product")
+def migrate_industry_to_category(request):
+    try:
+        payload = json.loads(request.body)
+    except (TypeError, json.JSONDecodeError):
+        return JsonResponse({"error": "Request body cannot be parsed as a JSON"})
+
+    products = Product.objects.filter(industries__name_en=payload["industry_name"])
+    category, created = Category.objects.get_or_create(name_en=payload["industry_name"])
+
+    for product in products:
+        product.categories.add(category)
+        product.save()
+
+    return JsonResponse(
+        {"status": "OK", "message": "migrated " + str(products.count()) + " categories"}
     )
 
 

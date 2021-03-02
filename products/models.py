@@ -101,6 +101,32 @@ class Industry(models.Model):
         verbose_name_plural = "industries"
 
 
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+
+    objects = AcrossLanguagesQuerySet.as_manager()
+
+    class Type(models.TextChoices):
+        CAREER_LEVEL = (
+            "career level",
+            _("Career level"),
+        )
+        INDUSTRY = (  # placeholder for future reference
+            "industry",
+            _("Industry"),
+        )
+
+    type = (
+        models.CharField(max_length=50, null=True, blank=True, choices=Type.choices),
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name_plural = "categories"
+
+
 class JobFunction(MPTTModel):
     name = models.CharField(max_length=100)
     parent = models.ForeignKey(
@@ -859,6 +885,12 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         Industry,
         related_name="industries",
         related_query_name="industry",
+        blank=True,
+    )
+    categories = models.ManyToManyField(
+        Category,
+        related_name="categories",
+        related_query_name="category",
         blank=True,
     )
 

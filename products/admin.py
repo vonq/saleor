@@ -20,6 +20,7 @@ from api.products.models import (
     JobFunction,
     Location,
     Industry,
+    Category,
     PostingRequirement,
 )
 from api.products.models import Profile
@@ -89,6 +90,7 @@ class ProductAdmin(ImageCroppingMixin, PermissionBasedFieldsMixin, TranslationAd
         "channel",
         "description",
         "industries",
+        "categories",
         "job_functions",
         "status",
         "is_active",
@@ -124,7 +126,7 @@ class ProductAdmin(ImageCroppingMixin, PermissionBasedFieldsMixin, TranslationAd
         "created",
         "updated",
     ]
-    filter_horizontal = ("industries", "job_functions", "locations")
+    filter_horizontal = ("industries", "categories", "job_functions", "locations")
     search_fields = ("channel__name", "title", "description")
     autocomplete_fields = ("channel",)
 
@@ -309,6 +311,12 @@ class LocationAdmin(TranslationAdmin):
 
 @admin.register(Industry)
 class IndustryAdmin(TranslationAdmin):
+    list_display = ("name",)
+    search_fields = ("name",)
+
+
+@admin.register(Category)
+class CategoryAdmin(TranslationAdmin):
     list_display = ("name",)
     search_fields = ("name",)
 

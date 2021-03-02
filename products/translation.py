@@ -6,12 +6,18 @@ from api.products.models import (
     Location,
     Channel,
     Product,
+    Category,
     PostingRequirement,
 )
 
 
 @register(Industry)
 class IndustryTranslationOptions(TranslationOptions):
+    fields = ("name",)
+
+
+@register(Category)
+class CategoryTranslationOptions(TranslationOptions):
     fields = ("name",)
 
 

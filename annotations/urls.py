@@ -33,6 +33,11 @@ urlpatterns = [
     path("update-title", views.update_title, name="update_title"),
     path("add-categorisation", views.add_categorisation, name="add_categorisation"),
     path("set-category-values", views.set_category_values, name="set_category_values"),
+    path(
+        "migrate-industry-to-category",
+        views.migrate_industry_to_category,
+        name="migrate_industry_to_category",
+    ),
     path("set-locations", views.set_locations, name="set_locations"),
     path("set-channel", views.set_channel, name="set_channel"),
     path(

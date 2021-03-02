@@ -18,6 +18,7 @@ var ProductAnnotationApp = new Vue({
         industryMapping: null,
         industryToAdd: '',
         jobFunctionTree: {},
+        migrationIndustryName: ''
     },
     mounted:  function() {
         d3.json('/annotations/get-products-text').then(data=>{
@@ -163,7 +164,24 @@ var ProductAnnotationApp = new Vue({
                 }, function(d){
                     console.error(d)
                 })
-            }
+        },
+        migrateIndustryToCategory: function() {
+            let vm = this
+            d3.json('/annotations/migrate-industry-to-category', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        industry_name: vm.migrationIndustryName,
+                    }),
+                    headers: {
+                        "Content-type": "application/json; charset=UTF-8",
+                        "X-CSRFToken": this.getCookie('csrftoken')
+                    },
+                }).then(function(data) {
+                    // should set back here to confirm done
+                }, function(d){
+                    console.error(d)
+                })
+        }
     },
     watch: {
         filterModel: {

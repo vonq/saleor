@@ -19,6 +19,15 @@
                     <label for="filter-mode">Iterate</label> <input type="radio" id="iterate-mode" class="form-control" v-model="annotationMode" value="iterate">
                 </form>
 
+                 <form class="form-inline" v-on:submit.prevent="migrateIndustryToCategory()">
+                     Global mapping Industry to Category
+                    <label for="migrate-to-category">From</label>
+                        <select class="form-control" id="migrate-to-category" v-model="migrationIndustryName">
+                            <option v-for="industry in industries">[[industry]]</option>
+                        </select>
+                     <input class="form-control" type="submit" >
+                </form>
+
                 <div v-if="annotationMode=='filter'" class="row"><!-- filter controls -->
                     <div class="col-12">
                         <form v-on:submit.prevent="" class="form">
@@ -123,7 +132,6 @@
                 <div>Locations: [[ focusBoard.location.join(', ')  ]]</div>
             </div>
             <div class="col-4">
-
                 <div class="float-right"><a target="_blank" :href="'/admin/products/product/'+focusBoard.id">edit in admin ([[focusBoard.id]])</a></div>
                 <form v-on:submit.prevent="" class="form-inline">
                     <h2>Industries</h2>
@@ -135,8 +143,6 @@
                     </select>
                     <button v-if="industryToAdd" class="btn" @click="addIndustry(industryToAdd)">Add '[[industryToAdd]]'</button>
                     <button v-if="!focusBoard.industries.includes('Generic')" class="btn" @click="addIndustry('Generic')">Add 'Generic'</button>
-
-
                     <div v-if="suggestedIndustries().length">
                         Suggested by SF Industry mapping <abbr v-bind:title="[[ focusBoard.salesforce_industries ]]">values</abbr>
                         <button class="btn btn-sm btn-block" v-for="industry in suggestedIndustries()" v-on:click="addIndustry(industry)">
@@ -161,17 +167,14 @@
                         @click="postCategorisation(focusBoard.id, 'industries', selectedIndustry)"
                         class="btn btn-block btn-outline-primary">Change to <strong>[[selectedIndustry]]</strong>function</button>
             </div>
-
-        </div>
-
-        <div class="row">
-            <div class="col-12">
-                <iframe :src="focusBoard.url" class="w-100" style="height:400px; border:0"></iframe>
-            </div>
         </div>
     </div>
     <script>
-        data = {'jobFunctions': {{ jobFunctions | safe}}, 'industries': {{ industries | safe}}, 'channelTypes': {{ channelTypes | safe}}}
+        data = {
+            'jobFunctions': {{ jobFunctions | safe}},
+            'industries': {{ industries | safe}},
+            'channelTypes': {{ channelTypes | safe}}
+        }
     </script>
     <script src="/static/lodash.min.js"></script>
     <script src="/static/vue.min.js"></script>
