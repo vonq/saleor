@@ -86,15 +86,25 @@ var titleTranslationApp = new Vue({
             return this.titles.filter(t=>this.titleSeen(t)).length
         },
         setFromTranslators: function() {
-             d3.csv('/static/data/merged_job_title_translations.csv').then(data => {
+             d3.csv('/static/data/merged_job_title_translations.csv').then(async data => {
                  for(loaded_title of data) {
                      let prior_title = this.titles.find(t=>t.name_en == loaded_title.name_en)
-                     if(prior_title.name_nl != loaded_title['Dutch Translator']
-                        || prior_title.name_de != loaded_title['German Translator']) {
-                         prior_title.name_nl = loaded_title['Dutch Translator']
-                         prior_title.name_de = loaded_title['German Translator']
-                        this.postUpdate(prior_title)
-                     }
+                     prior_title.name_nl = loaded_title['Dutch Translator']
+                     prior_title.name_de = loaded_title['German Translator']
+                     await d3.json('/annotations/update-title', {
+                        method: 'POST',
+                        body: JSON.stringify(prior_title),
+                        headers: {
+                            "Content-type": "application/json; charset=UTF-8",
+                            "X-CSRFToken": this.getCookie('csrftoken')
+                        },
+                    }).then(function(data) {
+                        prior_title.active = data.active,
+                        prior_title.name_de = data.name_de,
+                        prior_title.name_nl = data.name_nl
+                    }, function(d){
+                        alert('Failed to save: ' + prior_title.name)
+                    })
                  }
              })
         }
