@@ -129,7 +129,9 @@ class ProductSerializer(serializers.Serializer):
         )
 
         for rate in exchange_rates:
-            self._exchange_rates[rate["target_currency__code"]] = float(rate["rate"])
+            self._exchange_rates[rate["target_currency__code"]] = round(
+                float(rate["rate"]), 2
+            )
 
         self._selected_currency = request.query_params.get(
             CommonParameters.CURRENCY.name
