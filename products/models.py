@@ -355,7 +355,8 @@ class Channel(SFSyncable):
 
     salesforce_id = models.CharField(max_length=20, null=True)
     name = models.CharField(max_length=200)
-    url = models.URLField(max_length=300)
+    url = models.URLField(max_length=300, verbose_name="Channel URL")
+    description = models.TextField(default="", null=True, blank=True)
     is_active = models.BooleanField(default=False)
     salesforce_account_id = models.CharField(
         max_length=20, null=True, verbose_name="Salesforce Account"
@@ -876,7 +877,9 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         return False
 
     title = models.CharField(max_length=200, null=True)
-    url = models.URLField(max_length=300, null=True, blank=True)
+    url = models.URLField(
+        max_length=300, null=True, blank=True, verbose_name="Product URL"
+    )
     channel = models.ForeignKey(
         Channel, on_delete=models.SET_NULL, null=True, blank=True
     )
@@ -918,7 +921,7 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         validators=[
             Logo.validate_logo_size,
         ],
-        help_text="Rules: Logo size must be 1MB max. Logo file must be an image.",
+        help_text="Rules: Logo size must be 1MB max. Main supported formats: ['bmp', 'gif', 'png', 'jpg', 'jpeg']",
     )
     logo_square = models.ImageField(
         null=True,
@@ -942,9 +945,13 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         null=True, blank=True, verbose_name="Time to process (hours)"
     )
 
-    unit_price = models.FloatField(null=True, blank=True)
-    rate_card_price = models.FloatField(null=True, blank=True)
-    purchase_price = models.FloatField(null=True, blank=True)
+    unit_price = models.FloatField(null=True, blank=True, verbose_name="Unit Price (€)")
+    rate_card_price = models.FloatField(
+        null=True, blank=True, verbose_name="Rate Card Price (€)"
+    )
+    purchase_price = models.FloatField(
+        null=True, blank=True, verbose_name="Purchase Price (€)"
+    )
     purchase_price_method = models.CharField(
         choices=PurchasePriceMethodType.choices,
         default=PurchasePriceMethodType.NONE,

@@ -71,6 +71,7 @@ class ProductAdmin(ImageCroppingMixin, PermissionBasedFieldsMixin, TranslationAd
     crop_fields = ["cropped_logo"]
     list_display = ["external_product_name", "url", "created", "updated"]
     readonly_fields = [
+        "external_product_name",
         "product_id",
         # "salesforce_industries",
         "logo_url",
@@ -86,6 +87,7 @@ class ProductAdmin(ImageCroppingMixin, PermissionBasedFieldsMixin, TranslationAd
 
     fields = [
         "title",
+        "external_product_name",
         "url",
         "channel",
         "description",
