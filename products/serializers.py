@@ -156,7 +156,7 @@ class ProductSerializer(serializers.Serializer):
     @staticmethod
     def get_logo_url(product):
         if product.logo:
-            return [{"size": "300x200", "url": product.logo_url}]
+            return [{"url": product.logo_url}]
         return None
 
     @staticmethod

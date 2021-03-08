@@ -415,7 +415,6 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
                                 "homepage": "https://www.example.com",
                                 "logo_url": [
                                     {
-                                        "size": "300x200",
                                         "url": "https://example.com/logo.png",
                                     }
                                 ],
@@ -711,7 +710,7 @@ class ChannelsViewSet(viewsets.ModelViewSet):
                                         "cross_postings": [],
                                         "homepage": "http://www.product.com/product/",
                                         "type": "Finance",
-                                        "logo_url": [{"size": "300x200", "url": None}],
+                                        "logo_url": [{"url": None}],
                                         "title": "Product Name",
                                         "channel": {
                                             "name": "Channel Name",
