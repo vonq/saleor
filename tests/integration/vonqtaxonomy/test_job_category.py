@@ -1,3 +1,5 @@
+from urllib.parse import quote_plus
+
 from django.test import tag
 from rest_framework.reverse import reverse
 
@@ -11,12 +13,12 @@ class JobCategoryTaxonomyTestCase(AuthenticatedTestCase):
     def setUp(self) -> None:
         super().setUp()
         vonq_industry = VonqJobCategory(
-            name="Badabum", name_nl="Badabum in Dutch", mapi_id=1
+            name="Badabum Job Function", name_nl="Badabum in Dutch", mapi_id=1
         )
         vonq_industry.save()
 
         self.industry = PkbJobFunction(
-            name="Badabim", vonq_taxonomy_value_id=vonq_industry.id
+            name="Badabim & Job Function", vonq_taxonomy_value_id=vonq_industry.id
         )
         self.industry.save()
 
@@ -25,7 +27,9 @@ class JobCategoryTaxonomyTestCase(AuthenticatedTestCase):
 
     def test_returns_right_value(self):
         response = self.client.get(
-            reverse("vonqtaxonomy:job-category") + "?job_function_name=Badabim"
+            reverse("vonqtaxonomy:job-category")
+            + "?job_function_name="
+            + quote_plus("Badabim & Job Function")
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["name"], "Badabum in Dutch")
@@ -33,7 +37,9 @@ class JobCategoryTaxonomyTestCase(AuthenticatedTestCase):
 
     def test_returns_right_value_case_insensitive(self):
         response = self.client.get(
-            reverse("vonqtaxonomy:job-category") + "?job_function_name=baDaBiM"
+            reverse("vonqtaxonomy:job-category")
+            + "?job_function_name="
+            + quote_plus("baDaBiM & JOB functiON")
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["name"], "Badabum in Dutch")

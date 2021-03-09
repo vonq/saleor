@@ -1,3 +1,5 @@
+from urllib.parse import unquote
+
 from django.db.models import Q
 
 from django.http import JsonResponse
@@ -10,7 +12,7 @@ from api.vonqtaxonomy.models import Industry, JobCategory
 
 @permission_classes((IsMapiOrJmpUser,))
 def get_job_category_mapping(request):
-    text = request.GET.get("job_function_name")
+    text = unquote(request.GET.get("job_function_name"))
     if not text:
         return JsonResponse({"error": "No job function name specified"}, status=400)
 
@@ -33,7 +35,7 @@ def get_job_category_mapping(request):
 
 @permission_classes((IsMapiOrJmpUser,))
 def get_industry_mapping(request):
-    text = request.GET.get("industry_name")
+    text = unquote(request.GET.get("industry_name"))
     if not text:
         return JsonResponse({"error": "No industry name specified"}, status=400)
     try:
