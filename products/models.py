@@ -354,7 +354,21 @@ class Channel(SFSyncable):
         )
 
     salesforce_id = models.CharField(max_length=20, null=True)
-    name = models.CharField(max_length=200)
+    name = models.CharField(
+        max_length=200,
+        help_text="""
+Channel with one product: Stepstone
+<br/>
+Channel with multiple products: Stepstone - Premium Ad
+<br/>
+Channel with multiple countries: Stepstone | Germany
+<br/>
+Channel with multiple countries & products: Stepstone | Germany - Premium Ad
+<br/>
+Channel with extra product features: Stepstone - Premium Ad + Newsletter
+<br/>
+Channel with target group segmentation: Indeed - Sales""",
+    )
     url = models.URLField(max_length=300, verbose_name="Channel URL")
     description = models.TextField(default="", null=True, blank=True)
     is_active = models.BooleanField(default=False)
