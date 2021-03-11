@@ -162,8 +162,63 @@ class JobTitle(models.Model):
 
     objects = AcrossLanguagesQuerySet.as_manager()
 
+    @property
+    def active_and_canonical(self):
+        return self.active and self.canonical
+
+    @property
+    def aliases(self) -> Iterable["JobTitle"]:
+        return JobTitle.objects.filter(alias_of=self.id)
+
+    @property
+    def searchable_keywords(self) -> Iterable["JobTitle"]:
+        keywords = list(
+            itertools.chain(
+                [
+                    self.name_en,
+                    self.name_nl,
+                    self.name_de,
+                ],
+            )
+        )
+        if self.job_function:
+            keywords += [
+                self.job_function.name_en,
+                self.job_function.name_de,
+                self.job_function.name_nl,
+            ] + list(
+                itertools.chain(
+                    self.job_function.get_descendants().values_list(
+                        "name_en", flat=True
+                    ),
+                    self.job_function.get_descendants().values_list(
+                        "name_de", flat=True
+                    ),
+                    self.job_function.get_descendants().values_list(
+                        "name_nl", flat=True
+                    ),
+                )
+            )
+        aliases = self.aliases
+        if aliases:
+            keywords += list(
+                itertools.chain(
+                    aliases.values_list("name_en", flat=True),
+                    aliases.values_list("name_nl", flat=True),
+                    aliases.values_list("name_de", flat=True),
+                )
+            )
+
+        keywords = list(filter(None, set(keywords)))
+        return ", ".join(keywords)
+
     def __str__(self):
         return self.name
+
+    def save(self, **kwargs):
+        if self.canonical and self.alias_of is not None:
+            raise ValidationError("A canonical job title can't also be an alias.")
+        super().save(**kwargs)
 
 
 class Location(CreatedUpdatedModelMixin):

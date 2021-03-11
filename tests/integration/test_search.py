@@ -3,11 +3,10 @@ import time
 
 from algoliasearch_django import algolia_engine
 from django.conf import settings
-from django.core.handlers.wsgi import WSGIRequest
 from django.test import override_settings, tag
 from rest_framework.reverse import reverse
 
-from api.products.search.index import ProductIndex
+from api.products.search.index import JobTitleIndex, ProductIndex
 from api.products.models import (
     Product,
     Industry,
@@ -66,6 +65,10 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         if not algolia_engine.is_registered(Product):
             algolia_engine.register(Product, ProductIndex)
             algolia_engine.reindex_all(Product)
+
+        if not algolia_engine.is_registered(JobTitle):
+            algolia_engine.register(JobTitle, JobTitleIndex)
+            algolia_engine.reindex_all(JobTitle)
 
         pkb_industry = VonqIndustry.objects.create(mapi_id=1, name="Something")
 
@@ -314,13 +317,17 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         )
 
         python_developer = JobTitle(
-            name="Python Developer", job_function_id=software_engineering.id
+            name="Python Developer",
+            job_function_id=software_engineering.id,
+            canonical=True,
         )
         python_developer.save()
         cls.python_developer_id = python_developer.id
 
         java_developer = JobTitle(
-            name="Java Developer", job_function_id=software_engineering.id
+            name="Java Developer",
+            job_function_id=software_engineering.id,
+            canonical=True,
         )
         java_developer.save()
         cls.java_developer_id = java_developer.id
@@ -478,6 +485,9 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         super().tearDownClass()
         algolia_engine.client.delete_index(
             f"{ProductIndex.index_name}_{TEST_INDEX_SUFFIX}"
+        )
+        algolia_engine.client.delete_index(
+            f"{JobTitleIndex.index_name}_{TEST_INDEX_SUFFIX}"
         )
         algolia_engine.reset(settings.ALGOLIA)
 
@@ -1044,6 +1054,11 @@ class AddonSearchTestCase(AuthenticatedTestCase):
     )
     def setUpClass(cls):
         super().setUpClass()
+        algolia_engine.reset(settings.ALGOLIA)
+        if not algolia_engine.is_registered(Product):
+            algolia_engine.register(Product, ProductIndex)
+            algolia_engine.reindex_all(Product)
+
         addon_product_1 = Product.objects.create(
             title="This is an addon",
             salesforce_product_type=Product.SalesforceProductType.VONQ_SERVICES,
@@ -1080,9 +1095,6 @@ class AddonSearchTestCase(AuthenticatedTestCase):
         )
 
         time.sleep(4)
-
-    def setUp(self) -> None:
-        super().setUp()
 
     @classmethod
     @override_settings(

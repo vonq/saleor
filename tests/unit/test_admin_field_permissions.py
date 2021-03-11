@@ -1,3 +1,4 @@
+from algoliasearch_django.decorators import disable_auto_indexing
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.test import TestCase, tag
@@ -12,6 +13,7 @@ User = get_user_model()
 
 
 @tag("unit")
+@disable_auto_indexing
 class AdminTestCase(TestCase):
     def setUp(self) -> None:
 

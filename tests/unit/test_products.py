@@ -1,3 +1,4 @@
+from algoliasearch_django.decorators import disable_auto_indexing
 from django.test import tag
 from api.products.models import Product
 from api.tests import AuthenticatedTestCase
@@ -6,6 +7,7 @@ from unittest.mock import patch
 
 
 @tag("unit")
+@disable_auto_indexing
 class ProductTestCase(AuthenticatedTestCase):
     @patch("storages.backends.s3boto3.S3Boto3Storage._save")
     @patch("api.products.models.Product.generate_cropped_images")

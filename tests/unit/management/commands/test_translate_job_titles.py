@@ -1,5 +1,6 @@
 from unittest.mock import patch, mock_open
 
+from algoliasearch_django.decorators import disable_auto_indexing
 from django.test import TestCase, tag
 from django.core import management
 
@@ -12,6 +13,7 @@ Customer Assistant,Customer Assistant,Kundenassistent,Customer Assistant Better 
 """
 
 
+@disable_auto_indexing
 @tag("unit")
 class CommandTests(TestCase):
     def setUp(self) -> None:

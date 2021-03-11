@@ -1,7 +1,7 @@
 from algoliasearch_django import AlgoliaIndex
 from algoliasearch_django.decorators import register
 
-from api.products.models import Product
+from api.products.models import JobTitle, Product
 
 from django.conf import settings as django_settings
 
@@ -110,3 +110,53 @@ class ProductIndex(AlgoliaIndex):
     }
 
     index_name = f"{django_settings.ENV}_Product"
+
+
+@register(JobTitle)
+class JobTitleIndex(AlgoliaIndex):
+    should_index = "active_and_canonical"
+    fields = ("id", "name", "searchable_keywords", "frequency")
+    settings = {
+        "minWordSizefor1Typo": 5,
+        "minWordSizefor2Typos": 8,
+        "hitsPerPage": 5,
+        "maxValuesPerFacet": 100,
+        "minProximity": 10,
+        "searchableAttributes": ["searchable_keywords"],
+        "numericAttributesToIndex": ["maximum_locations_cardinality", "duration_days"],
+        "attributesToRetrieve": None,
+        "ignorePlurals": ["en", "nl", "de"],
+        "decompoundedAttributes": {
+            "de": ["searchable_keywords"],
+            "nl": ["searchable_keywords"],
+        },
+        "advancedSyntax": True,
+        "unretrievableAttributes": None,
+        "optionalWords": None,
+        "queryLanguages": ["en", "nl", "de"],
+        "attributesForFaceting": ["searchable_keywords"],
+        "attributesToSnippet": None,
+        "attributesToHighlight": None,
+        "paginationLimitedTo": 10,
+        "attributeForDistinct": None,
+        "exactOnSingleWordQuery": "attribute",
+        "ranking": [
+            "typo",
+            "exact",
+            "words",
+            "attribute",
+            "proximity",
+            "filters",
+            "custom",
+        ],
+        "customRanking": ["desc(frequency)"],
+        "separatorsToIndex": "",
+        "removeWordsIfNoResults": "allOptional",
+        "queryType": "prefixLast",
+        "highlightPreTag": "<em>",
+        "highlightPostTag": "</em>",
+        "snippetEllipsisText": "",
+        "alternativesAsExact": ["ignorePlurals", "singleWordSynonym"],
+        "indexLanguages": ["en", "nl", "de"],
+    }
+    index_name = f"{django_settings.ENV}_JobTitle"

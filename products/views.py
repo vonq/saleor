@@ -490,6 +490,7 @@ class AddonsViewSet(ProductsViewSet):
 
 
 class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+    queryset = JobTitle.objects.all()
     permission_classes = [IsAuthenticated]
     http_method_names = ("get",)
     serializer_class = JobTitleSerializer
@@ -509,15 +510,29 @@ class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         text = self.request.query_params.get("text")
         if not text:
             return []
-        # TODO ugly hack until filter_across_languages gets more sophisticated
-        return JobTitle.objects.filter(
-            Q(name_en__icontains=text)
-            | Q(name_nl__icontains=text)
-            | Q(name_de__icontains=text)
-            | Q(alias_of__name_en__icontains=text)
-            | Q(alias_of__name_nl__icontains=text)
-            | Q(alias_of__name_de__icontains=text)
-        ).order_by("-frequency")
+        _, results = query_search_index(
+            JobTitle,
+            query=text,
+            params={
+                "getRankingInfo": True,
+                "analytics": False,
+                "enableABTest": False,
+                "hitsPerPage": 10,
+                "attributesToRetrieve": "id",
+                "attributesToSnippet": "*:20",
+                "snippetEllipsisText": "…",
+                "responseFields": "*",
+                "explain": "*",
+                "page": 0,
+                "maxValuesPerFacet": 5,
+                "facets": ["*"],
+            },
+        )
+        ids = get_results_ids(results)
+
+        return self.queryset.filter(pk__in=ids).order_by(
+            Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(ids)])
+        )
 
     @swagger_auto_schema(
         operation_description="""
