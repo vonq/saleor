@@ -138,6 +138,12 @@ class ProductSerializer(serializers.Serializer):
         )
 
     @staticmethod
+    def get_audience_group(product):
+        if product.is_generic:
+            return "generic"
+        return "niche"
+
+    @staticmethod
     def get_homepage(product):
         if product.url:
             return product.url
@@ -224,6 +230,7 @@ class ProductSerializer(serializers.Serializer):
     channel = LimitedChannelSerializer(read_only=True)
     product_id = serializers.CharField(read_only=True)
     description = serializers.CharField(read_only=True)
+    audience_group = serializers.SerializerMethodField()
 
 
 class ProductSearchSerializer(serializers.Serializer):

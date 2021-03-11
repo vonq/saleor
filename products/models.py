@@ -963,6 +963,9 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
     rate_card_price = models.FloatField(
         null=True, blank=True, verbose_name="Rate Card Price (€)"
     )
+    rate_card_url = models.URLField(
+        max_length=300, verbose_name="Rate Card URL", null=True, blank=True
+    )
     purchase_price = models.FloatField(
         null=True, blank=True, verbose_name="Purchase Price (€)"
     )

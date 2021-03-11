@@ -119,6 +119,7 @@ class ProductAdmin(ImageCroppingMixin, PermissionBasedFieldsMixin, TranslationAd
         "product_id",
         "unit_price",
         "rate_card_price",
+        "rate_card_url",
         "purchase_price",
         "pricing_method",
         "purchase_price_method",

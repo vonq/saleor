@@ -704,6 +704,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
                 "channel",
                 "logo_square_url",
                 "logo_rectangle_url",
+                "audience_group",
             ],
         )
 

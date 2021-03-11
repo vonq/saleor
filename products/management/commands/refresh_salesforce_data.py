@@ -46,6 +46,7 @@ class Command(BaseCommand):
         "salesforce_id": "salesforce_id",
         "salesforce_product_solution": "product_solution",
         "created": "created_date",
+        "rate_card_url": "rate_card_url",
     }
 
     channel_fields_to_update_map = {
