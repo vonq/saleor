@@ -23,7 +23,7 @@ class Command(BaseCommand):
         "url": "channel_url",
         "salesforce_product_category": "product_category",
         "salesforce_logo_url": "product_logo",
-        "salesforce_cross_postings": "cross_postings",
+        "cross_postings": "cross_postings",
         "locations": "relevant_location_names",
         "salesforce_industries": "industries",
         "salesforce_job_categories": "job_categories",

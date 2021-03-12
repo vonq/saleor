@@ -157,7 +157,7 @@ class ProductSerializer(serializers.Serializer):
 
     @staticmethod
     def get_cross_postings(product):
-        return product.salesforce_cross_postings
+        return product.cross_postings
 
     @staticmethod
     def get_logo_url(product):

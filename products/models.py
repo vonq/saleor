@@ -1077,7 +1077,6 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
     salesforce_job_categories = ArrayField(
         base_field=models.CharField(max_length=80, blank=False), default=list
     )
-    salesforce_cross_postings = models.JSONField(null=True, blank=True, default=list)
 
     cross_postings = ArrayField(
         base_field=models.CharField(max_length=255, blank=False),

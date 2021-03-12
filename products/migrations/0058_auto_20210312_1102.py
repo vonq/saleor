@@ -7,7 +7,8 @@ class Migration(migrations.Migration):
     def populate_cross_postings(apps, schema_editor):
         Product = apps.get_model("products", "Product")
         for row in Product.objects.all():
-            salesforce_cross_postings = row.salesforce_cross_postings
+            salesforce_cross_postings = row.salesforce_cross_postings if hasattr(row,
+                                                                                 'salesforce_cross_postings') else None
             if salesforce_cross_postings:
                 row.cross_postings = salesforce_cross_postings
             try:
