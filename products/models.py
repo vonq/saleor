@@ -6,7 +6,7 @@ from typing import List, Iterable
 from storages.backends.s3boto3 import S3Boto3Storage
 from dateutil.tz import UTC
 from django.conf import settings
-from django.contrib.postgres.fields import ArrayField
+from django_better_admin_arrayfield.models.fields import ArrayField
 from django.core.exceptions import FieldError
 from django.db import models
 from django.db.models import QuerySet, Q, Max, Func, F, Case, When
@@ -1078,6 +1078,13 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         base_field=models.CharField(max_length=80, blank=False), default=list
     )
     salesforce_cross_postings = models.JSONField(null=True, blank=True, default=list)
+
+    cross_postings = ArrayField(
+        base_field=models.CharField(max_length=255, blank=False),
+        default=list,
+        null=True,
+        blank=True,
+    )
 
     customer_id = models.CharField(null=True, blank=True, max_length=36)
 

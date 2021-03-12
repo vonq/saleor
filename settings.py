@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "api.currency",
     "easy_thumbnails",
     "image_cropping",
+    "django_better_admin_arrayfield",
 ]
 
 ALGOLIA = {

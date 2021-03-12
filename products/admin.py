@@ -6,6 +6,7 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from django.db.models import Count
+from django_better_admin_arrayfield.admin.mixins import DynamicArrayMixin
 from image_cropping import ImageCroppingMixin
 from modeltranslation.admin import TranslationAdmin
 from mptt.admin import MPTTModelAdmin
@@ -66,7 +67,9 @@ class ProductForm(forms.ModelForm):
 
 
 @admin.register(Product)
-class ProductAdmin(ImageCroppingMixin, PermissionBasedFieldsMixin, TranslationAdmin):
+class ProductAdmin(
+    ImageCroppingMixin, PermissionBasedFieldsMixin, TranslationAdmin, DynamicArrayMixin
+):
     form = ProductForm
     crop_fields = ["cropped_logo"]
     list_display = ["external_product_name", "url", "created", "updated"]
