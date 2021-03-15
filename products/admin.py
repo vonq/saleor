@@ -71,7 +71,6 @@ class ProductAdmin(
     ImageCroppingMixin, PermissionBasedFieldsMixin, TranslationAdmin, DynamicArrayMixin
 ):
     form = ProductForm
-    crop_fields = ["cropped_logo"]
     list_display = ["external_product_name", "url", "created", "updated"]
     readonly_fields = [
         "external_product_name",
@@ -106,12 +105,12 @@ class ProductAdmin(
         "locations",
         "tracking_method",
         "posting_requirements",
-        "logo_url",
-        "logo",
-        "cropping_square",
-        "logo_square_url",
-        "cropping_rectangle",
         "logo_rectangle_url",
+        "logo_rectangle_uncropped",
+        "cropping_rectangle",
+        "logo_square_url",
+        "logo_square_uncropped",
+        "cropping_square",
         "salesforce_product_type",
         "cross_postings",
         "duration_days",

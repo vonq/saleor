@@ -37,8 +37,8 @@ class MapboxLocationsTestCase(AuthenticatedTestCase):
             list(Location.objects.all().values_list("mapbox_placename", flat=True)),
             [
                 "Reading, Reading, England, United Kingdom",
-                "Reading, Pennsylvania, United States",
                 "Reading, England, United Kingdom",
+                "Reading, Pennsylvania, United States",
                 "Reading, Massachusetts, United States",
                 "Readington, New Jersey, United States",
             ],

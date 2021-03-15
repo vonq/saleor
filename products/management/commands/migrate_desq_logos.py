@@ -13,7 +13,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         products = (
-            Product.objects.filter(Q(logo__isnull=True) | Q(logo=""))
+            Product.objects.filter(
+                Q(logo_rectangle_uncropped__isnull=True)
+                | Q(logo_rectangle_uncropped="")
+            )
             .exclude(salesforce_logo_url__isnull=True)
             .all()
         )
@@ -52,5 +55,5 @@ class Command(BaseCommand):
             temp.flush()
             self.stdout.write(f"Uploading logo for product {product.product_id}")
             file_name = product.logo_url.split("/")[-1]
-            product.logo = File(temp, name=file_name)
+            product.logo_rectangle_uncropped = File(temp, name=file_name)
             product.save()

@@ -715,24 +715,25 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
             cropped_img.save(img_io, format="png")
             return File(img_io, name=name)
 
-        def should_crop_logo() -> bool:
+        def should_crop_logo(format="rectangle") -> bool:
             """ Returns whether the cropping process should de executed. Functions are used for lazy evaluation """
 
             def is_newly_uploaded_logo():
-                return not current_obj or self.logo != current_obj.logo
-
-            def selections_changed():
-                return (
-                    self.cropping_square != current_obj.cropping_square
-                    or self.cropping_rectangle != current_obj.cropping_rectangle
+                return not current_obj or getattr(self, "logo_" + format) != getattr(
+                    current_obj, "logo_" + format
                 )
 
-            def selections_exist():
-                return self.cropping_square and self.cropping_rectangle
+            def selections_changed():
+                return getattr(self, "cropping_" + format) != getattr(
+                    current_obj, "cropping_" + format
+                )
+
+            def selection_exists():
+                return getattr(self, "cropping_" + format)
 
             return (
-                self.logo
-                and selections_exist()
+                getattr(self, f"logo_{format}_uncropped")
+                and selection_exists()
                 and (is_newly_uploaded_logo() or selections_changed())
             )
 
@@ -741,18 +742,24 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
             temporary_file_path.seek(0)
             return Image.open(temporary_file_path.name)
 
+        def load_and_crop_logo(format="rectangle"):
+            if should_crop_logo(format=format):
+                if not current_obj or getattr(
+                    self, f"logo_{format}_uncropped"
+                ) != getattr(current_obj, f"logo_{format}_uncropped"):
+                    # Saves to upload the new logo
+                    super(Product, self).save()
+                response = requests.get(getattr(self, f"logo_{format}_uncropped_url"))
+                with tempfile.NamedTemporaryFile() as fp:
+                    img = load_image(fp, response.content)
+                    cropped_image = crop_image(
+                        getattr(self, "cropping_" + format), img, format + ".png"
+                    )
+                    setattr(self, "logo_" + format, cropped_image)
+
         current_obj = Product.objects.filter(id=self.id).first()
-        if should_crop_logo():
-            if not current_obj or self.logo != current_obj.logo:
-                # Saves to upload the new logo
-                super(Product, self).save()
-            response = requests.get(self.logo_url)
-            with tempfile.NamedTemporaryFile() as fp:
-                img = load_image(fp, response.content)
-                self.logo_rectangle = crop_image(
-                    self.cropping_rectangle, img, "rectangle.png"
-                )
-                self.logo_square = crop_image(self.cropping_square, img, "square.png")
+        load_and_crop_logo(format="rectangle")
+        load_and_crop_logo(format="square")
 
     def save(self, *args, **kwargs):
         self.set_product_id()
@@ -917,20 +924,32 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         return self.title
 
     @property
-    def logo_url(self):
-        if self.logo:
-            return f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/{self.logo.name}"
-        return self.salesforce_logo_url
+    def logo_square_uncropped_url(self):
+        if self.logo_square_uncropped:
+            return f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/{self.logo_square_uncropped.name}"
+        return None
 
     @property
     def logo_square_url(self):
-        if self.logo:
+        if self.logo_square:
             return f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/{self.logo_square.name}"
         return None
 
     @property
+    def logo_url(self):
+        if self.logo_rectangle_uncropped_url:
+            return self.logo_rectangle_uncropped_url
+        return self.salesforce_logo_url
+
+    @property
+    def logo_rectangle_uncropped_url(self):
+        if self.logo_rectangle_uncropped:
+            return f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/{self.logo_rectangle_uncropped.name}"
+        return self.salesforce_logo_url
+
+    @property
     def logo_rectangle_url(self):
-        if self.logo:
+        if self.logo_rectangle:
             return f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/{self.logo_rectangle.name}"
         return None
 
@@ -979,10 +998,20 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
     salesforce_logo_url = models.CharField(
         max_length=300, null=True, blank=True, default=None
     )
-    cropping_square = ImageRatioField("logo", "68x68")
-    cropping_rectangle = ImageRatioField("logo", "270x90")
+    cropping_square = ImageRatioField("logo_square_uncropped", "68x68")
+    cropping_rectangle = ImageRatioField("logo_rectangle_uncropped", "270x90")
 
-    logo = models.ImageField(
+    logo_rectangle_uncropped = models.ImageField(
+        null=True,
+        blank=True,
+        upload_to=Logo.logo_path,
+        storage=S3Boto3Storage(),
+        validators=[
+            Logo.validate_logo_size,
+        ],
+        help_text="Rules: Logo size must be 1MB max. Main supported formats: ['bmp', 'gif', 'png', 'jpg', 'jpeg']",
+    )
+    logo_square_uncropped = models.ImageField(
         null=True,
         blank=True,
         upload_to=Logo.logo_path,
