@@ -1144,6 +1144,8 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
 
     order_frequency = models.FloatField(null=True, blank=True, default=0)
 
+    ra_click_frequency = models.FloatField(null=True, blank=True, default=0)
+
     objects = AcrossLanguagesQuerySet.as_manager()
 
     def __str__(self):

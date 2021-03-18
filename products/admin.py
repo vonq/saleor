@@ -2,6 +2,7 @@ from ajax_select.fields import AutoCompleteSelectField
 from django import forms
 from django.conf import settings
 from django.contrib import admin
+from django.contrib.admin.models import LogEntry
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
@@ -26,6 +27,29 @@ from api.products.models import (
 )
 from api.products.models import Profile
 from api.products.signals import channel_updated, product_updated
+
+
+@admin.register(LogEntry)
+class LogEntryAdmin(admin.ModelAdmin):
+    readonly_fields = (
+        "content_type",
+        "user",
+        "action_time",
+        "object_id",
+        "object_repr",
+        "action_flag",
+        "change_message",
+    )
+    list_display = ["object_repr", "user", "content_type", "action_flag", "action_time"]
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, *args, **kwargs):
+        return False
+
+    def has_add_permission(self, request):
+        return False
 
 
 class ProfileInline(admin.StackedInline):

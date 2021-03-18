@@ -81,7 +81,7 @@ class JobTitleSearchTestCase(AuthenticatedTestCase):
         java_developer.save()
 
         # waiting for algolia to re-index
-        time.sleep(4)
+        time.sleep(6)
 
     @classmethod
     @override_settings(
@@ -107,7 +107,7 @@ class JobTitleSearchTestCase(AuthenticatedTestCase):
         self.assertEqual(resp.json()["results"][0]["name"], "Python Developer")
 
     def test_most_frequent_job_title_is_at_the_top(self):
-        resp = self.client.get(reverse("job-titles") + "?text=Devel")
+        resp = self.client.get(reverse("job-titles") + "?text=Developer")
 
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(resp.json()["results"]), 2)
