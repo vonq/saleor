@@ -21,19 +21,34 @@
             </div>
         </div>
         <div class="col-12">
+            <div class="row">
+                <div class="col result-mismatch">Mismatched</div>
+                <div class="col result-missing">Missing</div>
+            </div>
+        </div>
+        <div class="col-12">
             <div v-for="searchCase,i in searchCases">
                     <div class="accordion-body">
                         <div class="row result-header">
-                            <div class='col-1'>#</div>
+{#                            <div class='col-1'>rank</div>#}
                             <div class='col-4'>[[ searchCase.query.jobFunction.name ]]</div>
-                            <div class='col-4'>[[ searchCase.query.location.name ]]</div>
+                            <div class='col-3'>[[ searchCase.query.location.name ]]</div>
                             <div class='col-3'>[[ searchCase.query.industry.name ]]</div>
+                            <div class='col-2'>product</div>
                         </div>
                         <div class="row result-row" v-for="result,resultIndex in searchCase.results">
-                            <div class='col-1'>[[resultIndex]]</div>
                             <div class='col-4' v-bind:class="{'result-mismatch':!result.outcomes.functionMatch}">[[names(result.job_functions)]]</div>
-                            <div class='col-4' v-bind:class="{'result-mismatch':!result.outcomes.locationMatch}">[[names(result.locations)]]</div>
+                            <div class='col-3' v-bind:class="{'result-mismatch':!result.outcomes.locationMatch}">[[names(result.locations)]]</div>
                             <div class='col-3'>[[names(result.industries)]]</div>
+                            <div class='col-1'>[[result.product_id]]</div>
+                        </div>
+                        <div class="row result-row"
+                             v-bind:class="{'result-missing':missingResult(searchCase, result), 'result-present':!missingResult(searchCase, result)}"
+                             v-for="result,resultIndex in searchCase.reference_results">
+                            <div class='col-4' Xv-bind:class="{'result-mismatch':!missingResult(result)}">[[names(result.job_functions)]]</div>
+                            <div class='col-3' Xv-bind:class="{'result-mismatch':!result.outcomes.locationMatch}">[[names(result.locations)]]</div>
+                            <div class='col-3'>[[names(result.industries)]]</div>
+                            <div class='col-2'><a :href="'/admin/products/product/'+result.id+'/change/'">[[result.product_id]]</a></div>
                         </div>
                     </div>
             </div>

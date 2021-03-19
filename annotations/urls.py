@@ -45,6 +45,11 @@ urlpatterns = [
         views.set_posting_requirements,
         name="set_posting_requirements",
     ),
+    path(
+        "reference_product_search",
+        views.reference_product_search,
+        name="reference_product_search",
+    ),
     path("export-options", views.export_options_json, name="export_options_json"),
     path(
         "export-categories-csv",

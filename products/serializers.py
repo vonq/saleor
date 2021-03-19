@@ -323,3 +323,13 @@ class ChannelSerializer(serializers.Serializer):
         child=ProductSerializer(read_only=True), source="product_set.all"
     )
     type = serializers.CharField(read_only=True)
+
+
+class MinimalProductSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    product_id = serializers.CharField(read_only=True)
+    locations = LimitedLocationSerializer(many=True, read_only=True)
+    job_functions = LimitedJobFunctionSerializer(many=True, read_only=True)
+    industries = IndustrySerializer(many=True, read_only=True)
+
+    location_specificity = serializers.IntegerField(read_only=True)

@@ -70,16 +70,14 @@ var SearchRelevancyApp = new Vue({
                 let ancestorOf = function(name_a, name_b, tree) {
                     let ancestor = tree.find(loc=>loc.data.name == name_a)
                     if(!ancestor) {
-                        console.error(name_a)
                         return false
                     }
                     return ancestor.descendants().find(loc => loc.data.name == name_b)
                 }
-
                 return ancestorOf(name_a, name_b, tree) || ancestorOf(name_b, name_a, tree)
             }
 
-            const limit = 50
+            const limit = 100
             const checkSearch = function(jobFunction, industry, location) {
                 vm.baseQuery(`/products/?includeLocationId=${location.id}&jobFunctionId=${jobFunction.id}&industryId=${industry.id}&limit=${limit}`).then(data => {
                     data.results.forEach((result, resultIndex) => {
@@ -88,9 +86,19 @@ var SearchRelevancyApp = new Vue({
                             result.outcomes.functionMatch = result.job_functions.some(f => linealRelation(jobFunction.name, f.name, vm.jobFunctionTree))
                                                             || result.job_functions.length == 0 // until we have global job_function
                     })
-                    vm.searchCases.push({
-                        'query': {'location':location, 'jobFunction': jobFunction, 'industry': industry}, 
-                        'results': data.results
+                    // add reference results
+                    vm.baseQuery(`/annotations/reference_product_search?location_ids=${location.id}&job_function_ids=${jobFunction.id}&industryId=${industry.id}&limit=${limit}`).then(refData => {
+
+                        refData = refData.sort((a,b)=>b.location_specificity - a.location_specificity)
+                        vm.searchCases.push({
+                            'query': {
+                                'location': location,
+                                'jobFunction': jobFunction,
+                                'industry': industry
+                            },
+                            'results': data.results,
+                            'reference_results': refData
+                        })
                     })
                 })
             }
@@ -103,7 +111,10 @@ var SearchRelevancyApp = new Vue({
             })
         },
         names: function(list) {
-            return list.map(e=>e.name ? e.name : e.canonical_name).join(', ')    
+            return list.map(e=>e.name ? e.name : e.canonical_name).join(', ')
         },
+        missingResult: function(searchCase, refResult) {
+            return searchCase && !searchCase.results.some(result=>result.product_id == refResult.product_id)
+        }
     }
 })

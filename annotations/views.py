@@ -10,6 +10,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 
 from django.core.exceptions import ObjectDoesNotExist
+from api.products.serializers import MinimalProductSerializer, ProductSerializer
+from rest_framework.renderers import JSONRenderer
 
 from api.products.models import (
     Industry,
@@ -24,6 +26,8 @@ from api.products.models import (
 
 import json
 import csv
+
+from django.db.models import Q
 
 
 def index(request):
@@ -369,6 +373,130 @@ def autocomplete(request):
     q = request.GET["q"]
     titles = JobTitle.objects.filter(name__icontains=q).filter().order_by("-freq").all()
     return HttpResponse([name["name"] + "\n" for name in titles.values("name")])
+
+
+def find_parent(node_value, relations):
+    for relation in relations:
+        if node_value == relation["child"]:
+            return relation["parent"]  # single parent
+    return None
+
+
+def find_children(node_value, relations):
+    children = []  # multiple children
+    for relation in relations:
+        if node_value == relation["parent"]:
+            children.append(relation["child"])
+    return children
+
+
+def expand_to_branch(nodes, relations):
+    def find_ancestors(node_value):  # returns a list from a value
+        parent = find_parent(node_value, relations)
+        if parent is None:
+            return []
+        else:
+            ancestors = find_ancestors(parent)
+            ancestors.append(parent)
+            return ancestors
+
+    branch = []
+    for node in nodes:
+        branch.append(node)
+        branch.extend(find_ancestors(node))
+        branch.extend(find_descendents(node, relations))
+    return list(set(branch))  # to unique values
+
+
+def find_descendents(node_value, relations):  # returns a list from a value
+    children = find_children(node_value, relations)
+    descendents = []
+    for child in children:
+        descendents.append(child)
+        descendents.extend(find_descendents(child, relations))
+    return descendents
+    # return ancestors and descendants of given items
+
+
+def depth_on_branch(node, relations):
+    parent = find_parent(node, relations)
+    if parent is None:
+        return 0
+    else:
+        return 1 + depth_on_branch(parent, relations)
+
+
+@permission_required("products.view_product")
+def reference_product_search(request):
+    query_job_function_ids = list(
+        map(lambda x: int(x), request.GET["job_function_ids"].split(","))
+    )
+    query_location_ids = list(
+        map(lambda x: int(x), request.GET["location_ids"].split(","))
+    )
+
+    all_approved_locations = Location.objects.filter(approved=True)
+
+    location_relations = [
+        {"parent": loc["mapbox_within__id"], "child": loc["id"]}
+        for loc in list(
+            all_approved_locations.values(
+                "id", "canonical_name_en", "mapbox_within__id"
+            )
+        )
+        if loc["mapbox_within__id"] is not None
+    ]
+    expanded_locations = expand_to_branch(query_location_ids, location_relations)
+
+    all_functions = JobFunction.objects.all()
+    function_relations = [
+        {
+            "parent": loc["parent__id"],
+            "child": loc["id"],
+            "label": loc["name_en"] + " > " + loc["parent__name_en"],
+        }
+        for loc in list(
+            all_functions.values("id", "name_en", "parent__id", "parent__name_en")
+        )
+        if loc["parent__id"] is not None
+    ]
+
+    expanded_functions = expand_to_branch(query_job_function_ids, function_relations)
+
+    products = Product.objects.filter(
+        Q(job_functions__id__in=expanded_functions)
+        & Q(locations__id__in=expanded_locations)
+        & Q(is_active=True)
+    )
+
+    # need to find depth of most specific location matching the search query
+    location_specificity_lookup = {}
+    for product in products.all():
+        max_location_depth = -1
+        for location in product.locations.all():
+            location_depth = depth_on_branch(location.id, location_relations)
+            if location.id in query_location_ids:
+                max_location_depth = max(max_location_depth, location_depth)
+            else:
+                for query_location_id in query_location_ids:
+                    # match up from children
+                    if location.id in find_descendents(
+                        query_location_id, location_relations
+                    ):
+                        # limit depth to query level. Currently producing -1 for International
+                        max_location_depth = max(
+                            max_location_depth,
+                            depth_on_branch(query_location_id, location_relations),
+                        )
+        location_specificity_lookup[product.id] = max_location_depth
+
+    queryset = products.all()
+
+    for product in queryset:
+        product.location_specificity = location_specificity_lookup[product.id]
+
+    serializer = MinimalProductSerializer(queryset, many=True)
+    return JsonResponse(serializer.data, safe=False)
 
 
 @permission_required("products.change_product")

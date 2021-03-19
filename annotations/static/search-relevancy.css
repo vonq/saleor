@@ -38,11 +38,19 @@ h1 {
 }
 
 .result-mismatch {
-    background-color: lightpink;
+    background-color: #f68f9f;
+}
+
+.result-present {
+    display: none;
+}
+
+.result-missing {
+    background-color: #fffb88;
 }
 
 .babbage-quote {
-    font-size: xx-small; 
+    font-size: xx-small;
     float:right;
     color: #878787;
     text-align: end;
