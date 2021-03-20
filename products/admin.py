@@ -152,7 +152,13 @@ class ProductAdmin(
         "created",
         "updated",
     ]
-    filter_horizontal = ("industries", "categories", "job_functions", "locations")
+    filter_horizontal = (
+        "industries",
+        "categories",
+        "job_functions",
+        "locations",
+        "posting_requirements",
+    )
     search_fields = ("channel__name", "title", "description")
     autocomplete_fields = ("channel",)
 
