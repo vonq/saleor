@@ -1,5 +1,6 @@
 import random
 import time
+from unittest import skip
 
 from algoliasearch_django import algolia_engine
 from django.conf import settings
@@ -24,6 +25,8 @@ from api.vonqtaxonomy.models import (
 from api.tests import AuthenticatedTestCase
 from django.contrib.auth import get_user_model
 
+from api.products.geocoder import MAPBOX_INTERNATIONAL_PLACE_TYPE
+
 NOW = int(time.time())
 TEST_INDEX_SUFFIX = f"test_{NOW}"
 
@@ -37,6 +40,26 @@ def how_many_products_with_value(
             if item[name_key] in values:
                 count += 1
     return count
+
+
+def is_generic_product(product: dict) -> bool:
+    return (
+        0 == len(product["industries"])
+        or any((industry["name"] == "Generic" for industry in product["industries"]))
+        and 0 == len(product["job_functions"])
+    )
+
+
+INTERNATIONAL_LOCATION_NAME = "International"
+
+
+def is_international_product(product: dict) -> bool:
+    return 0 == len(product["locations"]) or any(
+        (
+            INTERNATIONAL_LOCATION_NAME == location["canonical_name"]
+            for location in product["locations"]
+        )
+    )
 
 
 @tag("algolia")
@@ -107,12 +130,20 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         cls.construction_board.industries.add(cls.construction_industry)
         cls.construction_board.save()
 
+        low_duration_board = Product(
+            is_active=True,
+            status="Negotiated",
+            title="Low duration board",
+            duration_days=10,
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+        )
+        low_duration_board.save()
+
         cls.engineering_board = Product(
             is_active=True,
             status="Negotiated",
             title="Engineering Board",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
-            duration_days=10,
         )
         cls.engineering_board.save()
         cls.engineering_board.industries.add(cls.engineering_industry)
@@ -235,9 +266,9 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         cls.slough_id = slough.id
 
         global_location = Location(
-            # global has a specific name to allow searching just for it
-            mapbox_id="global",
-            canonical_name="global",
+            # global has a specific mapbox place type to allow searching just for it
+            canonical_name=INTERNATIONAL_LOCATION_NAME,
+            mapbox_place_type=[MAPBOX_INTERNATIONAL_PLACE_TYPE],
             mapbox_context=[],
         )
         global_location.save()
@@ -332,14 +363,24 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         java_developer.save()
         cls.java_developer_id = java_developer.id
 
-        product = Product(
+        product1 = Product(
             is_active=True,
             title="A job board for developers",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
-        product.save()
-        product.job_functions.add(software_engineering)
-        product.save()
+        product1.save()
+        product1.job_functions.add(software_engineering)
+        product1.save()
+
+        product1_but_global = Product(
+            is_active=True,
+            title="A global job board for developers",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+        )
+        product1_but_global.save()
+        product1_but_global.locations.add(global_location)
+        product1_but_global.job_functions.add(software_engineering)
+        product1_but_global.save()
 
         product2 = Product(
             is_active=True,
@@ -383,7 +424,6 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         )
         high_frequency_product.save()
 
-        high_frequency_product.locations.add(cls.brazil)
         high_frequency_product.industries.add(cls.recruitment_industry)
         high_frequency_product.save()
 
@@ -605,9 +645,9 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         self.assertEqual(len(response), 3)
 
         # TODO fix
-        # self.assertEqual(response[0]["product_id"], "medium")
-        # self.assertEqual(response[1]["product_id"], "low")
-        # self.assertEqual(response[2]["product_id"], "high")
+        self.assertEqual(response[0]["product_id"], "medium")
+        self.assertEqual(response[1]["product_id"], "low")
+        self.assertEqual(response[2]["product_id"], "high")
 
     def test_can_fetch_all_industries(self):
         resp = self.client.get(reverse("api.products:industries-list"))
@@ -649,15 +689,16 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         )
 
         self.assertEquals(resp.status_code, 200)
+        correct_locations = {"Reading", "England", "UK", INTERNATIONAL_LOCATION_NAME}
 
-        # must be 4, as we have product, product2, product4, global
-        self.assertEqual(len(resp.json()["results"]), 4)
-
-        # the most specific location is at the top
-        self.assertIn(
-            resp.json()["results"][0]["title"],
-            ["Something in Reading", "Something in Slough and Reading"],
-        )
+        for product in resp.json()["results"]:
+            product_locations = set(
+                [location["canonical_name"] for location in product["locations"]]
+            )
+            # skip comparing products with no locations
+            if not product_locations:
+                continue
+            self.assertTrue(product_locations & correct_locations)
 
         # Search for a product in England
         resp = self.client.get(
@@ -666,9 +707,21 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         )
 
         self.assertEquals(resp.status_code, 200)
-        # they're 5, because now there's a "slough only" product
-        # TODO fix includeLocation only including ascendants
-        # self.assertEqual(len(resp.json()["results"]), 5)
+        correct_locations = {
+            "Reading",
+            "Slough",
+            "England",
+            "UK",
+            INTERNATIONAL_LOCATION_NAME,
+        }
+
+        for product in resp.json()["results"]:
+            product_locations = set(
+                [location["canonical_name"] for location in product["locations"]]
+            )
+            if not product_locations:
+                continue
+            self.assertTrue(product_locations & correct_locations)
 
         # Search for a product in UK
         resp = self.client.get(
@@ -676,15 +729,28 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             + f"?includeLocationId={self.united_kingdom_id}"
         )
         self.assertEquals(resp.status_code, 200)
-        # TODO fix
-        # self.assertEqual(len(resp.json()["results"]), 5)
+
+        for product in resp.json()["results"]:
+            product_locations = set(
+                [location["canonical_name"] for location in product["locations"]]
+            )
+            if not product_locations:
+                continue
+            self.assertTrue(product_locations & correct_locations)
 
         # Search for a product in Slough OR Reading
         resp = self.client.get(
             reverse("api.products:products-list")
             + f"?includeLocationId={self.slough_id},{self.reading_id}"
         )
-        self.assertEqual(len(resp.json()["results"]), 5)
+
+        for product in resp.json()["results"]:
+            product_locations = set(
+                [location["canonical_name"] for location in product["locations"]]
+            )
+            if not product_locations:
+                continue
+            self.assertTrue(product_locations & correct_locations)
 
     def test_return_all_products_with_no_locations(self):
         resp = self.client.get(reverse("api.products:products-list"))
@@ -723,15 +789,14 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             reverse("api.products:products-list")
             + f"?includeLocationId={self.global_id}"
         )
-        self.assertEquals(resp_global.status_code, 200)
-
-        self.assertTrue(len(resp_global.json()["results"]) > 0)
-
-        self.assertEquals(
-            resp_global.json()["results"][-1]["title"], "Something Global"
+        all_products_are_global = all(
+            is_international_product(product)
+            for product in resp_global.json()["results"]
         )
 
-        self.assertEquals(len(resp_global.json()["results"]), 1)
+        self.assertEquals(resp_global.status_code, 200)
+        self.assertTrue(len(resp_global.json()["results"]) > 0)
+        self.assertTrue(all_products_are_global)
 
     def test_products_can_offset_and_limit(self):
         resp_one = self.client.get(reverse("api.products:products-list"))
@@ -780,29 +845,32 @@ class ProductSearchTestCase(AuthenticatedTestCase):
 
         self.assertEquals(resp.status_code, 404)
 
-    def test_can_narrow_the_list_by_filter_by(self):
+    def test_can_search_by_inclusive_location(self):
         resp_one = self.client.get(
             reverse("api.products:products-list")
             + f"?includeLocationId={self.united_kingdom_id}"
         )
-        # five products, including global...
+        # 1 UK product, 20 global products
         # TODO fix
-        # self.assertEqual(resp_one.json()["count"], 5)
+        self.assertEqual(resp_one.json()["count"], 21)
 
-        filtered_response = self.client.get(
-            reverse("api.products:products-list")
-            + f"?includeLocationId={self.united_kingdom_id}&exactLocationId={self.reading_id}"
-        )
-        # still five products, since the product for Reading
-        # is already included in the UK-wide list
-        # TODO fix
-        # self.assertEqual(filtered_response.json()["count"], 5)
-
+    def test_can_search_by_exact_location(self):
         only_filtered_response = self.client.get(
             reverse("api.products:products-list")
             + f"?exactLocationId={self.reading_id}"
         )
         self.assertEqual(only_filtered_response.json()["count"], 2)
+
+    # TODO figure out logic when includeLocationId and exactLocationId are both included
+    @skip
+    def test_can_narrow_included_location_by_exact_location(self):
+        filtered_response = self.client.get(
+            reverse("api.products:products-list")
+            + f"?includeLocationId={self.united_kingdom_id}&exactLocationId={self.reading_id}"
+        )
+        # still 21, since the product for Reading
+        # is already included in the UK-wide list
+        self.assertEqual(filtered_response.json()["count"], 21)
 
         multiple_filtered_response = self.client.get(
             reverse("api.products:products-list")
@@ -813,33 +881,33 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         # we get all the five results we already got for the UK
         # (since reading and slough are already in that result set)
         # TODO fix
-        # self.assertEqual(multiple_filtered_response.json()["count"], 5)
+        self.assertEqual(multiple_filtered_response.json()["count"], 5)
 
         # sorted ranking:
         # the most relevant result satisfies filters for both exactLocation
-        # self.assertEqual(
-        #     multiple_filtered_response.json()["results"][0]["title"],
-        #     "Something in Slough and Reading",
-        # )
-        # # then we get two results where only one of the exactLocation match
-        # self.assertIn(
-        #     multiple_filtered_response.json()["results"][1]["title"],
-        #     ["Something in Slough", "Something in Reading"],
-        # )
-        # self.assertIn(
-        #     multiple_filtered_response.json()["results"][2]["title"],
-        #     ["Something in Reading", "Something in Slough"],
-        # )
-        # # then the results that match for the includeLocation and its context:
-        # # first the most specific
-        # self.assertEqual(
-        #     multiple_filtered_response.json()["results"][3]["title"],
-        #     "Something in the whole of the UK",
-        # )
-        # # ... and then the least specific
-        # self.assertEqual(
-        #     multiple_filtered_response.json()["results"][4]["title"], "Something Global"
-        # )
+        self.assertEqual(
+            multiple_filtered_response.json()["results"][0]["title"],
+            "Something in Slough and Reading",
+        )
+        # then we get two results where only one of the exactLocation match
+        self.assertIn(
+            multiple_filtered_response.json()["results"][1]["title"],
+            ["Something in Slough", "Something in Reading"],
+        )
+        self.assertIn(
+            multiple_filtered_response.json()["results"][2]["title"],
+            ["Something in Reading", "Something in Slough"],
+        )
+        # then the results that match for the includeLocation and its context:
+        # first the most specific
+        self.assertEqual(
+            multiple_filtered_response.json()["results"][3]["title"],
+            "Something in the whole of the UK",
+        )
+        # ... and then the least specific
+        self.assertEqual(
+            multiple_filtered_response.json()["results"][4]["title"], "Something Global"
+        )
 
     def test_product_search_can_filter_by_job_function(self):
         resp = self.client.get(
@@ -855,7 +923,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
                 "job_functions",
                 (self.software_engineering_id, self.web_development.id),
             ),
-            2,
+            3,
         )
 
     def test_product_search_can_filter_by_job_title(self):
@@ -871,7 +939,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
                 "job_functions",
                 (self.software_engineering_id, self.web_development.id),
             ),
-            2,
+            3,
         )
 
     def test_product_search_cannot_filter_by_both_job_title_and_job_function(self):
@@ -893,11 +961,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
                 "job_functions",
                 (self.software_engineering_id, self.web_development.id),
             ),
-            2,
-        )
-        self.assertCountEqual(
-            ["A job board for developers", "A board for web developers"],
-            [res["title"] for res in resp.json()["results"][:2]],
+            3,
         )
 
     def test_it_returns_available_products_in_jmp(self):
@@ -1006,38 +1070,55 @@ class ProductSearchTestCase(AuthenticatedTestCase):
     def test_can_search_for_product_name(self):
         resp = self.client.get(reverse("api.products:products-list") + f"?name=global")
 
-        self.assertEqual(len(resp.json()["results"]), 1)
+        self.assertEqual(len(resp.json()["results"]), 2)
 
     def test_can_search_for_duration_from(self):
         resp = self.client.get(
             reverse("api.products:products-list") + "?durationFrom=20"
         )
-        self.assertEqual(len(resp.json()["results"]), 4)
+        resp_json = resp.json()
 
-        self.assertCountEqual(
-            ["Product available in JMP", "Negotiated product", "Null", "General"],
-            [obj["title"] for obj in resp.json()["results"]],
+        all_products_are_generic = all(
+            [is_generic_product(product) for product in resp_json["results"]]
         )
+        all_products_are_international = all(
+            is_international_product(product) for product in resp_json["results"]
+        )
+
+        self.assertEqual(len(resp_json["results"]), 3)
+        self.assertTrue(all_products_are_generic)
+        self.assertTrue(all_products_are_international)
 
     def test_can_search_for_duration_to(self):
         resp = self.client.get(reverse("api.products:products-list") + "?durationTo=20")
-        self.assertEqual(len(resp.json()["results"]), 2)
+        resp_json = resp.json()
 
-        self.assertCountEqual(
-            ["Engineering Board", "General"],
-            [obj["title"] for obj in resp.json()["results"]],
+        all_products_are_generic = all(
+            [is_generic_product(product) for product in resp_json["results"]]
         )
+        all_products_are_international = all(
+            is_international_product(product) for product in resp_json["results"]
+        )
+
+        self.assertEqual(len(resp_json["results"]), 1)
+        self.assertTrue(all_products_are_generic)
+        self.assertTrue(all_products_are_international)
 
     def test_can_search_for_duration_boundaries(self):
         resp = self.client.get(
             reverse("api.products:products-list") + "?durationTo=90&durationFrom=40"
         )
-        self.assertEqual(len(resp.json()["results"]), 2)
 
-        self.assertCountEqual(
-            ["Negotiated product", "Product available in JMP"],
-            [obj["title"] for obj in resp.json()["results"]],
+        resp_json = resp.json()
+        all_products_are_generic = all(
+            [is_generic_product(product) for product in resp_json["results"]]
         )
+        all_products_are_international = all(
+            is_international_product(product) for product in resp_json["results"]
+        )
+
+        self.assertTrue(all_products_are_generic)
+        self.assertTrue(all_products_are_international)
 
 
 @tag("algolia")

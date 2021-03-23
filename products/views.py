@@ -20,18 +20,16 @@ from api.products.apps import ProductsConfig
 from api.products.docs import CommonParameters
 from api.products.search.filters import (
     FacetFilter,
-    InclusiveJobFunctionChildrenFilter,
-    InclusiveLocationIdFacetFilter,
-    FacetFilterCollection,
     ExactLocationIdFacetFilter,
-    IsGenericFacetFilter,
-    IsInternationalFacetFilter,
-    JobFunctionsFacetFilter,
-    JobTitlesFacetFilter,
-    DescendentJobTitlesFacetFilter,
-    IndustryFacetFilter,
-    PrimarySimilarWebFacetFilter,
-    SecondarySimilarWebFacetFilter,
+    GenericAndInternationalGroup,
+    GenericAndLocationGroup,
+    GroupFacetFilter,
+    FacetFilterCollection,
+    IndustryAndInternationalGroup,
+    IndustryAndLocationGroup,
+    InternationalAndFunctionGroup,
+    JobFunctionAndLocationGroup,
+    JobFunctionIndustryAndLocationGroup,
     IsActiveFacetFilter,
     StatusFacetFilter,
     IsAvailableInJmpFacetFilter,
@@ -181,25 +179,22 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     is_my_own_product_request: bool = False
 
     search_filters: Tuple[Type[FacetFilter]] = (
-        InclusiveLocationIdFacetFilter,
-        ExactLocationIdFacetFilter,
-        JobFunctionsFacetFilter,
-        InclusiveJobFunctionChildrenFilter,
-        JobTitlesFacetFilter,
-        DescendentJobTitlesFacetFilter,
-        IndustryFacetFilter,
-        PrimarySimilarWebFacetFilter,
-        SecondarySimilarWebFacetFilter,
-        DurationMoreThanFacetFilter,
-        DurationLessThanFacetFilter,
         IsActiveFacetFilter,
-        # TODO: Re-enable them after we're done
-        #       with the search relevancy re-haul
-        # IsInternationalFacetFilter,
-        # IsGenericFacetFilter,
         StatusFacetFilter,
         ProductsOnlyFacetFilter,
         ChannelTypeFilter,
+        ExactLocationIdFacetFilter,
+        DurationMoreThanFacetFilter,
+        DurationLessThanFacetFilter,
+    )
+    search_group_filters: Tuple[Type[GroupFacetFilter]] = (
+        JobFunctionIndustryAndLocationGroup,
+        JobFunctionAndLocationGroup,
+        GenericAndLocationGroup,
+        InternationalAndFunctionGroup,
+        IndustryAndLocationGroup,
+        IndustryAndInternationalGroup,
+        GenericAndInternationalGroup,
     )
 
     @property
@@ -252,6 +247,9 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
                 )
         return self.search_filters
 
+    def get_all_group_filters(self):
+        return self.search_group_filters
+
     @staticmethod
     def add_recommendation_filter(queryset):
         is_generic = lambda: Q(job_functions=None, industries=None) | Q(
@@ -284,6 +282,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         filter_collection = FacetFilterCollection.build_filter_collection_from_request(
             request=self.request,
             filters=self.get_all_filters(),
+            group_filters=self.get_all_group_filters(),
             limit=limit,
             offset=offset,
         )
@@ -465,16 +464,11 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
 
 class AddonsViewSet(ProductsViewSet):
     search_filters: Tuple[Type[FacetFilter]] = (
-        InclusiveLocationIdFacetFilter,
-        ExactLocationIdFacetFilter,
-        JobFunctionsFacetFilter,
-        JobTitlesFacetFilter,
-        IndustryFacetFilter,
-        PrimarySimilarWebFacetFilter,
-        SecondarySimilarWebFacetFilter,
         IsActiveFacetFilter,
         StatusFacetFilter,
         AddonsOnlyFacetFilter,
+        DurationMoreThanFacetFilter,
+        DurationLessThanFacetFilter,
     )
     http_method_names = ("get",)
 

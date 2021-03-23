@@ -1,5 +1,5 @@
 # a location match is the most important
-exact_location_score = 100
+exact_location_score = 1000
 inclusive_location_score = exact_location_score // 2
 
 primary_similarweb_location = inclusive_location_score // 2
@@ -17,3 +17,10 @@ is_international_score = inclusive_location_score // 6
 
 # industry match is least important
 industry_score = is_international_score // 2
+
+
+matches_jf_industry_and_location = 1000
+matches_jf_and_location = matches_jf_industry_and_location // 2
+matches_jf_location_and_generic = matches_jf_industry_and_location // 3
+matches_industry_and_location = matches_jf_location_and_generic // 2
+matches_industry_and_international = 2

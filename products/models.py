@@ -16,7 +16,7 @@ from modeltranslation.fields import TranslationFieldDescriptor
 from mptt.models import MPTTModel
 from PIL import Image
 from api.field_permissions.models import FieldPermissionModelMixin
-from api.products.geocoder import Geocoder
+from api.products.geocoder import Geocoder, MAPBOX_INTERNATIONAL_PLACE_TYPE
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
 from api.settings import AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME
@@ -683,9 +683,68 @@ class IndexSearchableProductMixin:
 
     @property
     def is_international(self):
+        # TODO add parent location for all locations in the database
+        # [location.within is None for location in self.locations.all()]
         return self.locations.count() == 0 or any(
-            [location.within is None for location in self.locations.all()]
+            [
+                MAPBOX_INTERNATIONAL_PLACE_TYPE in location.mapbox_place_type
+                for location in self.locations.all()
+            ]
         )
+
+    @property
+    def searchable_jobfunctions_industries_locations_combinations(self):
+        combinations = []
+        for location_id in self.searchable_locations_mapbox_ids:
+            for job_function_id in self.searchable_job_functions_ids:
+                for industry_id in self.searchable_industries_ids:
+                    if location_id and job_function_id and industry_id:
+                        combinations.append(
+                            f"{job_function_id}{industry_id}{location_id}"
+                        )
+        return combinations
+
+    @property
+    def searchable_jobfunctions_locations_combinations(self):
+        combinations = []
+        for job_function_id in self.searchable_job_functions_ids:
+            for location_id in self.searchable_locations_mapbox_ids:
+                if job_function_id and location_id:
+                    combinations.append(f"{job_function_id}{location_id}")
+        return combinations
+
+    @property
+    def searchable_isgeneric_locations_combinations(self):
+        combinations = []
+        for location_id in self.searchable_locations_mapbox_ids:
+            combinations.append(f"{self.is_generic}{location_id}")
+        return combinations
+
+    @property
+    def searchable_isinternational_jobfunctions_combinations(self):
+        combinations = []
+        for job_function_id in self.searchable_job_functions_ids:
+            combinations.append(f"{self.is_international}{job_function_id}")
+        return combinations
+
+    @property
+    def searchable_industries_locations_combinations(self):
+        combinations = []
+        for industry_id in self.searchable_industries_ids:
+            for location_id in self.searchable_locations_mapbox_ids:
+                combinations.append(f"{industry_id}{location_id}")
+        return combinations
+
+    @property
+    def searchable_industries_isinternational_combinations(self):
+        return [
+            f"{industry_id}{self.is_international}"
+            for industry_id in self.searchable_industries_ids
+        ]
+
+    @property
+    def searchable_isgeneric_isinternational(self):
+        return f"{self.is_generic}{self.is_international}"
 
 
 class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin):

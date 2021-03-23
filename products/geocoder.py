@@ -11,6 +11,7 @@ from pycountry_convert.convert_continent_code_to_continent_name import (
 from django.apps import apps
 
 CONTINENTS = list(CONTINENT_CODE_TO_CONTINENT_NAME.values())
+MAPBOX_INTERNATIONAL_PLACE_TYPE = "world"
 
 
 class Geocoder:
