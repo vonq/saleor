@@ -9,6 +9,7 @@ from ..enums import (
     AccountErrorCode,
     AppErrorCode,
     AttributeErrorCode,
+    CampaignErrorCode,
     ChannelErrorCode,
     CheckoutErrorCode,
     CollectionErrorCode,
@@ -110,6 +111,10 @@ class StaffError(AccountError):
         description="List of user IDs which causes the error.",
         required=False,
     )
+
+
+class CampaignError(Error):
+    code = CampaignErrorCode(description="The error code.", required=True)
 
 
 class ChannelError(Error):

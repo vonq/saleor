@@ -3,6 +3,7 @@ import graphene
 from ...account import error_codes as account_error_codes
 from ...app import error_codes as app_error_codes
 from ...attribute import error_codes as attribute_error_codes
+from ...campaign import error_codes as campaign_error_codes
 from ...channel import error_codes as channel_error_codes
 from ...checkout import error_codes as checkout_error_codes
 from ...core import JobStatus
@@ -24,6 +25,7 @@ from ...shipping import error_codes as shipping_error_codes
 from ...warehouse import error_codes as warehouse_error_codes
 from ...webhook import error_codes as webhook_error_codes
 from ...wishlist import error_codes as wishlist_error_codes
+from ..campaign import enums as campaign_enums
 from ..shop import error_codes as shop_error_codes
 from .utils import str_to_enum
 
@@ -88,6 +90,11 @@ WeightUnitsEnum = graphene.Enum(
     "WeightUnitsEnum", [(str_to_enum(unit[0]), unit[0]) for unit in WeightUnits.CHOICES]
 )
 
+CampaignErrorCode = graphene.Enum.from_enum(campaign_error_codes.CampaignErrorCode)
+
+IndustryEnum = graphene.Enum.from_enum(campaign_enums.IndustryEnum)
+SeniorityEnum = graphene.Enum.from_enum(campaign_enums.SeniorityEnum)
+EducationLeavelEnum = graphene.Enum.from_enum(campaign_enums.EducationLeavelEnum)
 
 AccountErrorCode = graphene.Enum.from_enum(account_error_codes.AccountErrorCode)
 AppErrorCode = graphene.Enum.from_enum(app_error_codes.AppErrorCode)
