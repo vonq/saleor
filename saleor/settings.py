@@ -598,4 +598,7 @@ JWT_TTL_REQUEST_EMAIL_CHANGE = timedelta(
     seconds=parse(os.environ.get("JWT_TTL_REQUEST_EMAIL_CHANGE", "1 hour")),
 )
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    "https://dashboard.vonq.beweis.co.uk/",
+    "https://poc.vonq.beweis.co.uk/"
+]
