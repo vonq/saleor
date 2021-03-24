@@ -27,7 +27,7 @@ urlpatterns = [
         "get-products-text", views.get_products_text_json, name="get_products_text_json"
     ),
     path("get-product/<int:id>", views.get_product_json, name="get_product_json"),
-    path("get-boards", views.get_boards, name="get_boards"),
+    path("get-products", views.get_products, name="get_products"),
     path("get-channels", views.get_channel_list_json, name="get_channel_list"),
     path("get-channel/<int:channel_id>", views.get_channel_json, name="get_channel"),
     path("update-title", views.update_title, name="update_title"),

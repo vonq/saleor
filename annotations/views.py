@@ -198,54 +198,56 @@ def set_posting_requirements(request):
 
 
 @permission_required("products.view_product")
-def get_boards(request):
-    boards = Product.objects.filter().all()
+def get_products(request):
+    products = Product.objects.filter().all()
 
     def build_output():
         output = []
-        for board in boards.prefetch_related(
+        for product in products.prefetch_related(
             *["locations", "industries", "job_functions"]
         ).all():
             funs = []
-            for fun in board.job_functions.all():
+            for fun in product.job_functions.all():
                 funs.append(fun.name)
 
-            inds = list(board.industries.values_list("name", flat=True))
+            inds = list(product.industries.values_list("name", flat=True))
 
-            sf_inds = board.salesforce_industries
+            sf_inds = product.salesforce_industries
 
             locs = []
-            for loc in board.locations.all():
+            for loc in product.locations.all():
                 locs.append(
                     {"canonical_name": loc.canonical_name, "mapbox_id": loc.mapbox_id}
                 )
 
             monthly_visits = (
-                board.similarweb_estimated_monthly_visits
-                if (board.similarweb_estimated_monthly_visits is not None)
+                product.similarweb_estimated_monthly_visits
+                if (product.similarweb_estimated_monthly_visits is not None)
                 else []
             )
 
             top_country_shares = (
-                board.similarweb_top_country_shares
-                if not (board.similarweb_top_country_shares is not None)
+                product.similarweb_top_country_shares
+                if not (product.similarweb_top_country_shares is not None)
                 else []
             )
 
             output.append(
                 {
-                    "id": board.id,
-                    "title": board.title,
-                    "description": board.description,
+                    "id": product.id,
+                    "title": product.title,
+                    "status": product.status,
+                    "is_active": product.is_active,
+                    "is_recommended": product.is_recommended,
+                    "description": product.description,
                     "jobfunctions": funs,
                     "industries": inds,
                     "salesforce_industries": sf_inds,
-                    "salesforce_product_category": board.salesforce_product_category,
-                    "url": board.url,
-                    "logo_url": board.logo_url,
-                    "channel_type": "missing",
+                    "salesforce_product_category": product.salesforce_product_category,
+                    "url": product.url,
+                    "logo_url": product.logo_url,
                     "location": locs,
-                    "interests": board.interests,
+                    "interests": product.interests,
                     "similarweb_estimated_monthly_visits": monthly_visits,
                     "similarweb_top_country_shares": top_country_shares,
                 }

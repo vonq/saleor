@@ -10,18 +10,18 @@ var DataQualityApp = new Vue({
         parent_lookup: {},
         branches: {},
         filters: [],
-        showPassingChecks: false,
+        showPassingChecks: true,
         checkLevels: {
             'danger':{
                 'selector': 'level-danger',
                 'ordering': 0,
             },
             'warning':{
-                'color': 'level-warning',
+                'selector': 'level-warning',
                 'ordering': 1
             },
             'info':{
-                'color': 'level-info',
+                'selector': 'level-info',
                 'ordering': 2
             }
         },
@@ -50,7 +50,7 @@ var DataQualityApp = new Vue({
             }
         )
 
-        d3.json('/annotations/get-boards').then(
+        d3.json('/annotations/get-products').then(
             data => {
                 this.products = data.boards
             }
@@ -129,36 +129,46 @@ var DataQualityApp = new Vue({
             let obj = {}
             obj[this.checkLevels[check.level].selector] = true
             return obj
-        }
+        },
+        checkOrder: function(check){
+            return this.checkLevels[check.level].ordering
+        },
+        freqDist: function(array, field) {
+            let fd = {}
+            for(e of array) {
+                fd[e[field]] = fd[e[field]] ? fd[e[field]] + 1 : 1
+            }
+            return fd
+        },
     },
     computed: {
         checks : function() {
             let canonical_names = this.locations.map(l => l.canonical_name)
-            let many_location_threshold = 20
+            let many_location_threshold = 25
 
             return [
                     {
-                        'label': 'Approved Locations with no parent',
+                        'label': 'Approved Locations with no parent Location',
                         'type': 'simple',
-                        'level': 'info',
+                        'level': 'warning',
                         'pass': this.locations.filter(l => l.mapbox_within__canonical_name == null && l.approved).length == 0,
                         'values': this.locations.filter(l => l.mapbox_within__canonical_name == null && l.approved)
                             .map(l=>{ return {
                                 'label': l.canonical_name,
-                                'admin_url': '/admin/products/location/' + l.id + '/change',
+                                'admin_url': '/admin/products/location/' + l.id + '/change/',
                             }
                             })
                     },
                     {
-                        'label': 'Duplicate locations',
+                        'label': 'Duplicate location names',
                         'type': 'simple',
-                        'level': 'danger',
+                        'level': 'warning',
                         'pass': false,
                         'values': this.locations
                             .filter((l, index) => canonical_names.lastIndexOf(l.canonical_name) !== index)
                             .map(l=>{ return {
                                 'label': l.canonical_name,
-                                'admin_url': '/admin/products/location/' + l.id + '/change',
+                                'admin_url': '/admin/products/location/' + l.id + '/change/',
                             }})
                             .sort((a,b) => {
                                 return a.canonical_name < b.canonical_name ? -1: 1
@@ -172,7 +182,7 @@ var DataQualityApp = new Vue({
                         'values': this.products ? this.productsWithRedundantLocations().map(product => {
                             return {
                                 'label': product.title,
-                                'admin_url': '/admin/products/product/' + product.id + '/change',
+                                'admin_url': '/admin/products/product/' + product.id + '/change/',
                                 'values': product.location.map(l => l.canonical_name)
                             }
                         }) : null
@@ -180,43 +190,93 @@ var DataQualityApp = new Vue({
                     {
                         'label': `Products with ${many_location_threshold} location taggings or more`,
                         'type': 'structured',
-                        'level': 'warning',
+                        'level': 'info',
                         'pass': this.products ? !this.products.some(p => p.location.length >= many_location_threshold) : true,
                         'values': this.products ? this.products.filter(p => p.location.length >= many_location_threshold)
                             .map(p=>{ return {
                                 'label':p.title,
-                                'admin_url': '/admin/products/product/' + p.id + '/change',
+                                'admin_url': '/admin/products/product/' + p.id + '/change/',
                                 'values': [p.location.length]
                             }}) : null
                     },
                     {
                         'label': `Locations without a continent in context`,
                         'type': 'structured',
-                        'level': 'info',
+                        'level': 'warning',
                         'pass': true,
                         'values': this.locations ? this.locations.filter(loc =>
                             typeof loc.mapbox_context == 'object' && !loc.mapbox_context.some(con => con.startsWith('continent.')))
                             .map(loc=>{ return {
                                 'label':loc.canonical_name,
-                                'admin_url': '/admin/products/location/' + loc.id + '/change',
+                                'admin_url': '/admin/products/location/' + loc.id + '/change/',
                                 'values': [loc.mapbox_context.join(', ')]
                             }}).sort((a,b) => {
                                 return a.canonical_name < b.canonical_name ? -1: 1
                             }) : null
                     },
                     {
-                        'label': 'Generic Products with no location tagging',
+                        'label': `Active Boards with no location tagging, including 'International'`,
                         'type': 'simple',
-                        'level': 'danger',
+                        'level': 'warning',
                         'pass': this.products ? !this.products.some(p => p.location.length == 0 && p.location
-                                && p.salesforce_product_category == "Generic Product") : true,
+                                && p.salesforce_product_category == "Generic Product" && p.is_active==true) : true,
                         'values': this.products ? this.products
                             .filter(p => p.location.length == 0 && p.location
-                                && p.salesforce_product_category == "Generic Product")
+                                && p.salesforce_product_category == "Generic Product" && p.is_active==true)
                             .map(p=> {
                                     return {
                                         'label': p.title,
-                                        'admin_url': '/admin/products/product/' + p.id + '/change'
+                                        'admin_url': '/admin/products/product/' + p.id + '/change/'
+                                    }
+                                }
+                            ) : null
+                    },
+                    {
+                        'label': `Boards that look like add-ons or services`,
+                        'type': 'simple',
+                        'level': 'warning',
+                        'pass': false,
+                        'values': this.products ? this.products
+                            .filter(p => {
+                                let campaign_re = new RegExp('Campaign');
+
+                                return p.salesforce_product_category == "Generic Product"
+                                && p.title !== null
+                                && (
+                                    p.title.toLowerCase().startsWith('extra customer success') ||
+                                    p.title.toLowerCase().indexOf('add on') != -1 ||
+                                    p.title.toLowerCase().indexOf('costs') != -1 ||
+                                    p.title.toLowerCase().indexOf('campaign') != -1 ||
+                                    p.title.toLowerCase().indexOf('set up') != -1 ||
+                                    p.title.startsWith('Wallet ') ||
+                                    campaign_re.test(p.title.toLowerCase())
+                                )
+                            })
+
+
+                            .map(p=> {
+                                    return {
+                                        'label': p.title,
+                                        'admin_url': '/admin/products/product/' + p.id + '/change/'
+                                    }
+                                }
+                            ) : null
+                    },
+                    {
+                        'label': `Active Products with 'Disabled' or 'Blacklisted' status`,
+                        'type': 'simple',
+                        'level': 'danger',
+                        'pass': false,
+                        'values': this.products ? this.products
+                            .filter(p => {
+                                return true //p.salesforce_product_category == "Generic Product"
+                                && p.is_active
+                                && ( p.status == 'Disabled' || p.status == 'Blacklisted')
+                            })
+                            .map(p=> {
+                                    return {
+                                        'label': p.title,
+                                        'admin_url': '/admin/products/product/' + p.id + '/change/'
                                     }
                                 }
                             ) : null
@@ -230,15 +290,44 @@ var DataQualityApp = new Vue({
                                 .map(l=> {
                                         return {
                                             'label': l.canonical_name,
-                                            'admin_url': '/admin/products/location/' + l.id + '/change'
+                                            'admin_url': '/admin/products/location/' + l.id + '/change/'
+                                        }
+                                    }
+                                ) : null
+                    },
+                    {
+                            'label': 'Boards without a logo',
+                            'type': 'simple',
+                            'level': 'warning',
+                            'pass': this.products ? !this.products.some(p=>p.salesforce_product_category == "Generic Product"
+                                    && p.logo_url==null) : true,
+                            'values': this.products ? this.products.filter(p=>p.salesforce_product_category == "Generic Product"
+                                    && p.logo_url==null)
+                                .map(p=> {
+                                        return {
+                                            'label': p.title,
+                                            'admin_url': '/admin/products/product/' + p.id + '/change/'
                                         }
                                     }
                                 ) : null
                     }
                 ]
+                .sort((a,b)=>this.checkLevels[a.level].ordering - this.checkLevels[b.level].ordering)
             },
         checksPassingCount : function () {
             return this.checks.filter(check => check.pass).length
+        },
+        productStats : function() {
+            if (this.products === null) {
+                return {}
+            }
+            return {
+                'status': {
+                    'disabled': this.products.filter(p => p.status == 'Disabled').length,
+                    'blacklisted': this.products.filter(p => p.status == 'Blacklisted').length,
+                    'active': this.products.filter(p => p.status === null).length
+                }
+            }
         }
     }
 })
