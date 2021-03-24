@@ -3,7 +3,7 @@ from graphene_federation import build_schema
 from .account.schema import AccountMutations, AccountQueries
 from .app.schema import AppMutations, AppQueries
 from .attribute.schema import AttributeMutations, AttributeQueries
-from .campaign.schema import CampaignMutations
+from .campaign.schema import CampaignMutations, CampaignQuery
 from .channel.schema import ChannelMutations, ChannelQueries
 from .checkout.schema import CheckoutMutations, CheckoutQueries
 from .core.schema import CoreMutations, CoreQueries
@@ -29,6 +29,7 @@ class Query(
     AccountQueries,
     AppQueries,
     AttributeQueries,
+    CampaignQuery,
     ChannelQueries,
     CheckoutQueries,
     CoreQueries,

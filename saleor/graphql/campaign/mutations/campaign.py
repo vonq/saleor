@@ -10,6 +10,7 @@ from ...account.enums import CountryCodeEnum
 from ...core.types.common import CampaignError
 from ...core.enums import IndustryEnum, EducationLeavelEnum, SeniorityEnum
 from ...core.mutations import ModelMutation, ModelDeleteMutation
+from ...channel import ChannelContext
 from ...utils.validators import check_for_duplicates
 from ..types import CampaignType
 
@@ -38,13 +39,18 @@ class CampaignCreate(ModelMutation):
     class Meta:
         description = "Create a new campaign."
         model = Campaign
-        exclude = ['user', ]
+        exclude = ["user", ]
         error_type_class = CampaignError
         error_type_field = "campaign_errors"
 
     @classmethod
     def get_type_for_model(cls):
         return CampaignType
+
+    @classmethod
+    def success_response(cls, instance):
+        instance = ChannelContext(node=instance, channel_slug=None)
+        return super().success_response(instance)
 
     @classmethod
     def perform_mutation(cls, _root, info, **data):
