@@ -599,6 +599,6 @@ JWT_TTL_REQUEST_EMAIL_CHANGE = timedelta(
 )
 
 CORS_ALLOWED_ORIGINS = [
-    "https://dashboard.vonq.beweis.co.uk/",
-    "https://poc.vonq.beweis.co.uk/"
+    "https://dashboard.vonq.beweis.co.uk",
+    "https://poc.vonq.beweis.co.uk"
 ]
