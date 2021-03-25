@@ -1188,6 +1188,7 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         default=list,
         null=True,
         blank=True,
+        help_text="This field should only contain URLs (ex. www.facebook.com)",
     )
 
     customer_id = models.CharField(null=True, blank=True, max_length=36)
