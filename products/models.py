@@ -380,6 +380,21 @@ class Location(CreatedUpdatedModelMixin):
             )
         )
 
+    @classmethod
+    def list_child_locations(
+        cls, location_ids: Iterable[str], only_associated_to_products=False
+    ) -> List[str]:
+        # max depth a locataion (continents) can have is 3: country, district, place
+        qs = cls.objects.filter(
+            Q(mapbox_within__in=location_ids)
+            | Q(mapbox_within__mapbox_within__in=location_ids)
+            | Q(mapbox_within__mapbox_within__mapbox_within__in=location_ids)
+        )
+        if only_associated_to_products:
+            qs = qs.filter(products__isnull=False)
+
+        return list(set(qs.values_list("mapbox_id", flat=True)))
+
 
 class Channel(SFSyncable):
     class Type(models.TextChoices):

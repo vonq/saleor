@@ -87,10 +87,14 @@ class InclusiveLocationIdFacetFilter(FacetFilter):
     def __init__(self, *values, **kwargs):
         """
         Here we're passed a list of location ids, for which we want to
-        retrieve their CONTEXT!
+        retrieve the entire family (ascendants and descendants)
         """
         locations_and_contexts = Location.list_context_locations_ids(values)
-        super().__init__(*locations_and_contexts)
+        child_locations = Location.list_child_locations(
+            values, only_associated_to_products=True
+        )
+        all_locations = list(set(locations_and_contexts + child_locations))
+        super().__init__(*all_locations)
 
 
 class ExactLocationIdFacetFilter(FacetFilter):
