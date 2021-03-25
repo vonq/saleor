@@ -83,7 +83,6 @@ def to_enum(enum_cls, *, type_name=None, **options) -> graphene.Enum:
 TaxRateType = graphene.Enum(
     "TaxRateType", [(str_to_enum(rate[0]), rate[0]) for rate in CoreTaxRateType.CHOICES]
 )
-
 JobStatusEnum = to_enum(JobStatus)
 PermissionEnum = graphene.Enum("PermissionEnum", get_permissions_enum_list())
 WeightUnitsEnum = graphene.Enum(
@@ -95,6 +94,9 @@ CampaignErrorCode = graphene.Enum.from_enum(campaign_error_codes.CampaignErrorCo
 IndustryEnum = graphene.Enum.from_enum(campaign_enums.IndustryEnum)
 SeniorityEnum = graphene.Enum.from_enum(campaign_enums.SeniorityEnum)
 EducationLeavelEnum = graphene.Enum.from_enum(campaign_enums.EducationLeavelEnum)
+PeriodEnum = graphene.Enum.from_enum(campaign_enums.PeriodEnum)
+CurrenciesEnum = graphene.Enum.from_enum(campaign_enums.CurrenciesEnum)
+EmploymentTypeEnum = graphene.Enum.from_enum(campaign_enums.EmploymentTypeEnum)
 
 AccountErrorCode = graphene.Enum.from_enum(account_error_codes.AccountErrorCode)
 AppErrorCode = graphene.Enum.from_enum(app_error_codes.AppErrorCode)

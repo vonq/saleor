@@ -1,7 +1,8 @@
 import graphene
 from graphene_federation import key
+from graphene_django.types import DjangoObjectType
 
-from ...campaign.models import Campaign
+from ...campaign.models import Campaign, JobInfo
 from ..core.connection import CountableDjangoObjectType
 from ..core.fields import ChannelContextFilterConnectionField
 from ..account.types import User
@@ -40,3 +41,22 @@ class CampaignType(ChannelContextType, CountableDjangoObjectType):
     @staticmethod
     def resolve_user(root, info, **_kwargs):
         return root.node.user
+
+
+@key(fields="id")
+class JobInfoType(ChannelContextType, DjangoObjectType):
+
+    campaign = ChannelContextFilterConnectionField(
+        CampaignType, description="Represents campaign of job info instance."
+    )
+
+    class Meta:
+        default_resolver = ChannelContextType.resolver_with_context
+        description = "Represents a campaign job information data."
+        interfaces = [graphene.relay.Node, ]
+        model = JobInfo
+
+    @staticmethod
+    def resolve_campaign(root, info, **_kwargs):
+        qs = Campaign.objects.filter(id=root.node.campaign.id) 
+        return ChannelQsContext(qs=qs, channel_slug=root.channel_slug)
