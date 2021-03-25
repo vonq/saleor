@@ -584,7 +584,6 @@ class FacetFilterCollection:
                 "searchable_industries_ids",
                 "searchable_job_functions_ids",
                 "searchable_job_titles_ids",
-                "searchable_locations_context_ids",
                 "searchable_locations_mapbox_ids",
             ],
             "filters": filters,
