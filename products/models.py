@@ -26,6 +26,8 @@ import tempfile
 from io import BytesIO
 from django.core.files import File
 
+SEPARATOR = "|"
+
 
 class CreatedUpdatedModelMixin(models.Model):
     class Meta:
@@ -715,7 +717,7 @@ class IndexSearchableProductMixin:
                 for industry_id in self.searchable_industries_ids:
                     if location_id and job_function_id and industry_id:
                         combinations.append(
-                            f"{job_function_id}{industry_id}{location_id}"
+                            f"{job_function_id}{SEPARATOR}{industry_id}{SEPARATOR}{location_id}"
                         )
         return combinations
 
@@ -725,21 +727,21 @@ class IndexSearchableProductMixin:
         for job_function_id in self.searchable_job_functions_ids:
             for location_id in self.searchable_locations_mapbox_ids:
                 if job_function_id and location_id:
-                    combinations.append(f"{job_function_id}{location_id}")
+                    combinations.append(f"{job_function_id}{SEPARATOR}{location_id}")
         return combinations
 
     @property
     def searchable_isgeneric_locations_combinations(self):
         combinations = []
         for location_id in self.searchable_locations_mapbox_ids:
-            combinations.append(f"{self.is_generic}{location_id}")
+            combinations.append(f"{self.is_generic}{SEPARATOR}{location_id}")
         return combinations
 
     @property
     def searchable_isinternational_jobfunctions_combinations(self):
         combinations = []
         for job_function_id in self.searchable_job_functions_ids:
-            combinations.append(f"{self.is_international}{job_function_id}")
+            combinations.append(f"{self.is_international}{SEPARATOR}{job_function_id}")
         return combinations
 
     @property
@@ -747,19 +749,19 @@ class IndexSearchableProductMixin:
         combinations = []
         for industry_id in self.searchable_industries_ids:
             for location_id in self.searchable_locations_mapbox_ids:
-                combinations.append(f"{industry_id}{location_id}")
+                combinations.append(f"{industry_id}{SEPARATOR}{location_id}")
         return combinations
 
     @property
     def searchable_industries_isinternational_combinations(self):
         return [
-            f"{industry_id}{self.is_international}"
+            f"{industry_id}{SEPARATOR}{self.is_international}"
             for industry_id in self.searchable_industries_ids
         ]
 
     @property
     def searchable_isgeneric_isinternational(self):
-        return f"{self.is_generic}{self.is_international}"
+        return f"{self.is_generic}{SEPARATOR}{self.is_international}"
 
 
 class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin):

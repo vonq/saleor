@@ -6,7 +6,7 @@ from typing import ClassVar, Iterable, List, Optional, Type
 from drf_yasg2 import openapi
 from rest_framework.request import Request
 
-from api.products.models import JobFunction, Location, Channel
+from api.products.models import JobFunction, Location, Channel, SEPARATOR
 from api.products.search.scores import (
     descendant_job_functions_score,
     exact_location_score,
@@ -375,7 +375,7 @@ class GroupFacetFilter:
         )
         self.filters = " OR ".join(
             [
-                f' {self.parameter_name}: "{"".join(map(str, combination))}"<score={self.score}>'
+                f' {self.parameter_name}: "{SEPARATOR.join(map(str, combination))}"<score={self.score}>'
                 for combination in combinations
             ]
         )
