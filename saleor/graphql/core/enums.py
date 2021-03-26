@@ -91,13 +91,6 @@ WeightUnitsEnum = graphene.Enum(
 
 CampaignErrorCode = graphene.Enum.from_enum(campaign_error_codes.CampaignErrorCode)
 
-IndustryEnum = graphene.Enum.from_enum(campaign_enums.IndustryEnum)
-SeniorityEnum = graphene.Enum.from_enum(campaign_enums.SeniorityEnum)
-EducationLeavelEnum = graphene.Enum.from_enum(campaign_enums.EducationLeavelEnum)
-PeriodEnum = graphene.Enum.from_enum(campaign_enums.PeriodEnum)
-CurrenciesEnum = graphene.Enum.from_enum(campaign_enums.CurrenciesEnum)
-EmploymentTypeEnum = graphene.Enum.from_enum(campaign_enums.EmploymentTypeEnum)
-
 AccountErrorCode = graphene.Enum.from_enum(account_error_codes.AccountErrorCode)
 AppErrorCode = graphene.Enum.from_enum(app_error_codes.AppErrorCode)
 AttributeErrorCode = graphene.Enum.from_enum(attribute_error_codes.AttributeErrorCode)

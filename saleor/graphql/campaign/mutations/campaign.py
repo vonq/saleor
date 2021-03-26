@@ -8,10 +8,10 @@ from ....campaign.models import Campaign
 from ....campaign.error_codes import CampaignErrorCode
 from ...account.enums import CountryCodeEnum
 from ...core.types.common import CampaignError
-from ...core.enums import IndustryEnum, EducationLeavelEnum, SeniorityEnum
 from ...core.mutations import ModelMutation, ModelDeleteMutation
 from ...channel import ChannelContext
 from ...utils.validators import check_for_duplicates
+from ..enums import IndustryEnum, EducationLeavelEnum, SeniorityEnum
 from ..types import CampaignType
 
 
@@ -26,9 +26,9 @@ class CampaignCreateInput(graphene.InputObjectType):
     title = graphene.String(required=True, description="Title of job.")
     job_function = graphene.String(required=True, description="Choose from thousands of job functions available in our database.")
     country = CountryCodeEnum(required=True, description="Country.")
-    seniority = SeniorityEnum(required=True, description="Position level.")
-    industry = IndustryEnum(required=True, description="Industry.")
-    education = EducationLeavelEnum(required=True, description="Education level.")
+    seniority = graphene.NonNull(SeniorityEnum, description="Seniority.")
+    industry = graphene.NonNull(IndustryEnum, description="Industry.")
+    education = graphene.NonNull(EducationLeavelEnum, description="Education level.")
 
 
 class CampaignCreate(ModelMutation):
@@ -92,7 +92,7 @@ class CampaignUpdateInput(graphene.InputObjectType):
     title = graphene.String(description="Title of job.")
     job_function = graphene.String(description="Choose from thousands of job functions available in our database.")
     country = CountryCodeEnum(description="Country.")
-    seniority = SeniorityEnum(description="Position level.")
+    seniority = SeniorityEnum(description="Industry.")
     industry = IndustryEnum(description="Industry.")
     education = EducationLeavelEnum(description="Education level.")
 
