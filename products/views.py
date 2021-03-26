@@ -18,18 +18,9 @@ from rest_framework.utils import json
 
 from api.products.apps import ProductsConfig
 from api.products.docs import CommonParameters
-from api.products.search.filters import (
+from api.products.search.filters.facet_filters import (
     FacetFilter,
     ExactLocationIdFacetFilter,
-    GenericAndInternationalGroup,
-    GenericAndLocationGroup,
-    GroupFacetFilter,
-    FacetFilterCollection,
-    IndustryAndInternationalGroup,
-    IndustryAndLocationGroup,
-    InternationalAndFunctionGroup,
-    JobFunctionAndLocationGroup,
-    JobFunctionIndustryAndLocationGroup,
     IsActiveFacetFilter,
     StatusFacetFilter,
     IsAvailableInJmpFacetFilter,
@@ -40,6 +31,17 @@ from api.products.search.filters import (
     ChannelTypeFilter,
     CustomerIdFilter,
     IsMyOwnProductFilter,
+)
+from api.products.search.filter_collection import FacetFilterCollection
+from api.products.search.filters.facet_filters_groups import (
+    GenericAndInternationalGroup,
+    GenericAndLocationGroup,
+    FacetFiltersGroup,
+    IndustryAndInternationalGroup,
+    IndustryAndLocationGroup,
+    InternationalAndFunctionGroup,
+    JobFunctionAndLocationGroup,
+    JobFunctionIndustryAndLocationGroup,
 )
 from api.products.geocoder import Geocoder
 from api.products.models import (
@@ -187,7 +189,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         DurationMoreThanFacetFilter,
         DurationLessThanFacetFilter,
     )
-    search_group_filters: Tuple[Type[GroupFacetFilter]] = (
+    search_group_filters: Tuple[Type[FacetFiltersGroup]] = (
         JobFunctionIndustryAndLocationGroup,
         JobFunctionAndLocationGroup,
         GenericAndLocationGroup,
