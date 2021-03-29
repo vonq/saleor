@@ -11,7 +11,6 @@ from ..enums import (
     EmploymentTypeEnum
 )
 from ...core.mutations import ModelMutation, ModelDeleteMutation
-from ...channel import ChannelContext
 
 
 class JobInfoCreateInput(graphene.InputObjectType):
@@ -43,11 +42,6 @@ class JobInfoCreate(ModelMutation):
         model = JobInfo
         error_type_class = CampaignError
         error_type_field = "campaign_errors"
-
-    @classmethod
-    def success_response(cls, instance):
-        instance = ChannelContext(node=instance, channel_slug=None)
-        return super().success_response(instance)
 
 
 class JobInfoUpdateInput(graphene.InputObjectType):

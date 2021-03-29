@@ -1,7 +1,7 @@
 import django_filters
 
 from ...campaign.models import Campaign, JobInfo
-from ..core.types import ChannelFilterInputObjectType
+from ..core.types import FilterInputObjectType
 from ..utils.filters import filter_by_query_param
 
 
@@ -19,7 +19,7 @@ class CampaignFilter(django_filters.FilterSet):
         fields = ["title", ]
 
 
-class CampaignFilterInput(ChannelFilterInputObjectType):
+class CampaignFilterInput(FilterInputObjectType):
     class Meta:
         filterset_class = CampaignFilter
 
@@ -38,6 +38,6 @@ class JobInfoFilter(django_filters.FilterSet):
         fields = ["title", ]
 
 
-class JobInfoFilterInput(ChannelFilterInputObjectType):
+class JobInfoFilterInput(FilterInputObjectType):
     class Meta:
         filterset_class = JobInfoFilter

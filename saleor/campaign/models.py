@@ -9,7 +9,6 @@ from ..checkout.models import get_default_country
 
 class Campaign(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='campaigns', on_delete=models.SET_NULL, null=True)
-    products = models.ManyToManyField('product.Product', related_name='campaign', blank=True)
     title = models.CharField(max_length=250, blank=True)
     country = CountryField(default=get_default_country)
     industry = models.CharField(max_length=100)

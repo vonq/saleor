@@ -22,6 +22,7 @@ from ...product.templatetags.product_images import get_product_image_thumbnail
 from ...warehouse import models as warehouse_models
 from ..account.types import User
 from ..account.utils import requestor_has_access
+from ..campaign.types import CampaignType
 from ..channel import ChannelContext
 from ..channel.dataloaders import ChannelByIdLoader, ChannelByOrderLineIdLoader
 from ..core.connection import CountableDjangoObjectType
@@ -495,6 +496,7 @@ class OrderLine(CountableDjangoObjectType):
 
 
 class Order(CountableDjangoObjectType):
+    campaign = graphene.Field(CampaignType, description="Represents campaign data.")
     fulfillments = graphene.List(
         Fulfillment, required=True, description="List of shipments for the order."
     )
@@ -626,6 +628,10 @@ class Order(CountableDjangoObjectType):
             "weight",
             "redirect_url",
         ]
+
+    @staticmethod
+    def resolve_campaign(root: models.Order, info):
+        return root.campaign
 
     @staticmethod
     def resolve_discounts(root: models.Order, info):

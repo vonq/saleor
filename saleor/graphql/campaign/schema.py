@@ -1,6 +1,5 @@
 import graphene
-from ..core.fields import ChannelContextFilterConnectionField
-from ..channel import ChannelContext
+from ..core.fields import FilterInputConnectionField
 from .mutations.campaign import (
     CampaignCreate,
     CampaignUpdate,
@@ -18,7 +17,7 @@ from .filters import CampaignFilterInput, JobInfoFilterInput
 
 
 class CampaignQuery(graphene.ObjectType):
-    campaigns = ChannelContextFilterConnectionField(
+    campaigns = FilterInputConnectionField(
         CampaignType,
         description="List of campaigns.",
         sort_by=CampaignSortInput(description="Sort campaigns."),
@@ -31,13 +30,13 @@ class CampaignQuery(graphene.ObjectType):
             graphene.ID, description="ID of the campaign.", required=True
         ),
     )
-    job_infos = ChannelContextFilterConnectionField(
+    job_infos = FilterInputConnectionField(
         JobInfoType,
         description="List of job information instances.",
         sort_by=JobInfoSortInput(description="Sort job information."),
         filter=JobInfoFilterInput(description="Filter job information")
     )
-    job_info = ChannelContextFilterConnectionField(
+    job_info = FilterInputConnectionField(
         JobInfoType,
         description="Look up a campaign by ID.",
         id=graphene.Argument(
@@ -45,19 +44,17 @@ class CampaignQuery(graphene.ObjectType):
         ),
     )
 
-    def resolve_campaigns(self, info, query=None, channel=None, **data):
-        return resolve_campaings(info, query, channel_slug=None, **data)
+    def resolve_campaigns(self, info, query=None, **data):
+        return resolve_campaings(info, query, **data)
 
     def resolve_campaign(self, info, id, channel=None):
-        campaign = graphene.Node.get_node_from_global_id(info, id, CampaignType)
-        return ChannelContext(node=campaign, channel_slug=channel) if campaign else None
+        return graphene.Node.get_node_from_global_id(info, id, CampaignType)
 
-    def resolve_job_infos(self, info, query=None, channel=None, **data):
-        return resolve_job_infos(info, query, channel_slug=None, **data)
+    def resolve_job_infos(self, info, query=None, **data):
+        return resolve_job_infos(info, query, **data)
 
     def resolve_job_info(self, info, id, channel=None):
-        job_info = graphene.Node.get_node_from_global_id(info, id, JobInfoType)
-        return ChannelContext(node=job_info, channel_slug=channel) if job_info else None
+        return graphene.Node.get_node_from_global_id(info, id, JobInfoType)
 
 
 class CampaignMutations(graphene.ObjectType):
