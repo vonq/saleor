@@ -482,13 +482,20 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         )
         not_my_own_product.save()
 
+        job_function_for_recommendations = JobFunction(
+            name="Job function for recommendations",
+            vonq_taxonomy_value_id=pkb_job_category.id,
+        )
+        job_function_for_recommendations.save()
+        cls.job_function_for_recommendations_id = job_function_for_recommendations.id
+
         for channel in [
             jobboard_channel,
             community_channel,
             publication_channel,
             social_channel,
         ]:
-            for i in range(0, 3):
+            for i in range(0, 6):
                 recommended_product = Product(
                     title=f"recommendation {channel.type} {i}",
                     is_active=True,
@@ -496,9 +503,9 @@ class ProductSearchTestCase(AuthenticatedTestCase):
                     order_frequency=0.1 * i,
                     salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
                 )
-
                 recommended_product.save()
                 recommended_product.channel = channel
+                recommended_product.job_functions.add(job_function_for_recommendations)
                 recommended_product.save()
 
         # it takes up to four seconds to actually reindex stuff
@@ -575,31 +582,35 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         self.assertFalse("my_own_product" in product_titles)
 
     def test_can_recommend_products(self):
-        def get_number_of_products_for_channel_type(response, channel_type):
-            return len([r for r in response if r["channel"]["type"] == channel_type])
+        def get_number_of_products_for_channel_type(products, channel_type):
+            return len(
+                [
+                    r
+                    for r in products
+                    if r.get("channel") and r["channel"].get("type") == channel_type
+                ]
+            )
+
+        def get_number_of_generic_products(products):
+            return len([p for p in products if is_generic_product(p)])
+
+        def get_number_of_niche_products(products):
+            return len([p for p in products if not is_generic_product(p)])
 
         resp = self.client.get(
             reverse("api.products:products-list")
-            + f"?name=recommendation&recommended=true"
+            + f"?jobFunctionId={self.job_function_for_recommendations_id}&recommended=true"
         )
+
+        self.assertEqual(resp.json()["count"], 6)
+
         response = resp.json()["results"]
 
-        self.assertEqual(
-            get_number_of_products_for_channel_type(response, Channel.Type.COMMUNITY), 2
-        )
         self.assertEqual(
             get_number_of_products_for_channel_type(
                 response, Channel.Type.SOCIAL_MEDIA
             ),
             2,
-        )
-        self.assertEqual(
-            get_number_of_products_for_channel_type(response, Channel.Type.PUBLICATION),
-            2,
-        )
-        # Only one because no products where created with job function (so none were categorized as niche)
-        self.assertEqual(
-            get_number_of_products_for_channel_type(response, Channel.Type.JOB_BOARD), 1
         )
 
     def test_all_products_are_sorted_by_order_frequency(self):
@@ -850,9 +861,9 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             reverse("api.products:products-list")
             + f"?includeLocationId={self.united_kingdom_id}"
         )
-        # 1 UK product, 20 global products
+        # 1 UK product, 9 global products
         # TODO fix
-        self.assertEqual(resp_one.json()["count"], 21)
+        self.assertEqual(resp_one.json()["count"], 9)
 
     def test_can_search_by_exact_location(self):
         only_filtered_response = self.client.get(

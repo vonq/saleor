@@ -258,19 +258,18 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             # Generic industry
             industries__in=[29]
         )
-        jobboard_generic_filter = queryset.filter(
-            channel__type=Channel.Type.JOB_BOARD
-        ).filter(is_generic())[:1]
-        jobboard_niche_filter = queryset.filter(
-            channel__type=Channel.Type.JOB_BOARD
-        ).exclude(is_generic())[:1]
-        publication_filter = queryset.filter(channel__type=Channel.Type.PUBLICATION)[:2]
-        community_filter = queryset.filter(channel__type=Channel.Type.COMMUNITY)[:2]
-        social_filter = queryset.filter(channel__type=Channel.Type.SOCIAL_MEDIA)[:2]
-        return publication_filter.union(
-            jobboard_generic_filter,
-            jobboard_niche_filter,
-            community_filter,
+        is_not_social = lambda: ~Q(channel__type=Channel.Type.SOCIAL_MEDIA)
+
+        generic_filter = (
+            queryset.filter().filter(is_generic()).filter(is_not_social())[:2]
+        )
+        niche_filter = queryset.filter(is_not_social()).exclude(is_generic())[:2]
+        social_filter = queryset.exclude(is_not_social()).order_by("-order_frequency")[
+            :2
+        ]
+
+        return niche_filter.union(
+            generic_filter,
             social_filter,
         )
 
