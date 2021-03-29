@@ -11,6 +11,7 @@ from prices import TaxedMoney
 from ..account.error_codes import AccountErrorCode
 from ..account.models import User
 from ..account.utils import store_user_address
+from ..campaign.models import Campaign
 from ..checkout import calculations
 from ..checkout.error_codes import CheckoutErrorCode
 from ..core.exceptions import InsufficientStock
@@ -324,7 +325,7 @@ def _prepare_order_data(
 
 @transaction.atomic
 def _create_order(
-    *, checkout_info: "CheckoutInfo", order_data: dict, user: User, site_settings=None
+    *, campaign: "Campaign", checkout_info: "CheckoutInfo", order_data: dict, user: User, site_settings=None
 ) -> Order:
     """Create an order from the checkout.
 
@@ -342,6 +343,8 @@ def _create_order(
     checkout = checkout_info.checkout
     order = Order.objects.filter(checkout_token=checkout.token).first()
     if order is not None:
+        order.campaign = campaign
+        order.save()
         return order
 
     total_price_left = order_data.pop("total_price_left")
@@ -357,6 +360,7 @@ def _create_order(
     )
     order = Order.objects.create(
         **order_data,
+        campaign=campaign,
         checkout_token=checkout.token,
         status=status,
         channel=checkout_info.channel,
@@ -530,6 +534,7 @@ def _process_payment(
 
 
 def complete_checkout(
+    campaign: "Campaign",
     manager: "PluginsManager",
     checkout_info: "CheckoutInfo",
     lines: Iterable["CheckoutLineInfo"],
@@ -583,6 +588,7 @@ def complete_checkout(
     if not action_required:
         try:
             order = _create_order(
+                campaign=campaign,
                 checkout_info=checkout_info,
                 order_data=order_data,
                 user=user,  # type: ignore

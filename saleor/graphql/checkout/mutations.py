@@ -41,6 +41,7 @@ from ..account.types import AddressInput
 from ..core.mutations import BaseMutation, ModelMutation
 from ..core.types.common import CheckoutError
 from ..core.utils import from_global_id_strict_type
+from ..campaign.types import CampaignType
 from ..order.types import Order
 from ..product.types import ProductVariant
 from ..shipping.types import ShippingMethod
@@ -807,6 +808,7 @@ class CheckoutComplete(BaseMutation):
 
     class Arguments:
         checkout_id = graphene.ID(description="Checkout ID.", required=True)
+        campaign_id = graphene.ID(description="Campaign ID", required=True)
         store_source = graphene.Boolean(
             default_value=False,
             description=(
@@ -840,7 +842,7 @@ class CheckoutComplete(BaseMutation):
         error_type_field = "checkout_errors"
 
     @classmethod
-    def perform_mutation(cls, _root, info, checkout_id, store_source, **data):
+    def perform_mutation(cls, _root, info, checkout_id, campaign_id, store_source, **data):
         tracking_code = analytics.get_client_id(info.context)
         with transaction_with_commit_on_errors():
             try:
@@ -850,11 +852,16 @@ class CheckoutComplete(BaseMutation):
                     only_type=Checkout,
                     field="checkout_id",
                 )
+                campaign = cls.get_node_or_error(
+                    info,
+                    campaign_id,
+                    only_type=CampaignType,
+                    field="campaign_id",
+                )
             except ValidationError as e:
                 checkout_token = from_global_id_strict_type(
                     checkout_id, Checkout, field="checkout_id"
                 )
-
                 order = order_models.Order.objects.get_by_checkout_token(checkout_token)
                 if order:
                     if not order.channel.is_active:
@@ -877,6 +884,7 @@ class CheckoutComplete(BaseMutation):
             lines = fetch_checkout_lines(checkout)
             checkout_info = fetch_checkout_info(checkout, lines, info.context.discounts)
             order, action_required, action_data = complete_checkout(
+                campaign=campaign,
                 manager=info.context.plugins,
                 checkout_info=checkout_info,
                 lines=lines,
