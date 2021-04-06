@@ -6,6 +6,7 @@ from django.contrib.admin.models import LogEntry
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db.models import Count
 from django_better_admin_arrayfield.admin.mixins import DynamicArrayMixin
 from image_cropping import ImageCroppingMixin
@@ -81,6 +82,14 @@ class ProductForm(forms.ModelForm):
         model = Product
         fields = "__all__"
 
+    @staticmethod
+    def is_valid_cropping_area(cropping_string):
+        cropping = cropping_string.split(",")
+        cropping = tuple([int(t) for t in cropping])
+        x_point = (cropping[0], cropping[1])
+        y_point = (cropping[2], cropping[3])
+        return x_point != y_point
+
     def _save_m2m(self):
         super()._save_m2m()
         product_updated.send(sender=self.instance.__class__, instance=self.instance)
@@ -88,6 +97,24 @@ class ProductForm(forms.ModelForm):
     def save(self, commit=True):
         self.instance.salesforce_sync_status = Product.SyncStatusChoices.PENDING
         return super().save(commit)
+
+    def clean_cropping_rectangle(self):
+        if not self.cleaned_data["cropping_rectangle"]:
+            return self.cleaned_data["cropping_rectangle"]
+
+        crop_rectangle = self.cleaned_data["cropping_rectangle"]
+        if not self.is_valid_cropping_area(crop_rectangle):
+            raise ValidationError("Invalid cropping area, must be non-null")
+        return crop_rectangle
+
+    def clean_cropping_square(self):
+        if not self.cleaned_data["cropping_square"]:
+            return self.cleaned_data["cropping_square"]
+
+        crop_square = self.cleaned_data["cropping_square"]
+        if not self.is_valid_cropping_area(crop_square):
+            raise ValidationError("Invalid cropping area, must be non-null")
+        return crop_square
 
 
 @admin.register(Product)
