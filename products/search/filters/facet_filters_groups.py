@@ -171,7 +171,10 @@ class GenericAndInternationalGroup(FacetFiltersGroup):
 
     @classmethod
     def can_be_included(cls, user_request: Request) -> bool:
-        qp_keys = user_request.query_params.keys()
+        qp_keys = set(
+            {ele for ele in user_request.query_params if user_request.query_params[ele]}
+        )
+        qp_keys -= {"offset", "limit", "recommended", "format"}
 
         is_search_by_name = len(qp_keys) == 1 and list(qp_keys)[0] == "name"
         is_search_by_exact_location = (
