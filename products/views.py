@@ -228,7 +228,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         if self.is_recommendation:
             queryset = self.add_recommendation_filter(queryset)
 
-        return queryset.order_by("-order_frequency")
+        return queryset.order_by("-order_frequency", "id")
 
     def get_all_filters(self):
         if self.request.user.profile.type == Profile.Type.MAPI:
