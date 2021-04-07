@@ -81,7 +81,7 @@ class JobTitleSearchTestCase(AuthenticatedTestCase):
         java_developer.save()
 
         # waiting for algolia to re-index
-        time.sleep(6)
+        algolia_engine.reindex_all(JobTitle)
 
     @classmethod
     @override_settings(

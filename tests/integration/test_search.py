@@ -508,8 +508,9 @@ class ProductSearchTestCase(AuthenticatedTestCase):
                 recommended_product.job_functions.add(job_function_for_recommendations)
                 recommended_product.save()
 
-        # it takes up to four seconds to actually reindex stuff
-        time.sleep(4)
+        # wait for algolia to complete the index
+        algolia_engine.reindex_all(Product)
+        algolia_engine.reindex_all(JobTitle)
 
     def setUp(self) -> None:
         super().setUp()

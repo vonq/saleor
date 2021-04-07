@@ -139,8 +139,8 @@ class TrafficLocationsDataTestCase(AuthenticatedTestCase):
         cls.amsterdam_board.locations.set([cls.amsterdam_location])
         cls.amsterdam_board.save()
 
-        # it takes up to four seconds to actually reindex stuff
-        time.sleep(4)
+        # wait for algolia to complete the index
+        algolia_engine.reindex_all(Product)
 
     def test_get_country_shortcode_works(self):
         geocoder_response = Geocoder.geocode("reading uk")
