@@ -1,10 +1,10 @@
 import graphene
-from graphene_federation import key
 from graphene_django.types import DjangoObjectType
+from graphene_federation import key
 
 from ...campaign.models import Campaign, JobInfo
-from ..core.connection import CountableDjangoObjectType
 from ..account.types import User
+from ..core.connection import CountableDjangoObjectType
 
 
 @key(fields="id")
@@ -14,7 +14,9 @@ class CampaignType(CountableDjangoObjectType):
 
     class Meta:
         description = "Represents a campaign data."
-        interfaces = [graphene.relay.Node, ]
+        interfaces = [
+            graphene.relay.Node,
+        ]
         model = Campaign
         only_fields = [
             "title",
@@ -39,7 +41,9 @@ class JobInfoType(DjangoObjectType):
 
     class Meta:
         description = "Represents a campaign job information data."
-        interfaces = [graphene.relay.Node, ]
+        interfaces = [
+            graphene.relay.Node,
+        ]
         model = JobInfo
 
     @staticmethod

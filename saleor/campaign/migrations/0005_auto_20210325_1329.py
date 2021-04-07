@@ -10,36 +10,68 @@ import saleor.account.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('campaign', '0004_auto_20210324_1455'),
+        ("campaign", "0004_auto_20210324_1455"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='campaign',
-            name='created',
-            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
+            model_name="campaign",
+            name="created",
+            field=models.DateTimeField(
+                auto_now_add=True, default=django.utils.timezone.now
+            ),
             preserve_default=False,
         ),
         migrations.CreateModel(
-            name='JobInfo',
+            name="JobInfo",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('title', models.CharField(blank=True, max_length=250)),
-                ('industry', models.CharField(max_length=50)),
-                ('job_description', models.CharField(blank=True, max_length=250)),
-                ('link_to_job_detail_page', models.URLField(blank=True)),
-                ('link_to_job_app_page', models.URLField(blank=True)),
-                ('exp_year', models.PositiveSmallIntegerField(default=0)),
-                ('education', models.CharField(max_length=40)),
-                ('employment_type', models.CharField(max_length=40)),
-                ('hours_per_week', django.contrib.postgres.fields.ArrayField(base_field=models.PositiveIntegerField(default=0), size=2)),
-                ('salary_interval', django.contrib.postgres.fields.ArrayField(base_field=models.PositiveIntegerField(default=0), size=2)),
-                ('currency', models.CharField(max_length=3)),
-                ('period', models.CharField(blank=True, max_length=30)),
-                ('contact_info_name', models.CharField(blank=True, max_length=250)),
-                ('contact_phone', saleor.account.models.PossiblePhoneNumberField(blank=True, max_length=128, region=None)),
-                ('campaign', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='job_info', to='campaign.campaign')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("title", models.CharField(blank=True, max_length=250)),
+                ("industry", models.CharField(max_length=50)),
+                ("job_description", models.CharField(blank=True, max_length=250)),
+                ("link_to_job_detail_page", models.URLField(blank=True)),
+                ("link_to_job_app_page", models.URLField(blank=True)),
+                ("exp_year", models.PositiveSmallIntegerField(default=0)),
+                ("education", models.CharField(max_length=40)),
+                ("employment_type", models.CharField(max_length=40)),
+                (
+                    "hours_per_week",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.PositiveIntegerField(default=0), size=2
+                    ),
+                ),
+                (
+                    "salary_interval",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.PositiveIntegerField(default=0), size=2
+                    ),
+                ),
+                ("currency", models.CharField(max_length=3)),
+                ("period", models.CharField(blank=True, max_length=30)),
+                ("contact_info_name", models.CharField(blank=True, max_length=250)),
+                (
+                    "contact_phone",
+                    saleor.account.models.PossiblePhoneNumberField(
+                        blank=True, max_length=128, region=None
+                    ),
+                ),
+                (
+                    "campaign",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="job_info",
+                        to="campaign.campaign",
+                    ),
+                ),
             ],
         ),
     ]

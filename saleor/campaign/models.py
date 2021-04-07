@@ -1,6 +1,6 @@
 from django.conf import settings
-from django.db import models
 from django.contrib.postgres.fields import ArrayField
+from django.db import models
 from django_countries.fields import CountryField
 
 from ..account.models import PossiblePhoneNumberField
@@ -8,7 +8,12 @@ from ..checkout.models import get_default_country
 
 
 class Campaign(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='campaigns', on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="campaigns",
+        on_delete=models.SET_NULL,
+        null=True,
+    )
     title = models.CharField(max_length=250, blank=True)
     country = CountryField(default=get_default_country)
     industry = models.CharField(max_length=100)
@@ -21,7 +26,9 @@ class Campaign(models.Model):
 class JobInfo(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     title = models.CharField(max_length=250, blank=True)
-    campaign = models.OneToOneField('campaign.Campaign', related_name='job_info', on_delete=models.CASCADE)
+    campaign = models.OneToOneField(
+        "campaign.Campaign", related_name="job_info", on_delete=models.CASCADE
+    )
     industry = models.CharField(max_length=100)
     job_description = models.CharField(max_length=250, blank=True)
     link_to_job_detail_page = models.URLField(max_length=200, blank=True)

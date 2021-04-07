@@ -1,41 +1,54 @@
 import graphene
 
 from ....campaign.models import JobInfo
+from ...core.mutations import ModelDeleteMutation, ModelMutation
 from ...core.types.common import CampaignError
 from ..enums import (
-    IndustryEnum,
-    EducationLeavelEnum,
-    SeniorityEnum,
-    PeriodEnum,
     CurrenciesEnum,
-    EmploymentTypeEnum
+    EducationLeavelEnum,
+    EmploymentTypeEnum,
+    IndustryEnum,
+    PeriodEnum,
+    SeniorityEnum,
 )
-from ...core.mutations import ModelMutation, ModelDeleteMutation
 
 
 class JobInfoCreateInput(graphene.InputObjectType):
-    campaign = graphene.ID(required=True, description="Campaign IDs witch assigned to job info.")
+    campaign = graphene.ID(
+        required=True, description="Campaign IDs witch assigned to job info."
+    )
     title = graphene.String(required=True, description="Title of job.")
     seniority = graphene.NonNull(SeniorityEnum, description="Position level.")
     industry = graphene.NonNull(IndustryEnum, description="Industry.")
     job_description = graphene.String(required=True, description="Job description.")
-    link_to_job_detail_page = graphene.String(required=True, description="Link to job detail page.")
-    link_to_job_app_page = graphene.String(required=True, description="Link to the app page.")
+    link_to_job_detail_page = graphene.String(
+        required=True, description="Link to job detail page."
+    )
+    link_to_job_app_page = graphene.String(
+        required=True, description="Link to the app page."
+    )
     exp_year = graphene.Int(required=True, description="Years of experience.")
     education = graphene.NonNull(EducationLeavelEnum, description="Education level.")
-    hours_per_week = graphene.List(graphene.Int, required=True, description="Hours per week.")
-    salary_interval = graphene.List(graphene.Int, required=True, description="Salary interval.")
+    hours_per_week = graphene.List(
+        graphene.Int, required=True, description="Hours per week."
+    )
+    salary_interval = graphene.List(
+        graphene.Int, required=True, description="Salary interval."
+    )
     contact_info_name = graphene.String(description="Contact info name.")
     contact_phone = graphene.String(description="Contact phone.")
     currency = graphene.NonNull(CurrenciesEnum, description="Currency.")
     period = graphene.NonNull(PeriodEnum, description="Period.")
-    employment_type = graphene.NonNull(EmploymentTypeEnum, description="Employment type.")
+    employment_type = graphene.NonNull(
+        EmploymentTypeEnum, description="Employment type."
+    )
 
 
 class JobInfoCreate(ModelMutation):
-
     class Arguments:
-        input = JobInfoCreateInput(required=True, description="Fields required to create job information.")
+        input = JobInfoCreateInput(
+            required=True, description="Fields required to create job information."
+        )
 
     class Meta:
         description = "Create a new job info."
@@ -64,10 +77,13 @@ class JobInfoUpdateInput(graphene.InputObjectType):
 
 
 class JobInfoUpdate(JobInfoCreate):
-
     class Arguments:
-        id = graphene.ID(required=True, description="ID of a job info instance to update.")
-        input = JobInfoUpdateInput(required=True, description="Fields required to create job information.")
+        id = graphene.ID(
+            required=True, description="ID of a job info instance to update."
+        )
+        input = JobInfoUpdateInput(
+            required=True, description="Fields required to create job information."
+        )
 
     class Meta:
         description = "Updates an existing job information instance."
@@ -77,9 +93,10 @@ class JobInfoUpdate(JobInfoCreate):
 
 
 class JobInfoDelete(ModelDeleteMutation):
-
     class Arguments:
-        id = graphene.ID(required=True, description="ID of a job info instance to delete.")
+        id = graphene.ID(
+            required=True, description="ID of a job info instance to delete."
+        )
 
     class Meta:
         description = "Delete a job information instance."

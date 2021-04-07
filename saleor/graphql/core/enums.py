@@ -25,7 +25,6 @@ from ...shipping import error_codes as shipping_error_codes
 from ...warehouse import error_codes as warehouse_error_codes
 from ...webhook import error_codes as webhook_error_codes
 from ...wishlist import error_codes as wishlist_error_codes
-from ..campaign import enums as campaign_enums
 from ..shop import error_codes as shop_error_codes
 from .utils import str_to_enum
 

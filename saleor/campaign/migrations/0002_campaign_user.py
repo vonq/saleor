@@ -9,13 +9,18 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('campaign', '0001_initial'),
+        ("campaign", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='campaign',
-            name='user',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='campaigns', to=settings.AUTH_USER_MODEL),
+            model_name="campaign",
+            name="user",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="campaigns",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]

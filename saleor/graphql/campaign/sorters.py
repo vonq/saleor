@@ -14,7 +14,9 @@ class CampaignSortInput(SortInputObjectType):
 
 
 class JobInfoSortField(graphene.Enum):
-    CAMPAIGN = ["campaign_id", ]
+    CAMPAIGN = [
+        "campaign_id",
+    ]
 
 
 class JobInfoSortInput(SortInputObjectType):

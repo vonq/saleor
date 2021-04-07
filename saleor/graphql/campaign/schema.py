@@ -1,19 +1,12 @@
 import graphene
+
 from ..core.fields import FilterInputConnectionField
-from .mutations.campaign import (
-    CampaignCreate,
-    CampaignUpdate,
-    CampaignDelete
-)
-from .mutations.job_info import (
-    JobInfoCreate,
-    JobInfoUpdate,
-    JobInfoDelete
-)
-from .types import CampaignType, JobInfoType
+from .filters import CampaignFilterInput, JobInfoFilterInput
+from .mutations.campaign import CampaignCreate, CampaignDelete, CampaignUpdate
+from .mutations.job_info import JobInfoCreate, JobInfoDelete, JobInfoUpdate
 from .resolvers import resolve_campaings, resolve_job_infos
 from .sorters import CampaignSortInput, JobInfoSortInput
-from .filters import CampaignFilterInput, JobInfoFilterInput
+from .types import CampaignType, JobInfoType
 
 
 class CampaignQuery(graphene.ObjectType):
@@ -21,7 +14,7 @@ class CampaignQuery(graphene.ObjectType):
         CampaignType,
         description="List of campaigns.",
         sort_by=CampaignSortInput(description="Sort campaigns."),
-        filter=CampaignFilterInput(description="Filter campaigns.")
+        filter=CampaignFilterInput(description="Filter campaigns."),
     )
     campaign = graphene.Field(
         CampaignType,
@@ -34,7 +27,7 @@ class CampaignQuery(graphene.ObjectType):
         JobInfoType,
         description="List of job information instances.",
         sort_by=JobInfoSortInput(description="Sort job information."),
-        filter=JobInfoFilterInput(description="Filter job information")
+        filter=JobInfoFilterInput(description="Filter job information"),
     )
     job_info = FilterInputConnectionField(
         JobInfoType,

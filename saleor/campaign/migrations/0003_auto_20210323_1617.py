@@ -6,14 +6,14 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('product', '0143_rename_product_images_to_product_media'),
-        ('campaign', '0002_campaign_user'),
+        ("product", "0143_rename_product_images_to_product_media"),
+        ("campaign", "0002_campaign_user"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='campaign',
-            name='products',
-            field=models.ManyToManyField(related_name='campaign', to='product.Product'),
+            model_name="campaign",
+            name="products",
+            field=models.ManyToManyField(related_name="campaign", to="product.Product"),
         ),
     ]

@@ -6,7 +6,9 @@ from ..utils.filters import filter_by_query_param
 
 
 def filter_campaign_title(qs, _, value):
-    fields = ["title", ]
+    fields = [
+        "title",
+    ]
     qs = filter_by_query_param(qs, value, fields)
     return qs
 
@@ -16,7 +18,9 @@ class CampaignFilter(django_filters.FilterSet):
 
     class Meta:
         model = Campaign
-        fields = ["title", ]
+        fields = [
+            "title",
+        ]
 
 
 class CampaignFilterInput(FilterInputObjectType):
@@ -25,7 +29,9 @@ class CampaignFilterInput(FilterInputObjectType):
 
 
 def filter_job_info_title(qs, _, value):
-    fields = ["title", ]
+    fields = [
+        "title",
+    ]
     qs = filter_by_query_param(qs, value, fields)
     return qs
 
@@ -35,7 +41,9 @@ class JobInfoFilter(django_filters.FilterSet):
 
     class Meta:
         model = JobInfo
-        fields = ["title", ]
+        fields = [
+            "title",
+        ]
 
 
 class JobInfoFilterInput(FilterInputObjectType):

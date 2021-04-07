@@ -1,8 +1,8 @@
 from ...campaign import models
 from ..utils.filters import filter_by_query_param
 
-CAMPAIGN_SEARCH_FIELDS = ("titile")
-JOB_INFO_SEARCH_FIELDS = ("title")
+CAMPAIGN_SEARCH_FIELDS = "titile"
+JOB_INFO_SEARCH_FIELDS = "title"
 
 
 def resolve_campaings(info, query, **_kwargs):

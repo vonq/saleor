@@ -2,15 +2,18 @@ import graphene
 
 from ....campaign.models import Campaign
 from ...account.enums import CountryCodeEnum
+from ...core.mutations import ModelDeleteMutation, ModelMutation
 from ...core.types.common import CampaignError
-from ...core.mutations import ModelMutation, ModelDeleteMutation
-from ..enums import IndustryEnum, EducationLeavelEnum, SeniorityEnum
+from ..enums import EducationLeavelEnum, IndustryEnum, SeniorityEnum
 from ..types import CampaignType
 
 
 class CampaignCreateInput(graphene.InputObjectType):
     title = graphene.String(required=True, description="Title of job.")
-    job_function = graphene.String(required=True, description="Choose from thousands of job functions available in our database.")
+    job_function = graphene.String(
+        required=True,
+        description="Choose from thousands of job functions available in our database.",
+    )
     country = CountryCodeEnum(required=True, description="Country.")
     seniority = graphene.NonNull(SeniorityEnum, description="Seniority.")
     industry = graphene.NonNull(IndustryEnum, description="Industry.")
@@ -18,14 +21,17 @@ class CampaignCreateInput(graphene.InputObjectType):
 
 
 class CampaignCreate(ModelMutation):
-
     class Arguments:
-        input = CampaignCreateInput(required=True, description="Fields required to create campaign.")
+        input = CampaignCreateInput(
+            required=True, description="Fields required to create campaign."
+        )
 
     class Meta:
         description = "Create a new campaign."
         model = Campaign
-        exclude = ["user", ]
+        exclude = [
+            "user",
+        ]
         error_type_class = CampaignError
         error_type_field = "campaign_errors"
 
@@ -49,7 +55,9 @@ class CampaignCreate(ModelMutation):
 
 class CampaignUpdateInput(graphene.InputObjectType):
     title = graphene.String(description="Title of job.")
-    job_function = graphene.String(description="Choose from thousands of job functions available in our database.")
+    job_function = graphene.String(
+        description="Choose from thousands of job functions available in our database."
+    )
     country = CountryCodeEnum(description="Country.")
     seniority = SeniorityEnum(description="Industry.")
     industry = IndustryEnum(description="Industry.")
@@ -57,21 +65,23 @@ class CampaignUpdateInput(graphene.InputObjectType):
 
 
 class CampaignUpdate(CampaignCreate):
-
     class Arguments:
         id = graphene.ID(required=True, description="ID of a campaign to update.")
-        input = CampaignUpdateInput(required=True, description="Fields required to update a campaign.")
+        input = CampaignUpdateInput(
+            required=True, description="Fields required to update a campaign."
+        )
 
     class Meta:
         description = "Updates an existing campaign."
         model = Campaign
-        exclude = ['user', ]
+        exclude = [
+            "user",
+        ]
         error_type_class = CampaignError
         error_type_field = "campaign_errors"
 
 
 class CampaignDelete(ModelDeleteMutation):
-
     class Arguments:
         id = graphene.ID(description="ID of the campaign instance.")
 
