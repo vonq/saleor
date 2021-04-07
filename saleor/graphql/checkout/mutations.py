@@ -38,10 +38,10 @@ from ...shipping import models as shipping_models
 from ...warehouse.availability import check_stock_quantity_bulk
 from ..account.i18n import I18nMixin
 from ..account.types import AddressInput
+from ..campaign.types import CampaignType
 from ..core.mutations import BaseMutation, ModelMutation
 from ..core.types.common import CheckoutError
 from ..core.utils import from_global_id_strict_type
-from ..campaign.types import CampaignType
 from ..order.types import Order
 from ..product.types import ProductVariant
 from ..shipping.types import ShippingMethod
@@ -842,7 +842,9 @@ class CheckoutComplete(BaseMutation):
         error_type_field = "checkout_errors"
 
     @classmethod
-    def perform_mutation(cls, _root, info, checkout_id, campaign_id, store_source, **data):
+    def perform_mutation(
+        cls, _root, info, checkout_id, campaign_id, store_source, **data
+    ):
         tracking_code = analytics.get_client_id(info.context)
         with transaction_with_commit_on_errors():
             try:

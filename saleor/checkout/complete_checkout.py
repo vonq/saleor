@@ -325,7 +325,12 @@ def _prepare_order_data(
 
 @transaction.atomic
 def _create_order(
-    *, campaign: "Campaign", checkout_info: "CheckoutInfo", order_data: dict, user: User, site_settings=None
+    *,
+    campaign: "Campaign",
+    checkout_info: "CheckoutInfo",
+    order_data: dict,
+    user: User,
+    site_settings=None
 ) -> Order:
     """Create an order from the checkout.
 

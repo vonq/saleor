@@ -89,7 +89,12 @@ class Order(ModelWithMetadata):
         on_delete=models.SET_NULL,
     )
     campaign = models.OneToOneField(
-        "campaign.Campaign", on_delete=models.SET_NULL, editable=False,  related_name="+", null=True)
+        "campaign.Campaign",
+        on_delete=models.SET_NULL,
+        editable=False,
+        related_name="+",
+        null=True,
+    )
     language_code = models.CharField(max_length=35, default=settings.LANGUAGE_CODE)
     tracking_client_id = models.CharField(max_length=36, blank=True, editable=False)
     billing_address = models.ForeignKey(
