@@ -16,6 +16,7 @@ from api.products.search.filters.facet_filters import (
 )
 from api.products.search.filters.scores import (
     is_generic_score,
+    matches_generic_international_score,
     matches_industry_and_international_score,
     matches_industry_and_location_score,
     matches_jobfunction_and_international_score,
@@ -160,14 +161,17 @@ class IndustryAndInternationalGroup(FacetFiltersGroup):
 
     @classmethod
     def can_be_included(cls, user_request: Request) -> bool:
-        return True
+        qp_keys = set(
+            {ele for ele in user_request.query_params if user_request.query_params[ele]}
+        )
+        return "jobFunctionId" not in qp_keys and "jobTitleId" not in qp_keys
 
 
 class GenericAndInternationalGroup(FacetFiltersGroup):
     parameter_name = "searchable_isgeneric_isinternational"
     facet_filters = [IsGenericFacetFilter, IsInternationalFacetFilter]
     operator = "AND"
-    score = is_generic_score
+    score = matches_generic_international_score
 
     @classmethod
     def can_be_included(cls, user_request: Request) -> bool:

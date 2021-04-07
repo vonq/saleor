@@ -39,6 +39,7 @@ def how_many_products_with_value(
         for item in product[key]:
             if item[name_key] in values:
                 count += 1
+                break
     return count
 
 
@@ -425,6 +426,7 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         high_frequency_product.save()
 
         high_frequency_product.industries.add(cls.recruitment_industry)
+        high_frequency_product.locations.add(cls.brazil)
         high_frequency_product.save()
 
         medium_frequency_product = Product(
@@ -435,7 +437,6 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             order_frequency=0.6,
         )
         medium_frequency_product.save()
-        medium_frequency_product.locations.add(cls.brazil)
         medium_frequency_product.industries.add(cls.recruitment_industry)
         medium_frequency_product.save()
 
@@ -448,7 +449,6 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         )
         low_frequency_product.save()
         low_frequency_product.industries.add(cls.recruitment_industry)
-        low_frequency_product.locations.add(cls.brazil)
         low_frequency_product.save()
 
         # Light recommendations
@@ -670,10 +670,10 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             reverse("api.products:products-list")
             + f"?industryId={self.construction_industry.id}&limit=50"
         )
-
+        resp_json = resp.json()
         self.assertEqual(
             how_many_products_with_value(
-                resp.json(),
+                resp_json,
                 "industries",
                 (self.construction_industry.id,),
             ),
@@ -684,14 +684,22 @@ class ProductSearchTestCase(AuthenticatedTestCase):
             reverse("api.products:products-list")
             + f"?industryId={self.construction_industry.id},{self.engineering_industry.id}&limit=50"
         )
+        resp_json = resp.json()
+
         self.assertEqual(
             how_many_products_with_value(
                 resp.json(),
                 "industries",
                 (self.construction_industry.id, self.engineering_industry.id),
             ),
-            4,
+            3,
         )
+
+        for product in resp_json["results"][:3]:
+            self.assertFalse(is_generic_product(product))
+
+        for product in resp_json["results"][3:]:
+            self.assertTrue(is_generic_product(product))
 
     def test_can_get_nested_locations(self):
         # Search for a product within Reading
