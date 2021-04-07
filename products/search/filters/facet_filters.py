@@ -296,6 +296,17 @@ class InclusiveJobFunctionChildrenFilter(FacetFilter):
                         )
                         for job_function in JobFunction.objects.filter(id__in=values)
                     )
+                ).union(
+                    set(
+                        itertools.chain.from_iterable(
+                            job_function.get_ancestors(include_self=False).values_list(
+                                "pk", flat=True
+                            )
+                            for job_function in JobFunction.objects.filter(
+                                id__in=values
+                            )
+                        )
+                    )
                 )
             )
             or values
@@ -337,7 +348,7 @@ class CustomerIdFilter(FacetFilter):
     score = 0
 
 
-class IsMyOwnProductFilter(FacetFilter):
+class IsNotMyOwnProductFilter(FacetFilter):
     filter_name = "is_my_own_product"
     parameter_name = "is_my_own_product"
     parameter = None

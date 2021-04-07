@@ -674,6 +674,16 @@ class IndexSearchableProductMixin:
         ).values_list("locations_cardinality", flat=True)[0]
 
     @property
+    def maximum_jobfunctions_depth(self):
+        return max(
+            [
+                len(job_function.get_ancestors(include_self=False))
+                for job_function in self.job_functions.all()
+            ]
+            or [0]
+        )
+
+    @property
     def searchable_product_title(self):
         return self.external_product_name
 

@@ -33,6 +33,7 @@ class ProductIndex(AlgoliaIndex):
         "searchable_locations_context_mapbox_ids",
         "primary_similarweb_location",
         "secondary_similarweb_location",
+        "maximum_jobfunctions_depth",
         "maximum_locations_cardinality",
         "filterable_status",
         "available_in_jmp",
@@ -56,7 +57,11 @@ class ProductIndex(AlgoliaIndex):
         "searchableAttributes": [
             "unordered(searchable_product_title)",
         ],
-        "numericAttributesToIndex": ["maximum_locations_cardinality", "duration_days"],
+        "numericAttributesToIndex": [
+            "maximum_locations_cardinality",
+            "maximum_jobfunctions_depth",
+            "duration_days",
+        ],
         "attributesToRetrieve": None,
         "ignorePlurals": ["en", "de", "nl"],
         "advancedSyntax": True,
@@ -97,8 +102,9 @@ class ProductIndex(AlgoliaIndex):
         "exactOnSingleWordQuery": "attribute",
         "ranking": [
             "filters",
-            "desc(order_frequency)",
             "desc(maximum_locations_cardinality)",
+            "desc(maximum_jobfunctions_depth)",
+            "desc(order_frequency)",
         ],
         "customRanking": [],
         "separatorsToIndex": "",

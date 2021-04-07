@@ -30,7 +30,7 @@ from api.products.search.filters.facet_filters import (
     DurationLessThanFacetFilter,
     ChannelTypeFilter,
     CustomerIdFilter,
-    IsMyOwnProductFilter,
+    IsNotMyOwnProductFilter,
 )
 from api.products.search.filter_collection import FacetFilterCollection
 from api.products.search.filters.facet_filters_groups import (
@@ -234,7 +234,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         if self.request.user.profile.type == Profile.Type.MAPI:
             return self.search_filters + (
                 IsAvailableInJmpFacetFilter,
-                IsMyOwnProductFilter,
+                IsNotMyOwnProductFilter,
             )
         elif self.request.user.profile.type == Profile.Type.JMP:
             if self.is_my_own_product_request:
@@ -245,7 +245,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             else:
                 return self.search_filters + (
                     IsAvailableInJmpFacetFilter,
-                    IsMyOwnProductFilter,
+                    IsNotMyOwnProductFilter,
                 )
         return self.search_filters
 
