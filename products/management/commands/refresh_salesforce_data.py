@@ -2,7 +2,7 @@ from typing import Optional
 
 from django.core.management.base import BaseCommand
 
-from api.products.models import Product, Location, Channel
+from api.products.models import Product, Location, Channel, PostingRequirement
 import json
 
 
@@ -128,6 +128,8 @@ class Command(BaseCommand):
                 self.__add_locations(
                     product=current, new_field_name=new_field_name, new_product=new
                 )
+            elif current_field_name == "has_html_posting":
+                self.__map_html_posting_requirement(product=current, new_product=new)
             else:
                 self.__update_field(
                     current_field_name=current_field_name,
@@ -213,3 +215,20 @@ class Command(BaseCommand):
                     desq_name_en=new_location  # assuming location names in SF are const and unique
                 )
                 product.locations.add(db_location)  # won't duplicate
+
+    def __map_html_posting_requirement(self, product, new_product):
+        new_value = new_product.get("has_html_posting")
+        if new_value:
+            if (
+                product.posting_requirements.filter(
+                    posting_requirement_type="HTML Posting"
+                ).count()
+                == 0
+            ):
+                req, _ = PostingRequirement.objects.get_or_create(
+                    posting_requirement_type="HTML Posting"
+                )
+                self.stdout.write(
+                    f"Adding HTML posting requirement to product id {product.id}"
+                )
+                product.posting_requirements.add(req)

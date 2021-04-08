@@ -56,7 +56,10 @@ def make_salesforce_product(product_instance):
         "Product_Category__c": cast_none(product_instance.salesforce_product_category),
         "Cross_Posting__c": json.dumps(getattr(product_instance, "cross_postings", [])),
         "Recommended_product__c": product_instance.is_recommended,
-        "HTML_Required__c": product_instance.has_html_posting,
+        "HTML_Required__c": product_instance.posting_requirements.filter(
+            posting_requirement_type="HTML Posting"
+        ).count()
+        > 0,
         "Tracking_Method__c": cast_none(product_instance.tracking_method),
         "Pricing_Method__c": cast_none(product_instance.pricing_method),
         "PurchasePriceMethod__c": cast_none(product_instance.purchase_price_method),

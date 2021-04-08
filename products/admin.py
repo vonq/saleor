@@ -150,7 +150,6 @@ class ProductAdmin(
         "is_active",
         "available_in_jmp",
         "is_recommended",
-        "has_html_posting",
         "customer_id",
         "salesforce_product_category",
         "locations",

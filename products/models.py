@@ -468,6 +468,7 @@ class PostingRequirement(models.Model):
         LI_PROFILE = "LinkedIn Profile", _("LinkedIn Profile")
         XING_PROFILE = "Xing Profile", _("Xing Profile")
         HOURS = "Hours", _("Hours")
+        HTML_POSTING = "HTML Posting", _("HTML Posting")
         NONE = None, _("--None--")
 
     posting_requirement_type = models.TextField(
@@ -1204,7 +1205,6 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
     customer_id = models.CharField(null=True, blank=True, max_length=36)
 
     is_recommended = models.BooleanField(default=False)
-    has_html_posting = models.BooleanField(default=False)
 
     tracking_method = models.TextField(
         choices=TrackingMethod.choices, default=TrackingMethod.FIXED
