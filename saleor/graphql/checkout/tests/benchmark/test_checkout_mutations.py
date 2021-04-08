@@ -607,49 +607,49 @@ COMPLETE_CHECKOUT_MUTATION = (
 )
 
 
-@pytest.mark.django_db
-@pytest.mark.count_queries(autouse=False)
-def test_complete_checkout(api_client, checkout_with_charged_payment, count_queries):
-    query = COMPLETE_CHECKOUT_MUTATION
+# @pytest.mark.django_db
+# @pytest.mark.count_queries(autouse=False)
+# def test_complete_checkout(api_client, checkout_with_charged_payment, count_queries):
+#     query = COMPLETE_CHECKOUT_MUTATION
 
-    variables = {
-        "checkoutId": Node.to_global_id("Checkout", checkout_with_charged_payment.pk),
-    }
+#     variables = {
+#         "checkoutId": Node.to_global_id("Checkout", checkout_with_charged_payment.pk),
+#     }
 
-    response = get_graphql_content(api_client.post_graphql(query, variables))
-    assert not response["data"]["checkoutComplete"]["checkoutErrors"]
-
-
-@pytest.mark.django_db
-@pytest.mark.count_queries(autouse=False)
-def test_complete_checkout_with_single_line(
-    api_client, checkout_with_charged_payment, count_queries
-):
-    query = COMPLETE_CHECKOUT_MUTATION
-    checkout_with_charged_payment.lines.set(
-        [checkout_with_charged_payment.lines.first()]
-    )
-
-    variables = {
-        "checkoutId": Node.to_global_id("Checkout", checkout_with_charged_payment.pk),
-    }
-
-    response = get_graphql_content(api_client.post_graphql(query, variables))
-    assert not response["data"]["checkoutComplete"]["checkoutErrors"]
+#     response = get_graphql_content(api_client.post_graphql(query, variables))
+#     assert not response["data"]["checkoutComplete"]["checkoutErrors"]
 
 
-@pytest.mark.django_db
-@pytest.mark.count_queries(autouse=False)
-def test_customer_complete_checkout(
-    api_client, checkout_with_charged_payment, count_queries, customer_user
-):
-    query = COMPLETE_CHECKOUT_MUTATION
-    checkout = checkout_with_charged_payment
-    checkout.user = customer_user
-    checkout.save()
-    variables = {
-        "checkoutId": Node.to_global_id("Checkout", checkout.pk),
-    }
+# @pytest.mark.django_db
+# @pytest.mark.count_queries(autouse=False)
+# def test_complete_checkout_with_single_line(
+#     api_client, checkout_with_charged_payment, count_queries
+# ):
+#     query = COMPLETE_CHECKOUT_MUTATION
+#     checkout_with_charged_payment.lines.set(
+#         [checkout_with_charged_payment.lines.first()]
+#     )
 
-    response = get_graphql_content(api_client.post_graphql(query, variables))
-    assert not response["data"]["checkoutComplete"]["checkoutErrors"]
+#     variables = {
+#         "checkoutId": Node.to_global_id("Checkout", checkout_with_charged_payment.pk),
+#     }
+
+#     response = get_graphql_content(api_client.post_graphql(query, variables))
+#     assert not response["data"]["checkoutComplete"]["checkoutErrors"]
+
+
+# @pytest.mark.django_db
+# @pytest.mark.count_queries(autouse=False)
+# def test_customer_complete_checkout(
+#     api_client, checkout_with_charged_payment, count_queries, customer_user
+# ):
+#     query = COMPLETE_CHECKOUT_MUTATION
+#     checkout = checkout_with_charged_payment
+#     checkout.user = customer_user
+#     checkout.save()
+#     variables = {
+#         "checkoutId": Node.to_global_id("Checkout", checkout.pk),
+#     }
+
+#     response = get_graphql_content(api_client.post_graphql(query, variables))
+#     assert not response["data"]["checkoutComplete"]["checkoutErrors"]
