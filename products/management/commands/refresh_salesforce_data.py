@@ -24,7 +24,6 @@ class Command(BaseCommand):
         "salesforce_product_category": "product_category",
         "salesforce_logo_url": "product_logo",
         "cross_postings": "cross_postings",
-        "locations": "relevant_location_names",
         "salesforce_industries": "industries",
         "salesforce_job_categories": "job_categories",
         "duration_days": "duration",
