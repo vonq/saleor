@@ -510,7 +510,7 @@ class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
             query=text,
             params={
                 "getRankingInfo": True,
-                "analytics": False,
+                "analytics": True,
                 "enableABTest": False,
                 "hitsPerPage": 10,
                 "attributesToRetrieve": "id",

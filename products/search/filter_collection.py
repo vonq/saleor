@@ -53,7 +53,7 @@ class FacetFilterCollection:
 
         query = {
             "getRankingInfo": True,
-            "analytics": False,
+            "analytics": True,
             "enableABTest": False,
             "attributesToRetrieve": "id",
             "attributesToSnippet": "*:20",
