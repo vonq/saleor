@@ -56,6 +56,18 @@ class FacetFiltersGroup:
         """
         pass
 
+    @classmethod
+    def get_qp_keys(cls, user_request: Request) -> set:
+        """
+        Returns a list of query parameters that are defined
+        for the current user request
+        """
+        qp_keys = set(
+            {ele for ele in user_request.query_params if user_request.query_params[ele]}
+        )
+        qp_keys -= {"offset", "limit", "recommended", "format", "currency"}
+        return qp_keys
+
 
 class JobFunctionIndustryAndLocationGroup(FacetFiltersGroup):
     parameter_name = "searchable_jobfunctions_industries_locations_combinations"
@@ -120,8 +132,8 @@ class GenericAndLocationGroup(FacetFiltersGroup):
 
     @classmethod
     def can_be_included(cls, user_request: Request) -> bool:
-        qp_keys = user_request.query_params.keys()
-        is_search_by_exact_location = "exactLocationId" in list(qp_keys)
+        qp_keys = cls.get_qp_keys(user_request)
+        is_search_by_exact_location = "exactLocationId" in qp_keys
         return not is_search_by_exact_location
 
 
@@ -161,9 +173,7 @@ class IndustryAndInternationalGroup(FacetFiltersGroup):
 
     @classmethod
     def can_be_included(cls, user_request: Request) -> bool:
-        qp_keys = set(
-            {ele for ele in user_request.query_params if user_request.query_params[ele]}
-        )
+        qp_keys = cls.get_qp_keys(user_request)
         return "jobFunctionId" not in qp_keys and "jobTitleId" not in qp_keys
 
 
@@ -175,10 +185,7 @@ class GenericAndInternationalGroup(FacetFiltersGroup):
 
     @classmethod
     def can_be_included(cls, user_request: Request) -> bool:
-        qp_keys = set(
-            {ele for ele in user_request.query_params if user_request.query_params[ele]}
-        )
-        qp_keys -= {"offset", "limit", "recommended", "format"}
+        qp_keys = cls.get_qp_keys(user_request)
 
         is_search_by_name = len(qp_keys) == 1 and list(qp_keys)[0] == "name"
         is_search_by_exact_location = (
