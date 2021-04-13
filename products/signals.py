@@ -34,13 +34,13 @@ def sync_channel_with_salesforce(sender, instance, **kwargs):
         async_task(
             sync.update_channel,
             channel_instance=instance,
-            q_options={"task_name": f"channel-update-{instance.salesforce_id}"},
+            q_options={"task_name": f"channel-update-{instance.salesforce_id}"[:90]},
         )
     else:
         async_task(
             sync.push_channel,
             channel_instance=instance,
-            q_options={"task_name": f"channel-create-{instance.name}"},
+            q_options={"task_name": f"channel-create-{instance.name}"[:90]},
         )
 
 
@@ -49,11 +49,11 @@ def sync_product_with_salesforce(sender, instance, **kwargs):
         async_task(
             sync.update_product,
             product_instance=instance,
-            q_options={"task_name": f"product-update-{instance.title}"},
+            q_options={"task_name": f"product-update-{instance.title}"[:90]},
         )
     else:
         async_task(
             sync.push_product,
             product_instance=instance,
-            q_options={"task_name": f"product-create-{instance.title}"},
+            q_options={"task_name": f"product-create-{instance.title}"[:90]},
         )
