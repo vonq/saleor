@@ -80,6 +80,23 @@ class JobTitleSearchTestCase(AuthenticatedTestCase):
         cls.java_developer_id = java_developer.id
         java_developer.save()
 
+        nurse_job_titles = [
+            ("registered nurse", 1538),
+            ("staff nurse", 1134),
+            ("nursery nurse", 780),
+            ("nursery assistant", 1538),
+            ("nursery manager", 1000),
+        ]
+
+        for title, frequency in nurse_job_titles:
+            JobTitle.objects.create(
+                name=title,
+                name_nl=f"{title} in dutch",
+                frequency=frequency,
+                canonical=True,
+                active=True,
+            )
+
         # waiting for algolia to re-index
         algolia_engine.reindex_all(JobTitle)
 
@@ -151,6 +168,22 @@ class JobTitleSearchTestCase(AuthenticatedTestCase):
             resp.json()["results"][0]["id"],
             self.python_developer_id,
         )
+
+    def test_ranks_exact_word_matches_first_regardless_of_frequency(self):
+        resp = self.client.get(reverse("job-titles") + "?text=nurse").json()
+
+        self.assertEqual(resp["results"][0]["name"], "registered nurse")
+
+    def test_ranks_exact_matches_first_but_still_matches_partially_ordered_by_frequency(
+        self,
+    ):
+        resp = self.client.get(reverse("job-titles") + "?text=nurse").json()
+
+        self.assertEqual(resp["results"][0]["name"], "registered nurse")
+        self.assertEqual(resp["results"][1]["name"], "staff nurse")
+        self.assertEqual(resp["results"][2]["name"], "nursery nurse")
+        self.assertEqual(resp["results"][3]["name"], "nursery assistant")
+        self.assertEqual(resp["results"][4]["name"], "nursery manager")
 
     def test_decompounds_dutch_words(self):
         resp = self.client.get(reverse("job-titles") + "?text=ontwikkelaar")

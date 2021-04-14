@@ -130,7 +130,7 @@ class JobTitleIndex(AlgoliaIndex):
         "hitsPerPage": 5,
         "maxValuesPerFacet": 100,
         "minProximity": 10,
-        "searchableAttributes": ["searchable_keywords"],
+        "searchableAttributes": ["unordered(searchable_keywords)"],
         "numericAttributesToIndex": ["maximum_locations_cardinality", "duration_days"],
         "attributesToRetrieve": None,
         "ignorePlurals": ["en", "nl", "de"],
@@ -147,7 +147,7 @@ class JobTitleIndex(AlgoliaIndex):
         "attributesToHighlight": None,
         "paginationLimitedTo": 10,
         "attributeForDistinct": None,
-        "exactOnSingleWordQuery": "attribute",
+        "exactOnSingleWordQuery": "word",
         "ranking": [
             "typo",
             "exact",
