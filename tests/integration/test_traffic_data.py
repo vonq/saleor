@@ -1,38 +1,22 @@
 import time
 
 from algoliasearch_django import algolia_engine
-from django.conf import settings
-from django.test import tag, override_settings
+from django.test import tag
 from rest_framework.reverse import reverse
 
 from api.products.geocoder import Geocoder
 from api.products.search.index import ProductIndex
 from api.products.models import Product, Location
-from api.tests import AuthenticatedTestCase
-
-NOW = int(time.time())
-TEST_INDEX_SUFFIX = f"test_{NOW}"
+from api.tests import SearchTestCase
 
 
 @tag("integration")
 @tag("algolia")
-class TrafficLocationsDataTestCase(AuthenticatedTestCase):
-    @classmethod
-    @override_settings(
-        ALGOLIA={
-            "INDEX_SUFFIX": TEST_INDEX_SUFFIX,
-            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
-            "API_KEY": settings.ALGOLIA["API_KEY"],
-            "AUTO_INDEXING": True,
-        }
-    )
-    def setUpClass(cls):
-        super().setUpClass()
-        algolia_engine.reset(settings.ALGOLIA)
-        if not algolia_engine.is_registered(Product):
-            algolia_engine.register(Product, ProductIndex)
-            algolia_engine.reindex_all(Product)
+class TrafficLocationsDataTestCase(SearchTestCase):
+    model_index_class_pairs = [(Product, ProductIndex)]
 
+    @classmethod
+    def setUpSearchClass(cls):
         cls.rome_location = Location(
             canonical_name="Rome, Italy",
             mapbox_id="place.9045806458813870",
@@ -179,19 +163,3 @@ class TrafficLocationsDataTestCase(AuthenticatedTestCase):
         #
         # # the first result is the European board – since DE is its primary SW location
         # self.assertEqual(resp.json()["results"][0]["title"], "European Jobs Board")
-
-    @classmethod
-    @override_settings(
-        ALGOLIA={
-            "INDEX_SUFFIX": "test",
-            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
-            "API_KEY": settings.ALGOLIA["API_KEY"],
-            "AUTO_INDEXING": True,
-        }
-    )
-    def tearDownClass(cls):
-        super().tearDownClass()
-        algolia_engine.client.delete_index(
-            f"{ProductIndex.index_name}_{TEST_INDEX_SUFFIX}"
-        )
-        algolia_engine.reset(settings.ALGOLIA)

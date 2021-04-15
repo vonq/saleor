@@ -1,39 +1,25 @@
 import time
 
 from algoliasearch_django import algolia_engine
-from django.test import override_settings, tag
+from django.test import tag
 from django.urls import reverse
 
-from api import settings
 from api.products.models import JobFunction, Location, Product
 from api.products.search.index import ProductIndex
-from api.tests import AuthenticatedTestCase
+from api.tests import SearchTestCase
 
 from api.vonqtaxonomy.models import JobCategory as VonqJobCategory
 
 NOW = int(time.time())
-TEST_INDEX_SUFFIX = f"jobfunction_location_test_{NOW}"
 
 
 @tag("algolia")
 @tag("integration")
-class ProductSearchWithNestedJobFunctionAndLocationTest(AuthenticatedTestCase):
-    @classmethod
-    @override_settings(
-        ALGOLIA={
-            "INDEX_SUFFIX": TEST_INDEX_SUFFIX,
-            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
-            "API_KEY": settings.ALGOLIA["API_KEY"],
-            "AUTO_INDEXING": True,
-        }
-    )
-    def setUpClass(cls):
-        super().setUpClass()
-        algolia_engine.reset(settings.ALGOLIA)
-        if not algolia_engine.is_registered(Product):
-            algolia_engine.register(Product, ProductIndex)
-            algolia_engine.reindex_all(Product)
+class ProductSearchWithNestedJobFunctionAndLocationTest(SearchTestCase):
+    model_index_class_pairs = [(Product, ProductIndex)]
 
+    @classmethod
+    def setUpSearchClass(cls):
         # dummy desq job category
         desq_job_category = VonqJobCategory.objects.create(mapi_id=1, name="Something")
 

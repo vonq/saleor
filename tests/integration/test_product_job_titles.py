@@ -1,39 +1,22 @@
-import time
 from urllib.parse import quote_plus
 
 from algoliasearch_django import algolia_engine
-from django.test import override_settings, tag
+from django.test import tag
 from rest_framework.reverse import reverse
 
-from django.conf import settings
 from api.products.models import JobFunction, JobTitle
 from api.vonqtaxonomy.models import JobCategory as VonqJobCategory
-from api.tests import AuthenticatedTestCase
+from api.tests import SearchTestCase
 from api.products.search.index import JobTitleIndex
-
-NOW = int(time.time())
-TEST_INDEX_SUFFIX = f"test_{NOW}"
 
 
 @tag("algolia")
 @tag("integration")
-class JobTitleSearchTestCase(AuthenticatedTestCase):
-    @classmethod
-    @override_settings(
-        ALGOLIA={
-            "INDEX_SUFFIX": TEST_INDEX_SUFFIX,
-            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
-            "API_KEY": settings.ALGOLIA["API_KEY"],
-            "AUTO_INDEXING": True,
-        }
-    )
-    def setUpClass(cls):
-        super().setUpClass()
-        algolia_engine.reset(settings.ALGOLIA)
-        if not algolia_engine.is_registered(JobTitle):
-            algolia_engine.register(JobTitle, JobTitleIndex)
-            algolia_engine.reindex_all(JobTitle)
+class JobTitleSearchTestCase(SearchTestCase):
+    model_index_class_pairs = [(JobTitle, JobTitleIndex)]
 
+    @classmethod
+    def setUpSearchClass(cls):
         pkb_job_category = VonqJobCategory.objects.create(mapi_id=1, name="Something")
 
         software_development = JobFunction(name="Software Development")
@@ -99,22 +82,6 @@ class JobTitleSearchTestCase(AuthenticatedTestCase):
 
         # waiting for algolia to re-index
         algolia_engine.reindex_all(JobTitle)
-
-    @classmethod
-    @override_settings(
-        ALGOLIA={
-            "INDEX_SUFFIX": TEST_INDEX_SUFFIX,
-            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
-            "API_KEY": settings.ALGOLIA["API_KEY"],
-            "AUTO_INDEXING": True,
-        }
-    )
-    def tearDownClass(cls):
-        super().tearDownClass()
-        algolia_engine.client.delete_index(
-            f"{JobTitleIndex.index_name}_{TEST_INDEX_SUFFIX}"
-        )
-        algolia_engine.reset(settings.ALGOLIA)
 
     def test_can_search_in_default_language(self):
         resp = self.client.get(reverse("job-titles") + "?text=pyth")

@@ -50,8 +50,8 @@ class ProductIndex(AlgoliaIndex):
         "searchable_isgeneric_isinternational",
     )
     settings = {
-        "minWordSizefor1Typo": 3,
-        "minWordSizefor2Typos": 5,
+        "minWordSizefor1Typo": 5,
+        "minWordSizefor2Typos": 8,
         "hitsPerPage": 20,
         "maxValuesPerFacet": 100,
         "searchableAttributes": [
@@ -105,6 +105,7 @@ class ProductIndex(AlgoliaIndex):
             "desc(maximum_locations_cardinality)",
             "desc(maximum_jobfunctions_depth)",
             "desc(order_frequency)",
+            "typo",
         ],
         "customRanking": [],
         "separatorsToIndex": "",

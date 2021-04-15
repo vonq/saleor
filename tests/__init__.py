@@ -1,10 +1,16 @@
-from abc import abstractmethod
+import time
+from abc import ABCMeta, abstractmethod
+from typing import List, Tuple
 
+from algoliasearch_django import AlgoliaIndex, algolia_engine
 from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
-from django.test import TestCase
+from django.db.models import Model
+from django.test import TestCase, override_settings
+
+from api import settings
 
 User = get_user_model()
 
@@ -49,3 +55,68 @@ class TestMigrations(TestCase):
     @abstractmethod
     def setUpBeforeMigration(self, apps):
         raise NotImplementedError
+
+
+NOW = int(time.time())
+
+
+class SearchTestCase(AuthenticatedTestCase, metaclass=ABCMeta):
+    @property
+    @abstractmethod
+    def model_index_class_pairs(self) -> List[Tuple[Model, AlgoliaIndex]]:
+        pass
+
+    @classmethod
+    @abstractmethod
+    def setUpSearchClass(cls):
+        pass
+
+    """
+    We need to gather all the product-search related tests into
+    this one class, as we're hitting the live algolia index.
+    This means that we need to create the index and populate
+    it with test entities. This might take quite some time,
+    and it's infeasible to do it on a setUp method.
+    """
+
+    @classmethod
+    @override_settings(
+        ALGOLIA={
+            "INDEX_SUFFIX": f"{__name__}_{NOW}",
+            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
+            "API_KEY": settings.ALGOLIA["API_KEY"],
+            "AUTO_INDEXING": True,
+        }
+    )
+    def setUpClass(cls):
+        super().setUpClass()
+        algolia_engine.reset(settings.ALGOLIA)
+        for model_index_pair in cls.model_index_class_pairs:
+            model_class, index_class = model_index_pair
+            if not algolia_engine.is_registered(model_class):
+                algolia_engine.register(model_class, index_class)
+                algolia_engine.reindex_all(model_class)
+
+        cls.setUpSearchClass()
+
+        for model_index_pair in cls.model_index_class_pairs:
+            model_class, _ = model_index_pair
+        algolia_engine.reindex_all(model_class)
+
+    @classmethod
+    @override_settings(
+        ALGOLIA={
+            "INDEX_SUFFIX": f"{__name__}_{NOW}",
+            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
+            "API_KEY": settings.ALGOLIA["API_KEY"],
+            "AUTO_INDEXING": True,
+        }
+    )
+    def tearDownClass(cls):
+        super().tearDownClass()
+        for model_index_pair in cls.model_index_class_pairs:
+            _, index_class = model_index_pair
+            algolia_engine.client.delete_index(
+                f"{index_class.index_name}_{__name__}_{NOW}"
+            )
+        algolia_engine.reset(settings.ALGOLIA)

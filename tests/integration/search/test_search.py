@@ -1,10 +1,7 @@
 import random
-import time
 from unittest import skip
 
-from algoliasearch_django import algolia_engine
-from django.conf import settings
-from django.test import override_settings, tag
+from django.test import tag
 from rest_framework.reverse import reverse
 
 from api.products.search.index import JobTitleIndex, ProductIndex
@@ -22,13 +19,10 @@ from api.vonqtaxonomy.models import (
     Industry as VonqIndustry,
 )
 
-from api.tests import AuthenticatedTestCase
+from api.tests import SearchTestCase
 from django.contrib.auth import get_user_model
 
 from api.products.geocoder import MAPBOX_INTERNATIONAL_PLACE_TYPE
-
-NOW = int(time.time())
-TEST_INDEX_SUFFIX = f"test_{NOW}"
 
 
 def how_many_products_with_value(
@@ -65,35 +59,20 @@ def is_international_product(product: dict) -> bool:
 
 @tag("algolia")
 @tag("integration")
-class ProductSearchTestCase(AuthenticatedTestCase):
-    """
-    We need to gather all the product-search related tests into
-    this one class, as we're hitting the live algolia index.
-    This means that we need to create the index and populate
-    it with test entities. This might take quite some time,
-    and it's infeasible to do it on a setUp method.
-    """
+class ProductSearchTestCase(SearchTestCase):
+    model_index_class_pairs = [
+        (
+            Product,
+            ProductIndex,
+        ),
+        (
+            JobTitle,
+            JobTitleIndex,
+        ),
+    ]
 
     @classmethod
-    @override_settings(
-        ALGOLIA={
-            "INDEX_SUFFIX": TEST_INDEX_SUFFIX,
-            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
-            "API_KEY": settings.ALGOLIA["API_KEY"],
-            "AUTO_INDEXING": True,
-        }
-    )
-    def setUpClass(cls):
-        super().setUpClass()
-        algolia_engine.reset(settings.ALGOLIA)
-        if not algolia_engine.is_registered(Product):
-            algolia_engine.register(Product, ProductIndex)
-            algolia_engine.reindex_all(Product)
-
-        if not algolia_engine.is_registered(JobTitle):
-            algolia_engine.register(JobTitle, JobTitleIndex)
-            algolia_engine.reindex_all(JobTitle)
-
+    def setUpSearchClass(cls):
         pkb_industry = VonqIndustry.objects.create(mapi_id=1, name="Something")
 
         # populate industries
@@ -508,10 +487,6 @@ class ProductSearchTestCase(AuthenticatedTestCase):
                 recommended_product.job_functions.add(job_function_for_recommendations)
                 recommended_product.save()
 
-        # wait for algolia to complete the index
-        algolia_engine.reindex_all(Product)
-        algolia_engine.reindex_all(JobTitle)
-
     def setUp(self) -> None:
         super().setUp()
         # populate mapbox locations contexts
@@ -519,25 +494,6 @@ class ProductSearchTestCase(AuthenticatedTestCase):
         self.client.get(reverse("locations") + "?text=england")
         self.client.get(reverse("locations") + "?text=slough")
         self.client.get(reverse("locations") + "?text=united%20kingdom")
-
-    @classmethod
-    @override_settings(
-        ALGOLIA={
-            "INDEX_SUFFIX": "test",
-            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
-            "API_KEY": settings.ALGOLIA["API_KEY"],
-            "AUTO_INDEXING": True,
-        }
-    )
-    def tearDownClass(cls):
-        super().tearDownClass()
-        algolia_engine.client.delete_index(
-            f"{ProductIndex.index_name}_{TEST_INDEX_SUFFIX}"
-        )
-        algolia_engine.client.delete_index(
-            f"{JobTitleIndex.index_name}_{TEST_INDEX_SUFFIX}"
-        )
-        algolia_engine.reset(settings.ALGOLIA)
 
     def test_mapi_does_not_receive_my_own_products_by_default(self):
         User = get_user_model()
@@ -1143,23 +1099,16 @@ class ProductSearchTestCase(AuthenticatedTestCase):
 
 @tag("algolia")
 @tag("integration")
-class AddonSearchTestCase(AuthenticatedTestCase):
-    @classmethod
-    @override_settings(
-        ALGOLIA={
-            "INDEX_SUFFIX": TEST_INDEX_SUFFIX,
-            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
-            "API_KEY": settings.ALGOLIA["API_KEY"],
-            "AUTO_INDEXING": True,
-        }
-    )
-    def setUpClass(cls):
-        super().setUpClass()
-        algolia_engine.reset(settings.ALGOLIA)
-        if not algolia_engine.is_registered(Product):
-            algolia_engine.register(Product, ProductIndex)
-            algolia_engine.reindex_all(Product)
+class AddonSearchTestCase(SearchTestCase):
+    model_index_class_pairs = [
+        (
+            Product,
+            ProductIndex,
+        ),
+    ]
 
+    @classmethod
+    def setUpSearchClass(cls):
         addon_product_1 = Product.objects.create(
             title="This is an addon",
             salesforce_product_type=Product.SalesforceProductType.VONQ_SERVICES,
@@ -1195,24 +1144,6 @@ class AddonSearchTestCase(AuthenticatedTestCase):
             is_active=True,
         )
 
-        time.sleep(4)
-
-    @classmethod
-    @override_settings(
-        ALGOLIA={
-            "INDEX_SUFFIX": TEST_INDEX_SUFFIX,
-            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
-            "API_KEY": settings.ALGOLIA["API_KEY"],
-            "AUTO_INDEXING": True,
-        }
-    )
-    def tearDownClass(cls):
-        super().tearDownClass()
-        algolia_engine.client.delete_index(
-            f"{ProductIndex.index_name}_{TEST_INDEX_SUFFIX}"
-        )
-        algolia_engine.reset(settings.ALGOLIA)
-
     def test_can_list_all_products(self):
         resp = self.client.get(reverse("api.products:products-list"))
         self.assertEqual(len(resp.json()["results"]), 2)
@@ -1230,23 +1161,11 @@ class AddonSearchTestCase(AuthenticatedTestCase):
 
 @tag("algolia")
 @tag("integration")
-class ChannelTypeSearchTestCase(AuthenticatedTestCase):
-    @classmethod
-    @override_settings(
-        ALGOLIA={
-            "INDEX_SUFFIX": TEST_INDEX_SUFFIX,
-            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
-            "API_KEY": settings.ALGOLIA["API_KEY"],
-            "AUTO_INDEXING": True,
-        }
-    )
-    def setUpClass(cls):
-        super().setUpClass()
-        algolia_engine.reset(settings.ALGOLIA)
-        if not algolia_engine.is_registered(Product):
-            algolia_engine.register(Product, ProductIndex)
-            algolia_engine.reindex_all(Product)
+class ChannelTypeSearchTestCase(SearchTestCase):
+    model_index_class_pairs = [(Product, ProductIndex)]
 
+    @classmethod
+    def setUpSearchClass(cls):
         jobboard_channel = Channel.objects.create(type=Channel.Type.JOB_BOARD)
         community_channel = Channel.objects.create(type=Channel.Type.COMMUNITY)
         publication_channel = Channel.objects.create(type=Channel.Type.PUBLICATION)
@@ -1273,27 +1192,6 @@ class ChannelTypeSearchTestCase(AuthenticatedTestCase):
             is_active=True,
             channel_id=publication_channel.id,
         )
-
-        time.sleep(4)
-
-    def setUp(self) -> None:
-        super().setUp()
-
-    @classmethod
-    @override_settings(
-        ALGOLIA={
-            "INDEX_SUFFIX": TEST_INDEX_SUFFIX,
-            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
-            "API_KEY": settings.ALGOLIA["API_KEY"],
-            "AUTO_INDEXING": True,
-        }
-    )
-    def tearDownClass(cls):
-        super().tearDownClass()
-        algolia_engine.client.delete_index(
-            f"{ProductIndex.index_name}_{TEST_INDEX_SUFFIX}"
-        )
-        algolia_engine.reset(settings.ALGOLIA)
 
     def test_can_filter_by_channel_type(self):
         resp = self.client.get(
