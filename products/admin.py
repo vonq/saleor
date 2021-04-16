@@ -78,6 +78,10 @@ class JobFunctionModelInline(admin.TabularInline):
 
 
 class ProductForm(forms.ModelForm):
+    unit_price = forms.FloatField(required=True)
+    rate_card_price = forms.FloatField(required=True)
+    purchase_price = forms.FloatField(required=True)
+
     class Meta:
         model = Product
         fields = "__all__"
@@ -172,6 +176,7 @@ class ProductAdmin(
         "purchase_price",
         "pricing_method",
         "purchase_price_method",
+        "salesforce_product_solution",
         "salesforce_sync_status",
         "salesforce_last_sync",
         "salesforce_id",

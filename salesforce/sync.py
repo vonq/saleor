@@ -1,25 +1,12 @@
 import json
-import logging
 from functools import lru_cache
+from typing import Optional
 
 from django.conf import settings
-from simple_salesforce import SalesforceResourceNotFound, format_soql
+from django_q.conf import logger
+from simple_salesforce import SalesforceResourceNotFound, format_soql, SalesforceError
 
 from api.salesforce.salesforce_client import get_session_id, get_client
-
-logger = logging.getLogger(__name__)
-
-
-class RemoteProductNotFound(Exception):
-    pass
-
-
-class SyncProductError(Exception):
-    pass
-
-
-class CreatePricebookEntryError(Exception):
-    pass
 
 
 def login():
@@ -63,6 +50,7 @@ def make_salesforce_product(product_instance):
         "Tracking_Method__c": cast_none(product_instance.tracking_method),
         "Pricing_Method__c": cast_none(product_instance.pricing_method),
         "PurchasePriceMethod__c": cast_none(product_instance.purchase_price_method),
+        "Product_Solution__c": cast_none(product_instance.salesforce_product_solution),
     }
 
 
@@ -75,7 +63,8 @@ def update_pricebook(client, product_id, product_instance):
     )
     pricebook = pricebook["records"]
     if not pricebook or len(pricebook) > 1:
-        return
+        logger.error(f"No pricebook entry for {product_instance.product_id}")
+        return False
     pricebook_entry = pricebook[0]
     pricebook_entry_id = pricebook_entry.pop("Id")
     client.PriceBookEntry.update(
@@ -86,6 +75,7 @@ def update_pricebook(client, product_id, product_instance):
             "Purchase_Price__c": product_instance.purchase_price,
         },
     )
+    return True
 
 
 @lru_cache
@@ -202,53 +192,80 @@ def push_channel(channel_instance):
             }
         )
 
-    resp = client.bulk.Product2.upsert(products_to_link, external_id_field="Uuid__c")
+    client.bulk.Product2.upsert(products_to_link, external_id_field="Uuid__c")
     channel_instance.mark_as_synced()
 
 
 def update_product(product_instance):
+    logger.info(f"Updating product {product_instance.salesforce_id}...")
     client = login()
     try:
         salesforce_product = client.Product2.get_by_custom_id(
             "Uuid__c", product_instance.salesforce_id
         )
-    except SalesforceResourceNotFound:
-        raise RemoteProductNotFound(
-            f"Couldn't find any product with external id {product_instance.salesforce_id}"
+    except SalesforceResourceNotFound as e:
+        logger.error(
+            f"Couldn't find any product with external id {product_instance.salesforce_id} to update: {e}"
         )
+        product_instance.mark_sync_failed()
+        return
 
     product = make_salesforce_product(product_instance)
     product.pop("Uuid__c")
     product_id = salesforce_product["Id"]
 
-    resp = client.Product2.update(product_id, product)
-    if resp >= 400:
-        raise SyncProductError(
-            f"Couldn't sync product {product_instance.title} with SF"
+    try:
+        resp = client.Product2.update(product_id, product)
+    except SalesforceError as e:
+        logger.error(
+            f"Error {e.__class__.__name__} when updating product {product_instance.salesforce_id} in Salesforce: {e}"
         )
+        product_instance.mark_sync_failed()
+        return
 
-    update_pricebook(client, product_id, product_instance)
+    if resp >= 400:
+        logger.error(
+            f"Couldn't sync product {product_instance.salesforce_id} with SF: update call response code was {resp}"
+        )
+        product_instance.mark_sync_failed()
+        return
 
+    if not update_pricebook(client, product_id, product_instance):
+        logger.error(
+            f"Attempting to create a pricebook entry for {product_instance.salesforce_id}"
+        )
+        if not create_pricebook_entry(client, product_instance, product_id):
+            logger.error(
+                f"Failed Salesforce sync for product {product_instance.salesforce_id}"
+            )
+            product_instance.mark_sync_failed()
+            return
+
+    logger.info(
+        f"Successfully synced product {product_instance.salesforce_id} with Salesforce"
+    )
     product_instance.mark_as_synced()
 
 
 def create_pricebook_entry(client, product_instance, product_id):
-    resp = client.PriceBookEntry.create(
-        {
-            "Product2Id": product_id,
-            "Pricebook2Id": get_standard_pricebook_id(client),
-            "IsActive": True,
-            "UnitPrice": product_instance.unit_price,
-            "Rate_Card_supplier__c": product_instance.rate_card_price,
-            "Purchase_Price__c": product_instance.purchase_price,
-        }
-    )
-
-    if not resp["success"]:
-        logger.error(resp)
-        raise CreatePricebookEntryError(
-            f"Could not create pricebook entry for product {product_id}"
+    try:
+        client.PriceBookEntry.create(
+            {
+                "Product2Id": product_id,
+                "Pricebook2Id": get_standard_pricebook_id(client),
+                "IsActive": True,
+                "UnitPrice": product_instance.unit_price,
+                "Rate_Card_supplier__c": product_instance.rate_card_price,
+                "Purchase_Price__c": product_instance.purchase_price,
+            }
         )
+
+    except SalesforceError as e:
+        logger.error(
+            f"Error {e.__class__.__name__} when creating pricebook entry for product {product_instance.product_id}: {e}"
+        )
+        return False
+    return True
 
 
 def get_standard_pricebook_id(client):
@@ -256,21 +273,35 @@ def get_standard_pricebook_id(client):
     return resp["records"][0]["Id"]
 
 
-def create_salesforce_product(client, product_instance):
+def create_salesforce_product(client, product_instance) -> Optional[str]:
     product = make_salesforce_product(product_instance)
-    resp = client.Product2.create(product)
-    if not resp["success"]:
-        logger.error(resp)
-        raise SyncProductError(f"Error creating product {product_instance.product_id}")
     product_instance.salesforce_id = product["Uuid__c"]
-    return resp["id"]
+    try:
+        resp = client.Product2.create(product)
+    except SalesforceError as e:
+        logger.error(
+            f"Error {e.__class__.__name__} when creating product {product_instance.salesforce_id}: {e}"
+        )
+        return
+    else:
+        return resp["id"]
 
 
 def push_product(product_instance):
+    logger.info(
+        f"Pushing new product {product_instance.salesforce_id} to SalesForce..."
+    )
     client = login()
 
     product_id = create_salesforce_product(client, product_instance)
+    if product_id:
+        created = create_pricebook_entry(client, product_instance, product_id)
+        if created:
+            product_instance.mark_as_synced()
+            logger.info(
+                f"Successfully synced product {product_instance.salesforce_id} with Salesforce"
+            )
+            return
 
-    create_pricebook_entry(client, product_instance, product_id)
-
-    product_instance.mark_as_synced()
+    logger.info(f"Failed Salesforce sync for product {product_instance.salesforce_id}")
+    product_instance.mark_sync_failed()

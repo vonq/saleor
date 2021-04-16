@@ -45,6 +45,7 @@ class SFSyncable(CreatedUpdatedModelMixin):
         SYNCED = "synced"
         UNSYNCED = "unsynced"
         PENDING = "pending"
+        ERRORED = "errored"
 
     salesforce_sync_status = models.CharField(
         max_length=8,
@@ -55,6 +56,11 @@ class SFSyncable(CreatedUpdatedModelMixin):
 
     def mark_as_synced(self):
         self.salesforce_sync_status = self.SyncStatusChoices.SYNCED
+        self.salesforce_last_sync = datetime.datetime.now(tz=UTC)
+        self.save()
+
+    def mark_sync_failed(self):
+        self.salesforce_sync_status = self.SyncStatusChoices.ERRORED
         self.salesforce_last_sync = datetime.datetime.now(tz=UTC)
         self.save()
 
