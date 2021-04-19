@@ -101,11 +101,11 @@ class ProductIndex(AlgoliaIndex):
         "attributeForDistinct": None,
         "exactOnSingleWordQuery": "attribute",
         "ranking": [
+            "typo",
             "filters",
             "desc(maximum_locations_cardinality)",
             "desc(maximum_jobfunctions_depth)",
             "desc(order_frequency)",
-            "typo",
         ],
         "customRanking": [],
         "separatorsToIndex": "",
