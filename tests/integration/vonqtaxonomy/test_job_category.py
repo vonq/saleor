@@ -49,3 +49,9 @@ class JobCategoryTaxonomyTestCase(AuthenticatedTestCase):
             reverse("vonqtaxonomy:job-category") + "?job_function_name=foobar"
         )
         self.assertEqual(response.status_code, 404)
+
+    def test_handles_missing_category(self):
+        response = self.client.get(
+            reverse("vonqtaxonomy:job-category") + "?industry_name=foobar"
+        )
+        self.assertEqual(response.status_code, 400)

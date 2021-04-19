@@ -12,10 +12,11 @@ from api.vonqtaxonomy.models import Industry, JobCategory
 
 @permission_classes((IsMapiOrJmpUser,))
 def get_job_category_mapping(request):
-    text = unquote(request.GET.get("job_function_name"))
-    if not text:
+    job_function_name = request.GET.get("job_function_name")
+    if not job_function_name:
         return JsonResponse({"error": "No job function name specified"}, status=400)
 
+    text = unquote(job_function_name)
     try:
         job_category = JobCategory.objects.get(
             Q(jobfunction__name_en__iexact=text)
@@ -35,9 +36,11 @@ def get_job_category_mapping(request):
 
 @permission_classes((IsMapiOrJmpUser,))
 def get_industry_mapping(request):
-    text = unquote(request.GET.get("industry_name"))
-    if not text:
+    industry_name = request.GET.get("industry_name")
+    if not industry_name:
         return JsonResponse({"error": "No industry name specified"}, status=400)
+
+    text = unquote(industry_name)
     try:
         industry = Industry.objects.get(
             Q(industry__name_en__iexact=text)
