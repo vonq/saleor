@@ -14,14 +14,12 @@ class HasHtmlTestCase(TestMigrations):
         Product = apps.get_model("products", "Product")
 
         self.unmigrated_product = Product.objects.create(
-            is_active=True,
             status="Negotiated",
             title="Construction board",
             salesforce_product_type="job board",
         )
 
         Product.objects.create(
-            is_active=True,
             status="Negotiated",
             title="Low duration board",
             duration_days=10,
@@ -29,7 +27,6 @@ class HasHtmlTestCase(TestMigrations):
         )
 
         self.migrated_product = Product.objects.create(
-            is_active=True,
             status="Negotiated",
             has_html_posting=True,
             title="Engineering Board",
@@ -37,7 +34,6 @@ class HasHtmlTestCase(TestMigrations):
         )
 
         Product.objects.create(
-            is_active=True,
             status="Negotiated",
             title="General",
             salesforce_product_type="job board",

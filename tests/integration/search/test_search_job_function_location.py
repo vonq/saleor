@@ -84,8 +84,7 @@ class ProductSearchWithNestedJobFunctionAndLocationTest(SearchTestCase):
         for location in Location.objects.all():
             for job_function in JobFunction.objects.all():
                 product = Product(
-                    is_active=True,
-                    status="Negotiated",
+                    status=Product.Status.ACTIVE,
                     title=f"Product - {job_function.name} - {location.canonical_name}",
                     salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
                 )

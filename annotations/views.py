@@ -468,7 +468,7 @@ def reference_product_search(request):
     products = Product.objects.filter(
         Q(job_functions__id__in=expanded_functions)
         & Q(locations__id__in=expanded_locations)
-        & Q(is_active=True)
+        & Q(status=Product.Status.ACTIVE)
     )
 
     # need to find depth of most specific location matching the search query

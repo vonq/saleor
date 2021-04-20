@@ -3,7 +3,7 @@ from typing import ClassVar, Iterable, Type
 
 from drf_yasg2 import openapi
 
-from api.products.models import JobFunction, Location, Channel
+from api.products.models import JobFunction, Location, Channel, Product
 from api.products.search.filters.scores import (
     descendant_job_functions_score,
     exact_location_score,
@@ -183,7 +183,7 @@ class StatusFacetFilter(FacetFilter):
     operator = "AND"
 
     def __init__(self, **kwargs):
-        self.filters = 'filterable_status:"None" OR filterable_status:"Trial" OR filterable_status:"Negotiated"'
+        self.filters = f'filterable_status:"{Product.Status.ACTIVE}"'
 
 
 class ProductsOnlyFacetFilter(FacetFilter):

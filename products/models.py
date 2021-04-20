@@ -494,11 +494,14 @@ class IndexSearchableProductMixin:
     similarweb_top_country_shares: dict
     status: str
     external_product_name: str
-    is_active: bool
 
     @property
     def all_industries(self) -> Iterable["Industry"]:
         return self.industries.all()
+
+    @property
+    def is_active(self):
+        return self.status == Product.Status.ACTIVE
 
     @property
     def all_job_functions(self) -> Iterable["JobFunction"]:
@@ -921,17 +924,9 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
             "Disabled",
             _("Disabled"),
         )
-        NEGOTIATED = (
-            "Negotiated",
-            _("Negotiated"),
-        )
-        TRIAL = (
-            "Trial",
-            _("Trial"),
-        )
-        NONE = (
-            None,
-            _("--None--"),
+        ACTIVE = (
+            "Active",
+            _("Active"),
         )
 
     class PurchasePriceMethodType(models.TextChoices):
@@ -1126,7 +1121,6 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         upload_to=Logo.logo_path,
         storage=S3Boto3Storage(),
     )
-    is_active = models.BooleanField(default=False)
 
     available_in_ats = models.BooleanField(default=True)
     available_in_jmp = models.BooleanField(default=True)

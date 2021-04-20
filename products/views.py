@@ -210,12 +210,9 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         return self._paginator
 
     def get_queryset(self):
-        queryset = (
-            self.queryset.filter(is_active=True)
-            .filter(
-                salesforce_product_type__in=Product.SalesforceProductType.products()
-            )
-            .exclude(status__in=[Product.Status.BLACKLISTED, Product.Status.DISABLED])
+        queryset = self.queryset.filter(
+            status=Product.Status.ACTIVE,
+            salesforce_product_type__in=Product.SalesforceProductType.products(),
         )
 
         if self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]:
@@ -306,9 +303,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
 
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
-        return queryset.filter(is_active=True).exclude(
-            status__in=[Product.Status.BLACKLISTED, Product.Status.DISABLED]
-        )
+        return queryset.filter(status=Product.Status.ACTIVE)
 
     def check_object_permissions(self, request, obj):
         super().check_object_permissions(request, obj)
@@ -474,10 +469,9 @@ class AddonsViewSet(ProductsViewSet):
     http_method_names = ("get",)
 
     def get_queryset(self):
-        active_products = (
-            self.queryset.filter(is_active=True)
-            .filter(salesforce_product_type__in=Product.SalesforceProductType.addons())
-            .exclude(status__in=[Product.Status.BLACKLISTED, Product.Status.DISABLED])
+        active_products = self.queryset.filter(
+            status=Product.Status.ACTIVE,
+            salesforce_product_type__in=Product.SalesforceProductType.addons(),
         )
         if self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]:
             return active_products.filter(available_in_jmp=True)

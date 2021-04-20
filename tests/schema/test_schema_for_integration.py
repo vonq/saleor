@@ -25,14 +25,14 @@ class TestSchemaIntegration(AuthenticatedTestCase):
         Product.objects.bulk_create(
             [
                 Product(
-                    is_active=True,
+                    status=Product.Status.ACTIVE,
                     title="A board for web developers",
                     url="https://something.int/webDev",
                     product_id="1",
                     salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
                 ),
                 Product(
-                    is_active=True,
+                    status=Product.Status.ACTIVE,
                     title="A board for java developers",
                     url="https://something.int/javaDev",
                     product_id="2",

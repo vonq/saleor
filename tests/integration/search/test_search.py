@@ -101,8 +101,7 @@ class ProductSearchTestCase(SearchTestCase):
         cls.random_industry.save()
 
         cls.construction_board = Product(
-            is_active=True,
-            status="Negotiated",
+            status=Product.Status.ACTIVE,
             title="Construction board",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
@@ -111,8 +110,7 @@ class ProductSearchTestCase(SearchTestCase):
         cls.construction_board.save()
 
         low_duration_board = Product(
-            is_active=True,
-            status="Negotiated",
+            status=Product.Status.ACTIVE,
             title="Low duration board",
             duration_days=10,
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
@@ -120,8 +118,7 @@ class ProductSearchTestCase(SearchTestCase):
         low_duration_board.save()
 
         cls.engineering_board = Product(
-            is_active=True,
-            status="Negotiated",
+            status=Product.Status.ACTIVE,
             title="Engineering Board",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
@@ -130,8 +127,7 @@ class ProductSearchTestCase(SearchTestCase):
         cls.engineering_board.save()
 
         cls.general_board = Product(
-            is_active=True,
-            status="Negotiated",
+            status=Product.Status.ACTIVE,
             title="General",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
             duration_days=20,
@@ -143,8 +139,7 @@ class ProductSearchTestCase(SearchTestCase):
         cls.general_board.save()
 
         cls.null_board = Product(
-            is_active=True,
-            status="Negotiated",
+            status=Product.Status.ACTIVE,
             title="Null",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
             duration_days=30,
@@ -152,8 +147,7 @@ class ProductSearchTestCase(SearchTestCase):
         cls.null_board.save()
 
         cls.active_product = Product(
-            is_active=True,
-            status="Negotiated",
+            status=Product.Status.ACTIVE,
             salesforce_id="active_product",
             title="Negotiated product",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
@@ -162,16 +156,14 @@ class ProductSearchTestCase(SearchTestCase):
         cls.active_product.save()
 
         cls.inactive_product = Product(
-            is_active=False,
-            status="Negotiated",
+            status="Disabled",
             salesforce_id="inactive_product",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         cls.inactive_product.save()
 
         cls.available_in_jmp_product = Product(
-            is_active=True,
-            status="Trial",
+            status=Product.Status.ACTIVE,
             available_in_jmp=True,
             title="Product available in JMP",
             salesforce_id="available_jmp_product",
@@ -181,8 +173,7 @@ class ProductSearchTestCase(SearchTestCase):
         cls.available_in_jmp_product.save()
 
         cls.unavailable_in_jmp_product = Product(
-            is_active=True,
-            status="Trial",
+            status=Product.Status.ACTIVE,
             available_in_jmp=False,
             salesforce_id="unavailable_jmp_product",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
@@ -190,8 +181,7 @@ class ProductSearchTestCase(SearchTestCase):
         cls.unavailable_in_jmp_product.save()
 
         cls.unwanted_status_product = Product(
-            is_active=True,
-            status="Blacklisted",
+            status=Product.Status.BLACKLISTED,
             salesforce_id="unwanted_status_product",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
@@ -255,7 +245,7 @@ class ProductSearchTestCase(SearchTestCase):
         cls.global_id = global_location.id
 
         product = Product(
-            is_active=True,
+            status=Product.Status.ACTIVE,
             title="Something in the whole of the UK",
             url="https://vonq.com/somethinglkasjdfhg",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
@@ -265,7 +255,7 @@ class ProductSearchTestCase(SearchTestCase):
         product.save()
 
         product2 = Product(
-            is_active=True,
+            status=Product.Status.ACTIVE,
             title="Something in Reading",
             url="https://vonq.com/something",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
@@ -275,7 +265,7 @@ class ProductSearchTestCase(SearchTestCase):
         product2.save()
 
         product3 = Product(
-            is_active=True,
+            status=Product.Status.ACTIVE,
             title="Something in Slough",
             url="https://vonq.com/something2",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
@@ -285,7 +275,7 @@ class ProductSearchTestCase(SearchTestCase):
         product3.save()
 
         product4 = Product(
-            is_active=True,
+            status=Product.Status.ACTIVE,
             title="Something in Slough and Reading",
             url="https://vonq.com/something4",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
@@ -296,7 +286,7 @@ class ProductSearchTestCase(SearchTestCase):
         product4.save()
 
         global_product = Product(
-            is_active=True,
+            status=Product.Status.ACTIVE,
             title="Something Global",
             url="https://vonq.com/somethingGlobal",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
@@ -344,7 +334,7 @@ class ProductSearchTestCase(SearchTestCase):
         cls.java_developer_id = java_developer.id
 
         product1 = Product(
-            is_active=True,
+            status=Product.Status.ACTIVE,
             title="A job board for developers",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
@@ -353,7 +343,7 @@ class ProductSearchTestCase(SearchTestCase):
         product1.save()
 
         product1_but_global = Product(
-            is_active=True,
+            status=Product.Status.ACTIVE,
             title="A global job board for developers",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
@@ -363,8 +353,7 @@ class ProductSearchTestCase(SearchTestCase):
         product1_but_global.save()
 
         product2 = Product(
-            is_active=True,
-            status="Trial",
+            status=Product.Status.ACTIVE,
             title="A job board for construction jobs",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
@@ -373,7 +362,7 @@ class ProductSearchTestCase(SearchTestCase):
         product2.save()
 
         web_development_board = Product.objects.create(
-            is_active=True,
+            status=Product.Status.ACTIVE,
             title="A board for web developers",
             url="https://something.int/webDev",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
@@ -397,7 +386,7 @@ class ProductSearchTestCase(SearchTestCase):
 
         high_frequency_product = Product(
             title="frequency 1",
-            is_active=True,
+            status=Product.Status.ACTIVE,
             salesforce_id="high",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
             order_frequency=0.9,
@@ -410,7 +399,7 @@ class ProductSearchTestCase(SearchTestCase):
 
         medium_frequency_product = Product(
             title="frequency 2",
-            is_active=True,
+            status=Product.Status.ACTIVE,
             salesforce_id="medium",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
             order_frequency=0.6,
@@ -421,7 +410,7 @@ class ProductSearchTestCase(SearchTestCase):
 
         low_frequency_product = Product(
             title="frequency 3",
-            is_active=True,
+            status=Product.Status.ACTIVE,
             salesforce_id="low",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
             order_frequency=0.1,
@@ -443,7 +432,7 @@ class ProductSearchTestCase(SearchTestCase):
 
         my_own_product = Product(
             title="my_own_product",
-            is_active=True,
+            status=Product.Status.ACTIVE,
             salesforce_id="my_own_product",
             customer_id="f17d9484-b9ba-5262-8f8e-b986e4b8c79d",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
@@ -453,7 +442,7 @@ class ProductSearchTestCase(SearchTestCase):
         my_own_product.save()
         not_my_own_product = Product(
             title="not_my_own_product",
-            is_active=True,
+            status=Product.Status.ACTIVE,
             salesforce_id="not_my_own_product",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
             salesforce_product_solution=Product.SalesforceProductSolution.JOB_MARKETING,
@@ -477,7 +466,7 @@ class ProductSearchTestCase(SearchTestCase):
             for i in range(0, 6):
                 recommended_product = Product(
                     title=f"recommendation {channel.type} {i}",
-                    is_active=True,
+                    status=Product.Status.ACTIVE,
                     salesforce_id=f"recommendation {channel.type} {i}",
                     order_frequency=0.1 * i,
                     salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
@@ -1112,36 +1101,36 @@ class AddonSearchTestCase(SearchTestCase):
         addon_product_1 = Product.objects.create(
             title="This is an addon",
             salesforce_product_type=Product.SalesforceProductType.VONQ_SERVICES,
-            is_active=True,
+            status=Product.Status.ACTIVE,
         )
         addon_product_1 = Product.objects.create(
             title="This is another addon",
             salesforce_product_type=Product.SalesforceProductType.IMAGE_CREATION,
-            is_active=True,
+            status=Product.Status.ACTIVE,
         )
 
         proper_product = Product.objects.create(
             title="This is a product",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
-            is_active=True,
+            status=Product.Status.ACTIVE,
         )
 
         proper_product2 = Product.objects.create(
             title="This is another product",
             salesforce_product_type=Product.SalesforceProductType.SOCIAL,
-            is_active=True,
+            status=Product.Status.ACTIVE,
         )
 
         internal_product = Product.objects.create(
             title="Internal product",
             salesforce_product_type=Product.SalesforceProductType.FINANCE,
-            is_active=True,
+            status=Product.Status.ACTIVE,
         )
 
         other_interal_product = Product.objects.create(
             title="Another internal product",
             salesforce_product_type=Product.SalesforceProductType.OTHER,
-            is_active=True,
+            status=Product.Status.ACTIVE,
         )
 
     def test_can_list_all_products(self):
@@ -1173,23 +1162,20 @@ class ChannelTypeSearchTestCase(SearchTestCase):
         job_board = Product.objects.create(
             title="This is a job board",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
-            is_active=True,
-            status="Negotiated",
+            status=Product.Status.ACTIVE,
             channel_id=jobboard_channel.id,
         )
         community_product = Product.objects.create(
             title="This is a community product",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
-            status="Negotiated",
-            is_active=True,
+            status=Product.Status.ACTIVE,
             channel_id=community_channel.id,
         )
 
         publication_product = Product.objects.create(
             title="This is a publication product",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
-            status="Negotiated",
-            is_active=True,
+            status=Product.Status.ACTIVE,
             channel_id=publication_channel.id,
         )
 

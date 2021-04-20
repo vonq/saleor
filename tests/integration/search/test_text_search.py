@@ -17,13 +17,13 @@ class ProductSearchByTextTest(SearchTestCase):
     def setUpSearchClass(cls):
         Product.objects.create(
             title="Reddit - job ad",
-            is_active=True,
+            status=Product.Status.ACTIVE,
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
 
         Product.objects.create(
             title="Efinancialcareers - job credit",
-            is_active=True,
+            status=Product.Status.ACTIVE,
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
 
@@ -31,7 +31,7 @@ class ProductSearchByTextTest(SearchTestCase):
 
         Product.objects.create(
             title="Linkedin - Job posting",
-            is_active=True,
+            status=Product.Status.ACTIVE,
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
 
@@ -43,7 +43,7 @@ class ProductSearchByTextTest(SearchTestCase):
         england.save()
         linkfinance = Product(
             title="Linkfinance - basic posting",
-            is_active=True,
+            status=Product.Status.ACTIVE,
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
         linkfinance.save()
