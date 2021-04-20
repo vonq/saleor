@@ -251,15 +251,22 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
 
     @staticmethod
     def add_recommendation_filter(queryset):
-        is_generic = lambda: Q(job_functions=None, industries=None) | Q(
-            # Generic industry
-            industries__in=[29]
-        )
-        is_not_social = lambda: ~Q(channel__type=Channel.Type.SOCIAL_MEDIA)
+        def is_not_free_except_for_my_own_products():
+            return Q(purchase_price__gt=0) | ~Q(
+                salesforce_product_category=Product.SalesforceProductCategory.GENERIC
+            )
 
-        generic_filter = (
-            queryset.filter().filter(is_generic()).filter(is_not_social())[:2]
-        )
+        def is_generic():
+            return Q(job_functions=None, industries=None) | Q(
+                # Generic industry
+                industries__in=[29]
+            )
+
+        def is_not_social():
+            return ~Q(channel__type=Channel.Type.SOCIAL_MEDIA)
+
+        queryset = queryset.filter(is_not_free_except_for_my_own_products())
+        generic_filter = queryset.filter(is_generic()).filter(is_not_social())[:2]
         niche_filter = queryset.filter(is_not_social()).exclude(is_generic())[:2]
         social_filter = queryset.exclude(is_not_social()).order_by("-order_frequency")[
             :2

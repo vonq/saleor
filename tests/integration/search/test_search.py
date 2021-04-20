@@ -469,11 +469,31 @@ class ProductSearchTestCase(SearchTestCase):
                     status=Product.Status.ACTIVE,
                     salesforce_id=f"recommendation {channel.type} {i}",
                     order_frequency=0.1 * i,
+                    purchase_price=123,
+                    unit_price=123,
                     salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+                    salesforce_product_category=Product.SalesforceProductCategory.GENERIC,
                 )
+                # one free product with max order frequency
+                if i == 6:
+                    recommended_product.purchase_price = 0
+                    recommended_product.unit_price = 0
+                    recommended_product.order_frequency = 1
+                # one my own product with max order frequency
+                if i == 5:
+                    recommended_product.salesforce_product_category = (
+                        Product.SalesforceProductCategory.CUSTOMER_SPECIFIC
+                    )
+                    recommended_product.order_frequency = 1
+
                 recommended_product.save()
                 recommended_product.channel = channel
-                recommended_product.job_functions.add(job_function_for_recommendations)
+
+                # keep 1 generic product for each channel type
+                if not i == 0:
+                    recommended_product.job_functions.add(
+                        job_function_for_recommendations
+                    )
                 recommended_product.save()
 
     def setUp(self) -> None:
@@ -543,6 +563,11 @@ class ProductSearchTestCase(SearchTestCase):
         def get_number_of_niche_products(products):
             return len([p for p in products if not is_generic_product(p)])
 
+        def is_a_free_product_present(products):
+            return (
+                len([p for p in products if not p["vonq_price"][0]["amount"] > 0]) > 0
+            )
+
         resp = self.client.get(
             reverse("api.products:products-list")
             + f"?jobFunctionId={self.job_function_for_recommendations_id}&recommended=true"
@@ -552,6 +577,7 @@ class ProductSearchTestCase(SearchTestCase):
 
         response = resp.json()["results"]
 
+        self.assertFalse(is_a_free_product_present(response))
         self.assertEqual(
             get_number_of_products_for_channel_type(
                 response, Channel.Type.SOCIAL_MEDIA
@@ -817,7 +843,7 @@ class ProductSearchTestCase(SearchTestCase):
         )
         # 1 UK product, 9 global products
         # TODO fix
-        self.assertEqual(resp_one.json()["count"], 9)
+        self.assertEqual(resp_one.json()["count"], 13)
 
     def test_can_search_by_exact_location(self):
         only_filtered_response = self.client.get(
