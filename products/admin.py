@@ -126,7 +126,14 @@ class ProductAdmin(
     ImageCroppingMixin, PermissionBasedFieldsMixin, TranslationAdmin, DynamicArrayMixin
 ):
     form = ProductForm
-    list_display = ["external_product_name", "url", "created", "updated"]
+    list_display = [
+        "external_product_name",
+        "url",
+        "created",
+        "updated",
+        "status",
+        "salesforce_sync_status",
+    ]
     readonly_fields = [
         "external_product_name",
         "product_id",
@@ -151,7 +158,6 @@ class ProductAdmin(
         "categories",
         "job_functions",
         "status",
-        "is_active",
         "available_in_jmp",
         "is_recommended",
         "customer_id",
