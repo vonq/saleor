@@ -96,7 +96,7 @@ def get_accounts_by_ids(ids):
     client = login()
     accounts = client.query(
         format_soql(
-            "SELECT Id, Name, Type FROM Account WHERE Type='Partner' AND Id IN {ids}",
+            "SELECT Id, Name, Type FROM Account WHERE Id IN {ids}",
             ids=ids,
         )
     )
