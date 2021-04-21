@@ -78,9 +78,9 @@ class JobFunctionModelInline(admin.TabularInline):
 
 
 class ProductForm(forms.ModelForm):
-    unit_price = forms.FloatField(required=True)
-    rate_card_price = forms.FloatField(required=True)
-    purchase_price = forms.FloatField(required=True)
+    unit_price = forms.FloatField(required=True, label="List Price (€)")
+    rate_card_price = forms.FloatField(required=True, label="Rate Card Price (€)")
+    purchase_price = forms.FloatField(required=True, label="Purchase Price (€)")
 
     class Meta:
         model = Product

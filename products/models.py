@@ -1052,7 +1052,7 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
             return True
         return False
 
-    title = models.CharField(max_length=200, null=True)
+    title = models.CharField(max_length=200, null=True, verbose_name="Product Name")
     url = models.URLField(
         max_length=300, null=True, blank=True, verbose_name="Product URL"
     )
