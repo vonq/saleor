@@ -6,6 +6,7 @@ from django.conf import settings
 from django_q.conf import logger
 from simple_salesforce import SalesforceResourceNotFound, format_soql, SalesforceError
 
+from api.products.models import Product
 from api.salesforce.salesforce_client import get_session_id, get_client
 
 
@@ -38,7 +39,9 @@ def make_salesforce_product(product_instance):
         "Available_in_JMP__c": product_instance.available_in_jmp,
         "Duration__c": product_instance.duration_days,
         "TimeToGoLive__c": product_instance.time_to_process,
-        "Product_Status__c": product_instance.status,
+        "Product_Status__c": None
+        if product_instance.status == Product.Status.ACTIVE
+        else product_instance.status,
         "Type__c": cast_none(product_instance.salesforce_product_type),
         "Product_Category__c": cast_none(product_instance.salesforce_product_category),
         "Cross_Posting__c": json.dumps(getattr(product_instance, "cross_postings", [])),
