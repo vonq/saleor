@@ -21,7 +21,7 @@ ENV = os.getenv("ENV", "dev")
 
 
 def is_development() -> bool:
-    """ Returns true if environment is development """
+    """Returns true if environment is development"""
     return ENV == "dev"
 
 

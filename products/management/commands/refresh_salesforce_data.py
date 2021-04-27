@@ -85,7 +85,7 @@ class Command(BaseCommand):
         current_product.save()
 
     def __link_product_to_channel(self, product: Product, channel: Channel):
-        """ Updates a product's channel foreign key """
+        """Updates a product's channel foreign key"""
         if product.channel != channel:
             self.stdout.write(
                 "Updating product {}'s channel to {}".format(

@@ -110,26 +110,28 @@ class Industry(models.Model):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=100)
-
-    objects = AcrossLanguagesQuerySet.as_manager()
-
     class Type(models.TextChoices):
         CAREER_LEVEL = (
             "career level",
             _("Career level"),
         )
+        DIVERSITY = ("diversity", _("Diversity"))
+        JOB_TYPE = ("job type", _("Job type"))
         INDUSTRY = (  # placeholder for future reference
             "industry",
             _("Industry"),
         )
+        __empty__ = _("(Unknown)")
 
-    type = (
-        models.CharField(max_length=50, null=True, blank=True, choices=Type.choices),
-    )
+    name = models.CharField(max_length=100)
+    type = models.CharField(max_length=50, null=True, blank=True, choices=Type.choices)
+
+    objects = AcrossLanguagesQuerySet.as_manager()
 
     def __str__(self):
-        return self.name
+        if self.type is None:
+            return self.name
+        return self.name + " (" + self.type + ")"
 
     class Meta:
         verbose_name_plural = "categories"
@@ -812,7 +814,7 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
             return File(img_io, name=name)
 
         def should_crop_logo(format="rectangle") -> bool:
-            """ Returns whether the cropping process should de executed. Functions are used for lazy evaluation """
+            """Returns whether the cropping process should de executed. Functions are used for lazy evaluation"""
 
             def is_newly_uploaded_logo():
                 return not current_obj or getattr(self, "logo_" + format) != getattr(

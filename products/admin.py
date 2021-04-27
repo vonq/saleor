@@ -386,8 +386,9 @@ class IndustryAdmin(TranslationAdmin):
 
 @admin.register(Category)
 class CategoryAdmin(TranslationAdmin):
-    list_display = ("name",)
+    list_display = ("name", "type")
     search_fields = ("name",)
+    list_filter = ("type",)
 
 
 @admin.register(PostingRequirement)
