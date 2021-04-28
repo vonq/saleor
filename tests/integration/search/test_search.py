@@ -370,66 +370,6 @@ class ProductSearchTestCase(SearchTestCase):
         web_development_board.job_functions.add(cls.web_development)
         web_development_board.save()
 
-        # Frequency tests
-
-        cls.recruitment_industry = Industry(
-            name_en="Recruitment", vonq_taxonomy_value_id=pkb_industry.id
-        )
-        cls.recruitment_industry.save()
-
-        cls.brazil = Location(
-            mapbox_id="country.123",
-            mapbox_text="BR",
-            mapbox_context=["continent.south_america"],
-        )
-        cls.brazil.save()
-
-        high_frequency_product = Product(
-            title="frequency 1",
-            status=Product.Status.ACTIVE,
-            salesforce_id="high",
-            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
-            order_frequency=0.9,
-        )
-        high_frequency_product.save()
-
-        high_frequency_product.industries.add(cls.recruitment_industry)
-        high_frequency_product.locations.add(cls.brazil)
-        high_frequency_product.save()
-
-        medium_frequency_product = Product(
-            title="frequency 2",
-            status=Product.Status.ACTIVE,
-            salesforce_id="medium",
-            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
-            order_frequency=0.6,
-        )
-        medium_frequency_product.save()
-        medium_frequency_product.industries.add(cls.recruitment_industry)
-        medium_frequency_product.save()
-
-        low_frequency_product = Product(
-            title="frequency 3",
-            status=Product.Status.ACTIVE,
-            salesforce_id="low",
-            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
-            order_frequency=0.1,
-        )
-        low_frequency_product.save()
-        low_frequency_product.industries.add(cls.recruitment_industry)
-        low_frequency_product.save()
-
-        # Light recommendations
-
-        jobboard_channel = Channel(type=Channel.Type.JOB_BOARD)
-        jobboard_channel.save()
-        community_channel = Channel(type=Channel.Type.COMMUNITY)
-        community_channel.save()
-        publication_channel = Channel(type=Channel.Type.PUBLICATION)
-        publication_channel.save()
-        social_channel = Channel(type=Channel.Type.SOCIAL_MEDIA)
-        social_channel.save()
-
         my_own_product = Product(
             title="my_own_product",
             status=Product.Status.ACTIVE,
@@ -449,52 +389,6 @@ class ProductSearchTestCase(SearchTestCase):
             salesforce_product_category=Product.SalesforceProductCategory.GENERIC,
         )
         not_my_own_product.save()
-
-        job_function_for_recommendations = JobFunction(
-            name="Job function for recommendations",
-            vonq_taxonomy_value_id=pkb_job_category.id,
-        )
-        job_function_for_recommendations.save()
-        cls.job_function_for_recommendations_id = job_function_for_recommendations.id
-
-        for channel in [
-            jobboard_channel,
-            community_channel,
-            publication_channel,
-            social_channel,
-        ]:
-            for i in range(0, 6):
-                recommended_product = Product(
-                    title=f"recommendation {channel.type} {i}",
-                    status=Product.Status.ACTIVE,
-                    salesforce_id=f"recommendation {channel.type} {i}",
-                    order_frequency=0.1 * i,
-                    purchase_price=123,
-                    unit_price=123,
-                    salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
-                    salesforce_product_category=Product.SalesforceProductCategory.GENERIC,
-                )
-                # one free product with max order frequency
-                if i == 6:
-                    recommended_product.purchase_price = 0
-                    recommended_product.unit_price = 0
-                    recommended_product.order_frequency = 1
-                # one my own product with max order frequency
-                if i == 5:
-                    recommended_product.salesforce_product_category = (
-                        Product.SalesforceProductCategory.CUSTOMER_SPECIFIC
-                    )
-                    recommended_product.order_frequency = 1
-
-                recommended_product.save()
-                recommended_product.channel = channel
-
-                # keep 1 generic product for each channel type
-                if not i == 0:
-                    recommended_product.job_functions.add(
-                        job_function_for_recommendations
-                    )
-                recommended_product.save()
 
     def setUp(self) -> None:
         super().setUp()
@@ -547,94 +441,9 @@ class ProductSearchTestCase(SearchTestCase):
         product_titles = [result["title"] for result in results]
         self.assertFalse("my_own_product" in product_titles)
 
-    def test_can_recommend_products(self):
-        def get_number_of_products_for_channel_type(products, channel_type):
-            return len(
-                [
-                    r
-                    for r in products
-                    if r.get("channel") and r["channel"].get("type") == channel_type
-                ]
-            )
-
-        def get_number_of_generic_products(products):
-            return len([p for p in products if is_generic_product(p)])
-
-        def get_number_of_niche_products(products):
-            return len([p for p in products if not is_generic_product(p)])
-
-        def is_a_free_product_present(products):
-            return (
-                len([p for p in products if not p["vonq_price"][0]["amount"] > 0]) > 0
-            )
-
-        resp = self.client.get(
-            reverse("api.products:products-list")
-            + f"?jobFunctionId={self.job_function_for_recommendations_id}&recommended=true"
-        )
-
-        self.assertEqual(resp.json()["count"], 6)
-
-        response = resp.json()["results"]
-
-        self.assertFalse(is_a_free_product_present(response))
-        self.assertEqual(
-            get_number_of_products_for_channel_type(
-                response, Channel.Type.SOCIAL_MEDIA
-            ),
-            2,
-        )
-
-    def test_all_products_are_sorted_by_order_frequency(self):
-        def get_order_frequency(product_id):
-            return (
-                Product.objects.all()
-                .filter(product_id=product_id)
-                .first()
-                .order_frequency
-            )
-
-        resp = self.client.get(reverse("api.products:products-list"))
-        response = resp.json()["results"]
-
-        for i in range(0, len(response) - 1):
-            self.assertTrue(
-                get_order_frequency(response[i]["product_id"])
-                >= get_order_frequency(response[i + 1]["product_id"])
-            )
-
-    def test_can_prioritize_products_with_higher_order_frequency(self):
-        resp = self.client.get(
-            reverse("api.products:products-list") + f"?name=frequency"
-        )
-        response = resp.json()["results"]
-        self.assertEqual(len(response), 3)
-        self.assertEqual(response[0]["product_id"], "high")
-        self.assertEqual(response[1]["product_id"], "medium")
-        self.assertEqual(response[2]["product_id"], "low")
-
-    def test_order_frequency_rank_does_not_outweigh_filters(self):
-        """
-        The product with the highest frequency only contains one of the filters, while the other two have both.
-        We expect the ones that match both filters to appear first (ordered by frequency), followed by the product that
-        only matches one filter.
-        """
-        resp = self.client.get(
-            reverse("api.products:products-list")
-            + f"?name=frequency&includeLocationId={self.brazil.id}&industryId={self.recruitment_industry.id}"
-        )
-        response = resp.json()["results"]
-
-        self.assertEqual(len(response), 3)
-
-        # TODO fix
-        self.assertEqual(response[0]["product_id"], "medium")
-        self.assertEqual(response[1]["product_id"], "low")
-        self.assertEqual(response[2]["product_id"], "high")
-
     def test_can_fetch_all_industries(self):
         resp = self.client.get(reverse("api.products:industries-list"))
-        self.assertEqual(len(resp.json()), 4)
+        self.assertEqual(len(resp.json()), 3)
 
     def test_can_filter_products_by_industry_id(self):
         resp = self.client.get(
@@ -745,7 +554,7 @@ class ProductSearchTestCase(SearchTestCase):
 
     def test_return_all_products_with_no_locations(self):
         resp = self.client.get(reverse("api.products:products-list"))
-        self.assertEquals(len(resp.json()["results"]), 25)
+        self.assertEquals(len(resp.json()["results"]), 19)
 
     def test_products_conform_to_required_specification(self):
         resp = self.client.get(reverse("api.products:products-list"))
@@ -841,9 +650,8 @@ class ProductSearchTestCase(SearchTestCase):
             reverse("api.products:products-list")
             + f"?includeLocationId={self.united_kingdom_id}"
         )
-        # 1 UK product, 9 global products
-        # TODO fix
-        self.assertEqual(resp_one.json()["count"], 13)
+        # 1 UK product, 8 global products
+        self.assertEqual(resp_one.json()["count"], 9)
 
     def test_can_search_by_exact_location(self):
         only_filtered_response = self.client.get(
@@ -1110,6 +918,219 @@ class ProductSearchTestCase(SearchTestCase):
 
         self.assertTrue(all_products_are_generic)
         self.assertTrue(all_products_are_international)
+
+
+@tag("algolia")
+@tag("integration")
+class ProductRecommendationsTestCase(SearchTestCase):
+    model_index_class_pairs = [
+        (
+            Product,
+            ProductIndex,
+        )
+    ]
+
+    @classmethod
+    def setUpSearchClass(cls):
+        pkb_job_category = VonqJobCategory.objects.create(mapi_id=1, name="Whatever")
+
+        jobboard_channel = Channel(type=Channel.Type.JOB_BOARD)
+        jobboard_channel.save()
+        community_channel = Channel(type=Channel.Type.COMMUNITY)
+        community_channel.save()
+        publication_channel = Channel(type=Channel.Type.PUBLICATION)
+        publication_channel.save()
+        social_channel = Channel(type=Channel.Type.SOCIAL_MEDIA)
+        social_channel.save()
+
+        job_function_for_recommendations = JobFunction(
+            name="Job function for recommendations",
+            vonq_taxonomy_value_id=pkb_job_category.id,
+        )
+        job_function_for_recommendations.save()
+        cls.job_function_for_recommendations_id = job_function_for_recommendations.id
+
+        for channel in [
+            jobboard_channel,
+            community_channel,
+            publication_channel,
+            social_channel,
+        ]:
+            for i in range(0, 6):
+                recommended_product = Product(
+                    title=f"recommendation {channel.type} {i}",
+                    status=Product.Status.ACTIVE,
+                    salesforce_id=f"recommendation {channel.type} {i}",
+                    order_frequency=0.1 * i,
+                    purchase_price=123,
+                    unit_price=123,
+                    salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+                    salesforce_product_category=Product.SalesforceProductCategory.GENERIC,
+                )
+                # one free product with max order frequency
+                if i == 6:
+                    recommended_product.purchase_price = 0
+                    recommended_product.unit_price = 0
+                    recommended_product.order_frequency = 1
+                # one my own product with max order frequency
+                if i == 5:
+                    recommended_product.salesforce_product_category = (
+                        Product.SalesforceProductCategory.CUSTOMER_SPECIFIC
+                    )
+                    recommended_product.order_frequency = 1
+
+                recommended_product.save()
+                recommended_product.channel = channel
+
+                # keep 1 generic product for each channel type
+                if not i == 0:
+                    recommended_product.job_functions.add(
+                        job_function_for_recommendations
+                    )
+                recommended_product.save()
+
+    def test_can_recommend_products(self):
+        def get_number_of_products_for_channel_type(products, channel_type):
+            return len(
+                [
+                    r
+                    for r in products
+                    if r.get("channel") and r["channel"].get("type") == channel_type
+                ]
+            )
+
+        def get_number_of_generic_products(products):
+            return len([p for p in products if is_generic_product(p)])
+
+        def get_number_of_niche_products(products):
+            return len([p for p in products if not is_generic_product(p)])
+
+        def is_a_free_product_present(products):
+            return (
+                len([p for p in products if not p["vonq_price"][0]["amount"] > 0]) > 0
+            )
+
+        resp = self.client.get(
+            reverse("api.products:products-list")
+            + f"?jobFunctionId={self.job_function_for_recommendations_id}&recommended=true"
+        )
+
+        self.assertEqual(resp.json()["count"], 6)
+
+        response = resp.json()["results"]
+
+        self.assertFalse(is_a_free_product_present(response))
+        self.assertEqual(
+            get_number_of_products_for_channel_type(
+                response, Channel.Type.SOCIAL_MEDIA
+            ),
+            2,
+        )
+
+
+@tag("algolia")
+@tag("integration")
+class ProductSearchOrderByFrequencyTestCase(SearchTestCase):
+    model_index_class_pairs = [
+        (
+            Product,
+            ProductIndex,
+        )
+    ]
+
+    @classmethod
+    def setUpSearchClass(cls):
+        pkb_industry = VonqIndustry.objects.create(mapi_id=1, name="Something")
+        cls.recruitment_industry = Industry(
+            name_en="Recruitment", vonq_taxonomy_value_id=pkb_industry.id
+        )
+        cls.recruitment_industry.save()
+
+        cls.brazil = Location(
+            mapbox_id="country.123",
+            mapbox_text="BR",
+            mapbox_context=["continent.south_america"],
+        )
+        cls.brazil.save()
+
+        high_frequency_product = Product(
+            title="frequency 1",
+            status=Product.Status.ACTIVE,
+            salesforce_id="high",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            order_frequency=0.9,
+        )
+        high_frequency_product.save()
+
+        high_frequency_product.industries.add(cls.recruitment_industry)
+        high_frequency_product.locations.add(cls.brazil)
+        high_frequency_product.save()
+
+        medium_frequency_product = Product(
+            title="frequency 2",
+            status=Product.Status.ACTIVE,
+            salesforce_id="medium",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            order_frequency=0.6,
+        )
+        medium_frequency_product.save()
+        medium_frequency_product.industries.add(cls.recruitment_industry)
+        medium_frequency_product.save()
+
+        low_frequency_product = Product(
+            title="frequency 3",
+            status=Product.Status.ACTIVE,
+            salesforce_id="low",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            order_frequency=0.3,
+        )
+        low_frequency_product.save()
+        low_frequency_product.industries.add(cls.recruitment_industry)
+        low_frequency_product.save()
+
+    def test_all_products_are_sorted_by_order_frequency(self):
+        def get_order_frequency(product_id):
+            return (
+                Product.objects.all()
+                .filter(product_id=product_id)
+                .first()
+                .order_frequency
+            )
+
+        resp = self.client.get(reverse("api.products:products-list"))
+        response = resp.json()["results"]
+
+        for i in range(0, len(response) - 1):
+            self.assertTrue(
+                get_order_frequency(response[i]["product_id"])
+                >= get_order_frequency(response[i + 1]["product_id"])
+            )
+
+    def test_can_prioritize_products_with_higher_order_frequency(self):
+        resp = self.client.get(
+            reverse("api.products:products-list") + f"?name=frequency"
+        )
+        response = resp.json()["results"]
+        self.assertEqual(len(response), 3)
+        self.assertEqual(response[0]["product_id"], "high")
+        self.assertEqual(response[1]["product_id"], "medium")
+        self.assertEqual(response[2]["product_id"], "low")
+
+    def test_order_frequency_rank_does_not_outweigh_filters(self):
+        """
+        The product with the highest frequency only contains one of the filters, while the other two have both.
+        We expect the ones that match both filters to appear first (ordered by frequency), followed by the product that
+        only matches one filter.
+        """
+        resp = self.client.get(
+            reverse("api.products:products-list")
+            + f"?includeLocationId={self.brazil.id}&industryId={self.recruitment_industry.id}"
+        )
+        response = resp.json()["results"]
+
+        self.assertEqual(response[0]["product_id"], "medium")
+        self.assertEqual(response[1]["product_id"], "low")
+        self.assertEqual(response[2]["product_id"], "high")
 
 
 @tag("algolia")

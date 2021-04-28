@@ -87,3 +87,12 @@ class ProductSearchByTextTest(SearchTestCase):
         self.assertEqual(len(products), 2)
         self.assertEqual(products[0]["title"], "Linkedin - Job posting")
         self.assertEqual(products[1]["title"], "Linkfinance - basic posting")
+
+    def test_ignores_all_filters_when_searching_by_name(self):
+        products = self.client.get(
+            reverse("api.products:products-list")
+            + f"?name=linkedin&includeLocationId=123&jobFunctionId=234"
+        ).json()["results"]
+        self.assertEqual(len(products), 2)
+        self.assertEqual(products[0]["title"], "Linkedin - Job posting")
+        self.assertEqual(products[1]["title"], "Linkfinance - basic posting")

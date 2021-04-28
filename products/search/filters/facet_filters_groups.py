@@ -15,7 +15,6 @@ from api.products.search.filters.facet_filters import (
     IsInternationalFacetFilter,
 )
 from api.products.search.filters.scores import (
-    is_generic_score,
     matches_generic_international_score,
     matches_industry_and_international_score,
     matches_industry_and_location_score,
@@ -54,7 +53,7 @@ class FacetFiltersGroup:
         Helper function to conditionally allow including a group filter in the index query.
         @rtype: bool
         """
-        pass
+        return "name" not in cls.get_qp_keys(user_request)
 
     @classmethod
     def get_qp_keys(cls, user_request: Request) -> set:
@@ -67,21 +66,6 @@ class FacetFiltersGroup:
         )
         qp_keys -= {"offset", "limit", "recommended", "format", "currency"}
         return qp_keys
-
-
-class JobFunctionIndustryAndLocationGroup(FacetFiltersGroup):
-    parameter_name = "searchable_jobfunctions_industries_locations_combinations"
-    facet_filters = [
-        InclusiveJobFunctionChildrenFilter,
-        IndustryFacetFilter,
-        InclusiveLocationIdFacetFilter,
-    ]
-    operator = "AND"
-    score = matches_jobfunction_industry_and_location_score
-
-    @classmethod
-    def can_be_included(cls, user_request: Request) -> bool:
-        return True
 
 
 def get_group_facet_filter(
@@ -113,15 +97,22 @@ def get_group_facet_filter(
     return None
 
 
+class JobFunctionIndustryAndLocationGroup(FacetFiltersGroup):
+    parameter_name = "searchable_jobfunctions_industries_locations_combinations"
+    facet_filters = [
+        InclusiveJobFunctionChildrenFilter,
+        IndustryFacetFilter,
+        InclusiveLocationIdFacetFilter,
+    ]
+    operator = "AND"
+    score = matches_jobfunction_industry_and_location_score
+
+
 class JobFunctionAndLocationGroup(FacetFiltersGroup):
     parameter_name = "searchable_jobfunctions_locations_combinations"
     facet_filters = [InclusiveJobFunctionChildrenFilter, InclusiveLocationIdFacetFilter]
     operator = "AND"
     score = matches_jobfunction_and_location_score
-
-    @classmethod
-    def can_be_included(cls, user_request: Request) -> bool:
-        return True
 
 
 class GenericAndLocationGroup(FacetFiltersGroup):
@@ -134,7 +125,7 @@ class GenericAndLocationGroup(FacetFiltersGroup):
     def can_be_included(cls, user_request: Request) -> bool:
         qp_keys = cls.get_qp_keys(user_request)
         is_search_by_exact_location = "exactLocationId" in qp_keys
-        return not is_search_by_exact_location
+        return super().can_be_included(user_request) and not is_search_by_exact_location
 
 
 class InternationalAndFunctionGroup(FacetFiltersGroup):
@@ -142,10 +133,6 @@ class InternationalAndFunctionGroup(FacetFiltersGroup):
     facet_filters = [IsInternationalFacetFilter, InclusiveJobFunctionChildrenFilter]
     operator = "AND"
     score = matches_jobfunction_and_international_score
-
-    @classmethod
-    def can_be_included(cls, user_request: Request) -> bool:
-        return True
 
 
 class IndustryAndLocationGroup(FacetFiltersGroup):
@@ -156,10 +143,6 @@ class IndustryAndLocationGroup(FacetFiltersGroup):
     ]
     operator = "AND"
     score = matches_industry_and_location_score
-
-    @classmethod
-    def can_be_included(cls, user_request: Request) -> bool:
-        return True
 
 
 class IndustryAndInternationalGroup(FacetFiltersGroup):
@@ -174,7 +157,11 @@ class IndustryAndInternationalGroup(FacetFiltersGroup):
     @classmethod
     def can_be_included(cls, user_request: Request) -> bool:
         qp_keys = cls.get_qp_keys(user_request)
-        return "jobFunctionId" not in qp_keys and "jobTitleId" not in qp_keys
+        return (
+            super().can_be_included(user_request)
+            and "jobFunctionId" not in qp_keys
+            and "jobTitleId" not in qp_keys
+        )
 
 
 class GenericAndInternationalGroup(FacetFiltersGroup):
@@ -187,7 +174,6 @@ class GenericAndInternationalGroup(FacetFiltersGroup):
     def can_be_included(cls, user_request: Request) -> bool:
         qp_keys = cls.get_qp_keys(user_request)
 
-        is_search_by_name = len(qp_keys) == 1 and list(qp_keys)[0] == "name"
         is_search_by_exact_location = (
             len(qp_keys) == 1 and list(qp_keys)[0] == "exactLocationId"
         )
@@ -200,7 +186,7 @@ class GenericAndInternationalGroup(FacetFiltersGroup):
             "includeLocationId",
         }
         return (
-            not is_search_by_name
+            super().can_be_included(user_request)
             and not is_search_by_exact_location
             and not is_search_by_name_and_exact_location
             and not is_search_by_inclusive_and_exact_location
