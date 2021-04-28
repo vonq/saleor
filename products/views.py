@@ -168,7 +168,12 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     serializer_class = ProductSerializer
     http_method_names = ("get", "post")
     queryset = Product.objects.all().prefetch_related(
-        "locations", "industries", "job_functions"
+        "locations",
+        "industries",
+        "job_functions",
+        "categories",
+        "posting_requirements",
+        "channel",
     )
     lookup_field = "product_id"
     recommendation_search_limit = (
@@ -353,14 +358,18 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         detail=False,
         methods=["get"],
         permission_classes=[IsAuthenticated],
-        url_path="multiple/(?P<product_ids>(.+,?)+)",
+        url_path="multiple/(?P<product_ids>.+)",
     )
-    def multiple(self, request, **kwargs):
-        product_ids = kwargs.get("product_ids")
+    def multiple(self, request, product_ids=None):
         if not product_ids:
             raise NotFound
 
         product_ids = product_ids.split(",")
+        if len(product_ids) > 25:
+            return JsonResponse(
+                data={"error": "Cannot fetch more than 25 products at a time"},
+                status=HTTP_400_BAD_REQUEST,
+            )
         queryset = self.get_queryset().filter(product_id__in=product_ids)
         page = self.paginate_queryset(queryset)
         serializer = self.get_serializer(page, many=True)

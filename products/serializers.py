@@ -7,7 +7,7 @@ from rest_framework_recursive.fields import RecursiveField
 from api.currency.conversion import convert
 from api.currency.models import ExchangeRate
 from api.products.docs import CommonParameters
-from api.products.models import Location, JobFunction, JobTitle, Industry, Channel
+from api.products.models import Location, JobFunction, JobTitle, Channel
 from api.products.area import bounding_box_area
 
 from uuid import UUID
@@ -57,13 +57,9 @@ class JobFunctionTreeSerializer(serializers.Serializer):
     children = serializers.ListField(child=RecursiveField())
 
 
-class IndustrySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Industry
-        fields = (
-            "id",
-            "name",
-        )
+class IndustrySerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
 
 
 class LimitedLocationSerializer(serializers.Serializer):
@@ -137,48 +133,37 @@ class ProductSerializer(serializers.Serializer):
             CommonParameters.CURRENCY.name
         )
 
-    @staticmethod
-    def get_audience_group(product):
+    def get_audience_group(self, product):
         if product.is_generic:
             return "generic"
         return "niche"
 
-    @staticmethod
-    def get_homepage(product):
+    def get_homepage(self, product):
         if product.url:
             return product.url
         if product.channel:
             return product.channel.url
         return None
 
-    @staticmethod
-    def get_type(product):
+    def get_type(self, product):
         return getattr(product.channel, "type", None)
 
-    @staticmethod
-    def get_cross_postings(product):
-        return product.cross_postings
-
-    @staticmethod
-    def get_logo_url(product):
+    def get_logo_url(self, product):
         if product.logo_rectangle_uncropped:
             return [{"url": product.logo_rectangle_uncropped_url}]
         return None
 
-    @staticmethod
-    def get_logo_square_url(product):
+    def get_logo_square_url(self, product):
         if product.logo_square:
             return [{"size": "68x68", "url": product.logo_square_url}]
         return None
 
-    @staticmethod
-    def get_logo_rectangle_url(product):
+    def get_logo_rectangle_url(self, product):
         if product.logo_rectangle:
             return [{"size": "270x90", "url": product.logo_rectangle_url}]
         return None
 
-    @staticmethod
-    def get_duration(product):
+    def get_duration(self, product):
         return {"range": "days", "period": product.duration_days}
 
     def get_prices(self, price):
@@ -205,13 +190,8 @@ class ProductSerializer(serializers.Serializer):
             return filter(lambda x: x["currency"] == self._selected_currency, prices)
         return prices
 
-    @staticmethod
-    def get_time_to_process(product):
+    def get_time_to_process(self, product):
         return {"range": "hours", "period": product.time_to_process}
-
-    @staticmethod
-    def get_title(product):
-        return product.external_product_name
 
     locations = LimitedLocationSerializer(many=True, read_only=True)
     job_functions = LimitedJobFunctionSerializer(many=True, read_only=True)
@@ -220,13 +200,13 @@ class ProductSerializer(serializers.Serializer):
     time_to_process = serializers.SerializerMethodField()
     vonq_price = serializers.SerializerMethodField()
     ratecard_price = serializers.SerializerMethodField()
-    cross_postings = serializers.SerializerMethodField()
+    cross_postings = serializers.ListField(child=serializers.CharField())
     homepage = serializers.SerializerMethodField()
     type = serializers.SerializerMethodField()
     logo_url = serializers.SerializerMethodField()
     logo_square_url = serializers.SerializerMethodField()
     logo_rectangle_url = serializers.SerializerMethodField()
-    title = serializers.SerializerMethodField()
+    title = serializers.CharField(source="external_product_name", read_only=True)
     channel = LimitedChannelSerializer(read_only=True)
     product_id = serializers.CharField(read_only=True)
     description = serializers.CharField(read_only=True)

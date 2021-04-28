@@ -714,11 +714,13 @@ class IndexSearchableProductMixin:
 
     @property
     def is_generic(self):
+        industries = list(self.industries.all())
+        job_functions = list(self.job_functions.all())
         return (
-            self.industries.count() == 0
+            len(industries) == 0
             # TODO migrate industry values instead, use "all" root job function
-            or self.industries.filter(name_en="Generic").exists()
-        ) and self.job_functions.count() == 0
+            or any([x.name_en == "Generic" for x in industries])
+        ) and len(job_functions) == 0
 
     @property
     def is_international(self):
