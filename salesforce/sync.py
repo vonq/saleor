@@ -66,7 +66,7 @@ def update_pricebook(client, product_id, product_instance):
     )
     pricebook = pricebook["records"]
     if not pricebook or len(pricebook) > 1:
-        logger.error(f"No pricebook entry for {product_instance.product_id}")
+        logger.warning(f"No pricebook entry for {product_instance.product_id}")
         return False
     pricebook_entry = pricebook[0]
     pricebook_entry_id = pricebook_entry.pop("Id")
@@ -234,12 +234,12 @@ def update_product(product_instance):
         return
 
     if not update_pricebook(client, product_id, product_instance):
-        logger.error(
+        logger.warning(
             f"Attempting to create a pricebook entry for {product_instance.salesforce_id}"
         )
         if not create_pricebook_entry(client, product_instance, product_id):
             logger.error(
-                f"Failed Salesforce sync for product {product_instance.salesforce_id}"
+                f"Failed Salesforce sync for product {product_instance.salesforce_id}, couldn't create a pricebook entry"
             )
             product_instance.mark_sync_failed()
             return
