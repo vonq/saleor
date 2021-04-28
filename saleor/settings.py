@@ -18,6 +18,8 @@ from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
 
+from api.settings import *
+
 
 def get_list(text):
     return [item.strip() for item in text.split(",")]
@@ -178,6 +180,10 @@ STATICFILES_FINDERS = [
 
 context_processors = [
     "django.template.context_processors.debug",
+    "django.template.context_processors.debug",
+    "django.template.context_processors.request",
+    "django.contrib.auth.context_processors.auth",
+    "django.contrib.messages.context_processors.messages",
     "django.template.context_processors.media",
     "django.template.context_processors.static",
     "saleor.site.context_processors.site",
@@ -210,7 +216,10 @@ if not SECRET_KEY and DEBUG:
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
     "saleor.core.middleware.request_time",
     "saleor.core.middleware.discounts",
     "saleor.core.middleware.google_analytics",
@@ -252,6 +261,29 @@ INSTALLED_APPS = [
     "saleor.webhook",
     "saleor.wishlist",
     "saleor.app",
+    # pkb apps
+    "api.annotations",
+    "api.currency",
+    "api.field_permissions",
+    "api.products",
+    "api.vonqtaxonomy",
+    # pkb external apps
+    "algoliasearch_django",
+    "corsheaders",
+    "modeltranslation",
+    "massadmin",
+    "django.contrib.admin",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "health_check",  # required
+    "health_check.db",  # stock Django health checkers
+    "rest_framework",
+    "drf_yasg2",
+    "django_q",
+    "ajax_select",
+    "easy_thumbnails",
+    "image_cropping",
+    "django_better_admin_arrayfield",
     # External apps
     "versatileimagefield",
     "django_measurement",
