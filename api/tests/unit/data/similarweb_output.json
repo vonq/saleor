@@ -1,0 +1,1557 @@
+{
+  "meta": {
+    "request": {
+      "main_domain_only": true,
+      "format": "json",
+      "domain": "bbc.com",
+      "start_date": "2019-10-01",
+      "end_date": "2020-09-30",
+      "limit": null,
+      "country": "world",
+      "show_verified": false
+    },
+    "status": "Success",
+    "last_updated": "2020-09-30"
+  },
+  "records": [
+    {
+      "country": 840,
+      "share": 0.2799958673246951,
+      "visits": 483082002.2453719,
+      "pages_per_visit": 2.438935213495266,
+      "average_time": 212.5327148331801,
+      "bounce_rate": 0.5525742682510215,
+      "rank": null
+    },
+    {
+      "country": 826,
+      "share": 0.06514208607613542,
+      "visits": 112390835.16760306,
+      "pages_per_visit": 1.9448790434524865,
+      "average_time": 180.53877362366336,
+      "bounce_rate": 0.6792586589588075,
+      "rank": null
+    },
+    {
+      "country": 124,
+      "share": 0.06325415544003021,
+      "visits": 109133553.83518803,
+      "pages_per_visit": 2.791444498015593,
+      "average_time": 256.63453024886155,
+      "bounce_rate": 0.48504363036937465,
+      "rank": null
+    },
+    {
+      "country": 36,
+      "share": 0.030594934336607767,
+      "visits": 52786001.01891791,
+      "pages_per_visit": 2.5712247367488477,
+      "average_time": 209.6030965091389,
+      "bounce_rate": 0.5232245389092484,
+      "rank": null
+    },
+    {
+      "country": 76,
+      "share": 0.029774358001015456,
+      "visits": 51370245.62588057,
+      "pages_per_visit": 1.6983725063827644,
+      "average_time": 131.01172070470315,
+      "bounce_rate": 0.717136269620023,
+      "rank": null
+    },
+    {
+      "country": 356,
+      "share": 0.024757228149605782,
+      "visits": 42714099.5287905,
+      "pages_per_visit": 2.2213911564199273,
+      "average_time": 190.1033414384747,
+      "bounce_rate": 0.5921741994487892,
+      "rank": null
+    },
+    {
+      "country": 276,
+      "share": 0.023368660283780242,
+      "visits": 40318377.93730462,
+      "pages_per_visit": 2.8261716698377075,
+      "average_time": 249.5876972460748,
+      "bounce_rate": 0.4737818291760489,
+      "rank": null
+    },
+    {
+      "country": 643,
+      "share": 0.023319595709629534,
+      "visits": 40233725.928164236,
+      "pages_per_visit": 1.7861853570778345,
+      "average_time": 130.11327969439228,
+      "bounce_rate": 0.6929882143596195,
+      "rank": null
+    },
+    {
+      "country": 250,
+      "share": 0.018299710982895075,
+      "visits": 31572826.79417919,
+      "pages_per_visit": 3.113301182864679,
+      "average_time": 285.7058201974623,
+      "bounce_rate": 0.44698125694926516,
+      "rank": null
+    },
+    {
+      "country": 372,
+      "share": 0.01777478452210697,
+      "visits": 30667161.54943103,
+      "pages_per_visit": 3.211801089631779,
+      "average_time": 302.82182024563394,
+      "bounce_rate": 0.39599878251449067,
+      "rank": null
+    },
+    {
+      "country": 724,
+      "share": 0.01715216285567765,
+      "visits": 29592940.975627944,
+      "pages_per_visit": 2.537236115574719,
+      "average_time": 248.20370251135253,
+      "bounce_rate": 0.5635772480277217,
+      "rank": null
+    },
+    {
+      "country": 156,
+      "share": 0.016099565610593766,
+      "visits": 27776875.654480122,
+      "pages_per_visit": 2.2009457731983995,
+      "average_time": 173.04313066384535,
+      "bounce_rate": 0.5598024735910401,
+      "rank": null
+    },
+    {
+      "country": 484,
+      "share": 0.015771466215177273,
+      "visits": 27210799.753475863,
+      "pages_per_visit": 1.7728124428346859,
+      "average_time": 142.41332346209057,
+      "bounce_rate": 0.7161756314773645,
+      "rank": null
+    },
+    {
+      "country": 804,
+      "share": 0.015640700614495708,
+      "visits": 26985187.46567444,
+      "pages_per_visit": 1.5780173904503367,
+      "average_time": 109.24825530090364,
+      "bounce_rate": 0.7573162578418712,
+      "rank": null
+    },
+    {
+      "country": 528,
+      "share": 0.01510247404077001,
+      "visits": 26056575.29228275,
+      "pages_per_visit": 2.812647772552879,
+      "average_time": 269.99589671259355,
+      "bounce_rate": 0.4597745158259927,
+      "rank": null
+    },
+    {
+      "country": 392,
+      "share": 0.013167691063000727,
+      "visits": 22718458.75598695,
+      "pages_per_visit": 1.8769045016846253,
+      "average_time": 131.0981590157459,
+      "bounce_rate": 0.6868629711837295,
+      "rank": null
+    },
+    {
+      "country": 792,
+      "share": 0.012946754975972044,
+      "visits": 22337273.67525751,
+      "pages_per_visit": 2.076040002975063,
+      "average_time": 177.72645535743223,
+      "bounce_rate": 0.6226148088970852,
+      "rank": null
+    },
+    {
+      "country": 170,
+      "share": 0.011398374286879377,
+      "visits": 19665824.090405077,
+      "pages_per_visit": 1.7690318152104074,
+      "average_time": 158.50014284695908,
+      "bounce_rate": 0.6989546441272646,
+      "rank": null
+    },
+    {
+      "country": 586,
+      "share": 0.010752615249869339,
+      "visits": 18551684.187028944,
+      "pages_per_visit": 2.7411252883468524,
+      "average_time": 313.08006621945407,
+      "bounce_rate": 0.4394424054233922,
+      "rank": null
+    },
+    {
+      "country": 554,
+      "share": 0.010484427631164812,
+      "visits": 18088975.172574233,
+      "pages_per_visit": 2.7502590909721634,
+      "average_time": 227.28055324151876,
+      "bounce_rate": 0.46579406633568865,
+      "rank": null
+    },
+    {
+      "country": 752,
+      "share": 0.009683780563181692,
+      "visits": 16707604.110248348,
+      "pages_per_visit": 2.617209505687403,
+      "average_time": 251.3140153394625,
+      "bounce_rate": 0.4822526594043313,
+      "rank": null
+    },
+    {
+      "country": 32,
+      "share": 0.009501212484487796,
+      "visits": 16392616.057588046,
+      "pages_per_visit": 1.660024144393065,
+      "average_time": 130.29156752603916,
+      "bounce_rate": 0.7201498281538298,
+      "rank": null
+    },
+    {
+      "country": 764,
+      "share": 0.008964253619861138,
+      "visits": 15466191.085942155,
+      "pages_per_visit": 2.5970565320767416,
+      "average_time": 219.1723561537906,
+      "bounce_rate": 0.5639531820165092,
+      "rank": null
+    },
+    {
+      "country": 784,
+      "share": 0.008692089448711813,
+      "visits": 14996621.25266386,
+      "pages_per_visit": 2.7260291245457458,
+      "average_time": 269.65661989930874,
+      "bounce_rate": 0.46178688192300654,
+      "rank": null
+    },
+    {
+      "country": 704,
+      "share": 0.008385630322909173,
+      "visits": 14467881.705492523,
+      "pages_per_visit": 2.222848211211295,
+      "average_time": 163.82733431169592,
+      "bounce_rate": 0.5874133052198156,
+      "rank": null
+    },
+    {
+      "country": 756,
+      "share": 0.007905672424335517,
+      "visits": 13639801.54541084,
+      "pages_per_visit": 3.327809196866897,
+      "average_time": 293.13474021918665,
+      "bounce_rate": 0.4258346690720468,
+      "rank": null
+    },
+    {
+      "country": 604,
+      "share": 0.007879537076548121,
+      "visits": 13594709.75080991,
+      "pages_per_visit": 1.615313942636768,
+      "average_time": 138.25907536873015,
+      "bounce_rate": 0.7436420767288469,
+      "rank": null
+    },
+    {
+      "country": 158,
+      "share": 0.007603450926867689,
+      "visits": 13118373.25608167,
+      "pages_per_visit": 1.9241761939817281,
+      "average_time": 163.54256530160634,
+      "bounce_rate": 0.6822922584120136,
+      "rank": null
+    },
+    {
+      "country": 710,
+      "share": 0.007454426446012452,
+      "visits": 12861258.58762965,
+      "pages_per_visit": 2.617928652347962,
+      "average_time": 243.02850831570808,
+      "bounce_rate": 0.5178552433402018,
+      "rank": null
+    },
+    {
+      "country": 344,
+      "share": 0.007319232451940564,
+      "visits": 12628005.91153904,
+      "pages_per_visit": 2.340521798470342,
+      "average_time": 192.13480374847202,
+      "bounce_rate": 0.5662421174725791,
+      "rank": null
+    },
+    {
+      "country": 616,
+      "share": 0.007295608372825137,
+      "visits": 12587246.854809646,
+      "pages_per_visit": 2.4837849115123647,
+      "average_time": 203.18313832669475,
+      "bounce_rate": 0.547387294425528,
+      "rank": null
+    },
+    {
+      "country": 578,
+      "share": 0.0071670372176086345,
+      "visits": 12365420.683993477,
+      "pages_per_visit": 2.7203100547951995,
+      "average_time": 267.801014184177,
+      "bounce_rate": 0.46556576352996576,
+      "rank": null
+    },
+    {
+      "country": 702,
+      "share": 0.007051139336058005,
+      "visits": 12165459.944535317,
+      "pages_per_visit": 2.373952950619964,
+      "average_time": 200.72462792740416,
+      "bounce_rate": 0.5621709474290252,
+      "rank": null
+    },
+    {
+      "country": 56,
+      "share": 0.006740317417834785,
+      "visits": 11629193.191630363,
+      "pages_per_visit": 2.739490871931114,
+      "average_time": 241.5745926629063,
+      "bounce_rate": 0.4591878351569674,
+      "rank": null
+    },
+    {
+      "country": 152,
+      "share": 0.006108030018161901,
+      "visits": 10538296.151088377,
+      "pages_per_visit": 1.7010556609480674,
+      "average_time": 143.70830251641019,
+      "bounce_rate": 0.6988822046979458,
+      "rank": null
+    },
+    {
+      "country": 360,
+      "share": 0.005941799196945511,
+      "visits": 10251495.068217454,
+      "pages_per_visit": 1.6758885834575186,
+      "average_time": 139.9991578912492,
+      "bounce_rate": 0.7355171041561477,
+      "rank": null
+    },
+    {
+      "country": 208,
+      "share": 0.005853913358566259,
+      "visits": 10099864.020306205,
+      "pages_per_visit": 2.6136379377819883,
+      "average_time": 230.16245663127017,
+      "bounce_rate": 0.49229481690808613,
+      "rank": null
+    },
+    {
+      "country": 380,
+      "share": 0.0058431635881451725,
+      "visits": 10081317.244354421,
+      "pages_per_visit": 2.4953692226346953,
+      "average_time": 222.37392834932893,
+      "bounce_rate": 0.5150165304828486,
+      "rank": null
+    },
+    {
+      "country": 246,
+      "share": 0.005584717796751426,
+      "visits": 9635415.983127594,
+      "pages_per_visit": 2.653920455107697,
+      "average_time": 232.35972595025754,
+      "bounce_rate": 0.4834727021516475,
+      "rank": null
+    },
+    {
+      "country": 410,
+      "share": 0.005290378018746195,
+      "visits": 9127586.168859888,
+      "pages_per_visit": 1.9711091262265519,
+      "average_time": 134.32346767726023,
+      "bounce_rate": 0.6572472326274237,
+      "rank": null
+    },
+    {
+      "country": 203,
+      "share": 0.0049488917359330085,
+      "visits": 8538413.625647236,
+      "pages_per_visit": 2.707747920003759,
+      "average_time": 251.9500168600054,
+      "bounce_rate": 0.49114251849403195,
+      "rank": null
+    },
+    {
+      "country": 862,
+      "share": 0.004910211324575014,
+      "visits": 8471677.602915779,
+      "pages_per_visit": 1.8859166906654992,
+      "average_time": 214.18291556535615,
+      "bounce_rate": 0.6497297309753789,
+      "rank": null
+    },
+    {
+      "country": 50,
+      "share": 0.004900048732014533,
+      "visits": 8454143.895689921,
+      "pages_per_visit": 2.0915026424227063,
+      "average_time": 197.83351540747285,
+      "bounce_rate": 0.6076944226861624,
+      "rank": null
+    },
+    {
+      "country": 458,
+      "share": 0.0046318241329725675,
+      "visits": 7991371.078381177,
+      "pages_per_visit": 2.3141898763722444,
+      "average_time": 215.56281860034426,
+      "bounce_rate": 0.5703236121610401,
+      "rank": null
+    },
+    {
+      "country": 682,
+      "share": 0.0042944206503175856,
+      "visits": 7409242.665119577,
+      "pages_per_visit": 2.3553993843838064,
+      "average_time": 218.2363986233346,
+      "bounce_rate": 0.5272958526601874,
+      "rank": null
+    },
+    {
+      "country": 608,
+      "share": 0.004077248027624373,
+      "visits": 7034550.75839277,
+      "pages_per_visit": 2.2586417319657346,
+      "average_time": 208.4777604934642,
+      "bounce_rate": 0.6294910505250519,
+      "rank": null
+    },
+    {
+      "country": 376,
+      "share": 0.003999894609861653,
+      "visits": 6901091.488831467,
+      "pages_per_visit": 2.2249645636027764,
+      "average_time": 168.46773793844844,
+      "bounce_rate": 0.5775712597268363,
+      "rank": null
+    },
+    {
+      "country": 620,
+      "share": 0.003728639534421333,
+      "visits": 6433090.135043729,
+      "pages_per_visit": 2.244200183605543,
+      "average_time": 173.50783521776927,
+      "bounce_rate": 0.6092327592583131,
+      "rank": null
+    },
+    {
+      "country": 218,
+      "share": 0.0036813496114755035,
+      "visits": 6351499.96415664,
+      "pages_per_visit": 1.7393703822207083,
+      "average_time": 167.3881936468515,
+      "bounce_rate": 0.6942204568473531,
+      "rank": null
+    },
+    {
+      "country": 40,
+      "share": 0.003669391803476435,
+      "visits": 6330868.938828123,
+      "pages_per_visit": 2.778861398156294,
+      "average_time": 262.2656452752955,
+      "bounce_rate": 0.4681529891989508,
+      "rank": null
+    },
+    {
+      "country": 566,
+      "share": 0.003648838266562266,
+      "visits": 6295407.54484188,
+      "pages_per_visit": 2.643646696997627,
+      "average_time": 305.9195792541899,
+      "bounce_rate": 0.4920968843646249,
+      "rank": null
+    },
+    {
+      "country": 300,
+      "share": 0.003582128109616936,
+      "visits": 6180311.288260772,
+      "pages_per_visit": 2.621274788873097,
+      "average_time": 237.0562422206151,
+      "bounce_rate": 0.5246032578877955,
+      "rank": null
+    },
+    {
+      "country": 818,
+      "share": 0.003376521443827126,
+      "visits": 5825574.338984463,
+      "pages_per_visit": 1.9094883247521448,
+      "average_time": 161.00188703625852,
+      "bounce_rate": 0.6575319831552843,
+      "rank": null
+    },
+    {
+      "country": 404,
+      "share": 0.003069310982103377,
+      "visits": 5295538.498176377,
+      "pages_per_visit": 2.5018383645118965,
+      "average_time": 266.93332376626245,
+      "bounce_rate": 0.5091444873894871,
+      "rank": null
+    },
+    {
+      "country": 642,
+      "share": 0.0025034844566175136,
+      "visits": 4319307.622103212,
+      "pages_per_visit": 2.2183012098672736,
+      "average_time": 198.96551324570595,
+      "bounce_rate": 0.5733215269522678,
+      "rank": null
+    },
+    {
+      "country": 524,
+      "share": 0.0022929352439671467,
+      "visits": 3956043.206131045,
+      "pages_per_visit": 2.20334647734567,
+      "average_time": 217.87393673106214,
+      "bounce_rate": 0.5589969654232915,
+      "rank": null
+    },
+    {
+      "country": 348,
+      "share": 0.0022310874685302702,
+      "visits": 3849336.105494373,
+      "pages_per_visit": 2.3797814171160767,
+      "average_time": 209.31273347621146,
+      "bounce_rate": 0.5475311750446945,
+      "rank": null
+    },
+    {
+      "country": 4,
+      "share": 0.002114920142910969,
+      "visits": 3648910.4892455987,
+      "pages_per_visit": 2.758663970434419,
+      "average_time": 354.25887316086744,
+      "bounce_rate": 0.4368593542988634,
+      "rank": null
+    },
+    {
+      "country": 364,
+      "share": 0.002094598794945202,
+      "visits": 3613849.695108079,
+      "pages_per_visit": 2.3302796724215535,
+      "average_time": 219.66028031827761,
+      "bounce_rate": 0.5317279038072871,
+      "rank": null
+    },
+    {
+      "country": 100,
+      "share": 0.0020425790299104067,
+      "visits": 3524099.040966455,
+      "pages_per_visit": 2.6346304306631434,
+      "average_time": 267.558047532683,
+      "bounce_rate": 0.5260730395186634,
+      "rank": null
+    },
+    {
+      "country": 231,
+      "share": 0.0020413326210947003,
+      "visits": 3521948.5889899274,
+      "pages_per_visit": 2.661762699316447,
+      "average_time": 327.71661040142834,
+      "bounce_rate": 0.5016960450837288,
+      "rank": null
+    },
+    {
+      "country": 112,
+      "share": 0.0019436312790492155,
+      "visits": 3353382.672684241,
+      "pages_per_visit": 1.866546861232068,
+      "average_time": 141.00685024924192,
+      "bounce_rate": 0.6604650534470254,
+      "rank": null
+    },
+    {
+      "country": 288,
+      "share": 0.0019018433188193516,
+      "visits": 3281285.138922491,
+      "pages_per_visit": 2.6668129892958055,
+      "average_time": 309.0484096886341,
+      "bounce_rate": 0.47457546589378385,
+      "rank": null
+    },
+    {
+      "country": 188,
+      "share": 0.0018075707871029073,
+      "visits": 3118635.0119279074,
+      "pages_per_visit": 2.208344216160573,
+      "average_time": 195.38615495026775,
+      "bounce_rate": 0.6276322562098284,
+      "rank": null
+    },
+    {
+      "country": 688,
+      "share": 0.0018072372169656153,
+      "visits": 3118059.497255666,
+      "pages_per_visit": 1.8181384542140056,
+      "average_time": 121.72388225843095,
+      "bounce_rate": 0.6813966695651049,
+      "rank": null
+    },
+    {
+      "country": 144,
+      "share": 0.0017580511865446116,
+      "visits": 3033197.937385834,
+      "pages_per_visit": 2.4706161486377525,
+      "average_time": 210.80185358891154,
+      "bounce_rate": 0.5361623078516845,
+      "rank": null
+    },
+    {
+      "country": 703,
+      "share": 0.0016871587893809736,
+      "visits": 2910885.98509523,
+      "pages_per_visit": 2.255819037041801,
+      "average_time": 180.26664720177462,
+      "bounce_rate": 0.5707250417274891,
+      "rank": null
+    },
+    {
+      "country": 214,
+      "share": 0.0016741736789399311,
+      "visits": 2888482.5360330273,
+      "pages_per_visit": 2.0219718335251193,
+      "average_time": 176.14001111234774,
+      "bounce_rate": 0.6803800055663101,
+      "rank": null
+    },
+    {
+      "country": 196,
+      "share": 0.0016640870178315842,
+      "visits": 2871079.834733368,
+      "pages_per_visit": 2.872422192960022,
+      "average_time": 284.6867934168526,
+      "bounce_rate": 0.44551318085001734,
+      "rank": null
+    },
+    {
+      "country": 634,
+      "share": 0.001649821388022496,
+      "visits": 2846467.0821334375,
+      "pages_per_visit": 2.500170874179564,
+      "average_time": 209.26922042105394,
+      "bounce_rate": 0.5080741198245016,
+      "rank": null
+    },
+    {
+      "country": 398,
+      "share": 0.001568138005044145,
+      "visits": 2705537.244216944,
+      "pages_per_visit": 1.9432263052448955,
+      "average_time": 162.72251324019106,
+      "bounce_rate": 0.6710823950035544,
+      "rank": null
+    },
+    {
+      "country": 440,
+      "share": 0.0015086886440514515,
+      "visits": 2602968.171983979,
+      "pages_per_visit": 2.255785041835814,
+      "average_time": 172.77985339696409,
+      "bounce_rate": 0.5692236707963279,
+      "rank": null
+    },
+    {
+      "country": 470,
+      "share": 0.0015003547900281553,
+      "visits": 2588589.6208772734,
+      "pages_per_visit": 3.0884534042174225,
+      "average_time": 264.96427101665574,
+      "bounce_rate": 0.45012792433858945,
+      "rank": null
+    },
+    {
+      "country": 428,
+      "share": 0.001402430787088935,
+      "visits": 2419639.54365023,
+      "pages_per_visit": 2.1910222657573204,
+      "average_time": 169.04942597604403,
+      "bounce_rate": 0.549766053648734,
+      "rank": null
+    },
+    {
+      "country": 834,
+      "share": 0.0013779447157561896,
+      "visits": 2377393.275947898,
+      "pages_per_visit": 2.789154245583411,
+      "average_time": 300.6763981203228,
+      "bounce_rate": 0.42272592901974293,
+      "rank": null
+    },
+    {
+      "country": 233,
+      "share": 0.0013240975417201264,
+      "visits": 2284489.759559811,
+      "pages_per_visit": 2.205425577032564,
+      "average_time": 165.05576197103298,
+      "bounce_rate": 0.5411990128153266,
+      "rank": null
+    },
+    {
+      "country": 858,
+      "share": 0.0013180552974755577,
+      "visits": 2274064.9648097623,
+      "pages_per_visit": 1.9149099168444332,
+      "average_time": 173.2506776894131,
+      "bounce_rate": 0.6472013081393487,
+      "rank": null
+    },
+    {
+      "country": 591,
+      "share": 0.001292181045743878,
+      "visits": 2229423.6440196745,
+      "pages_per_visit": 2.324754717795769,
+      "average_time": 260.5213372022096,
+      "bounce_rate": 0.6124884441584847,
+      "rank": null
+    },
+    {
+      "country": 352,
+      "share": 0.0012675585935428143,
+      "visits": 2186942.0759053594,
+      "pages_per_visit": 2.6805304659874696,
+      "average_time": 245.23081272628568,
+      "bounce_rate": 0.4810017205759715,
+      "rank": null
+    },
+    {
+      "country": 442,
+      "share": 0.001196453889835838,
+      "visits": 2064263.8272439353,
+      "pages_per_visit": 2.8712246080214316,
+      "average_time": 282.3124607408455,
+      "bounce_rate": 0.43789217457131424,
+      "rank": null
+    },
+    {
+      "country": 705,
+      "share": 0.0011923865361336574,
+      "visits": 2057246.3473465946,
+      "pages_per_visit": 2.179493032289199,
+      "average_time": 157.36615522108403,
+      "bounce_rate": 0.5705616802900536,
+      "rank": null
+    },
+    {
+      "country": 368,
+      "share": 0.0011650843931220545,
+      "visits": 2010141.4595578762,
+      "pages_per_visit": 2.3251790486164254,
+      "average_time": 258.07365192201786,
+      "bounce_rate": 0.5025138755216422,
+      "rank": null
+    },
+    {
+      "country": 68,
+      "share": 0.0011372744630602062,
+      "visits": 1962160.477463586,
+      "pages_per_visit": 1.748015674908263,
+      "average_time": 158.08157890465728,
+      "bounce_rate": 0.6995293265888439,
+      "rank": null
+    },
+    {
+      "country": 320,
+      "share": 0.0011054579673743707,
+      "visits": 1907266.8942575133,
+      "pages_per_visit": 1.6932710772833788,
+      "average_time": 145.47812152724666,
+      "bounce_rate": 0.7172764034660886,
+      "rank": null
+    },
+    {
+      "country": 31,
+      "share": 0.0010667067362071375,
+      "visits": 1840408.6848110443,
+      "pages_per_visit": 1.8768235107025604,
+      "average_time": 153.52951781435436,
+      "bounce_rate": 0.6487884098605086,
+      "rank": null
+    },
+    {
+      "country": 222,
+      "share": 0.0010550737220866321,
+      "visits": 1820338.0323147143,
+      "pages_per_visit": 1.8134283840781191,
+      "average_time": 169.08399187905752,
+      "bounce_rate": 0.6852791618373175,
+      "rank": null
+    },
+    {
+      "country": 512,
+      "share": 0.0010544766774147085,
+      "visits": 1819307.9401983607,
+      "pages_per_visit": 2.6799804441190545,
+      "average_time": 300.4209061039956,
+      "bounce_rate": 0.4760978205389977,
+      "rank": null
+    },
+    {
+      "country": 52,
+      "share": 0.0010460746902393103,
+      "visits": 1804811.8377154463,
+      "pages_per_visit": 3.3436911487758945,
+      "average_time": 307.60420590081605,
+      "bounce_rate": 0.395323289391086,
+      "rank": null
+    },
+    {
+      "country": 191,
+      "share": 0.0010334136103055547,
+      "visits": 1782967.4444269747,
+      "pages_per_visit": 2.166862998373487,
+      "average_time": 152.62206409633282,
+      "bounce_rate": 0.5923052806794461,
+      "rank": null
+    },
+    {
+      "country": 268,
+      "share": 0.0010199785884090077,
+      "visits": 1759787.7548836714,
+      "pages_per_visit": 1.8902153722486075,
+      "average_time": 136.00161720382465,
+      "bounce_rate": 0.6319140229928413,
+      "rank": null
+    },
+    {
+      "country": 800,
+      "share": 0.0009339187958171246,
+      "visits": 1611307.217240959,
+      "pages_per_visit": 2.702035708177729,
+      "average_time": 315.30986795818694,
+      "bounce_rate": 0.4636199393701027,
+      "rank": null
+    },
+    {
+      "country": 480,
+      "share": 0.0008911038307213119,
+      "visits": 1537437.7731588937,
+      "pages_per_visit": 2.23021157234587,
+      "average_time": 196.47307909093772,
+      "bounce_rate": 0.5398425888327114,
+      "rank": null
+    },
+    {
+      "country": 12,
+      "share": 0.0008837519988957552,
+      "visits": 1524753.5229505051,
+      "pages_per_visit": 1.855804162411984,
+      "average_time": 147.14799174914293,
+      "bounce_rate": 0.6872771207236789,
+      "rank": null
+    },
+    {
+      "country": 716,
+      "share": 0.0008581184667002921,
+      "visits": 1480527.519988663,
+      "pages_per_visit": 2.865612650942629,
+      "average_time": 335.51332342294853,
+      "bounce_rate": 0.46939176077192735,
+      "rank": null
+    },
+    {
+      "country": 600,
+      "share": 0.0008481430665257598,
+      "visits": 1463316.7792175373,
+      "pages_per_visit": 1.8245342905694224,
+      "average_time": 171.54266280312046,
+      "bounce_rate": 0.6632545849959719,
+      "rank": null
+    },
+    {
+      "country": 504,
+      "share": 0.0008326491206997258,
+      "visits": 1436584.7904784246,
+      "pages_per_visit": 2.0236600774451476,
+      "average_time": 153.44993021945345,
+      "bounce_rate": 0.6372095621854699,
+      "rank": null
+    },
+    {
+      "country": 116,
+      "share": 0.0008280725429182708,
+      "visits": 1428688.7369429874,
+      "pages_per_visit": 2.499193278836695,
+      "average_time": 229.1015525385247,
+      "bounce_rate": 0.5158392787753661,
+      "rank": null
+    },
+    {
+      "country": 860,
+      "share": 0.0007689798218825537,
+      "visits": 1326734.9821650372,
+      "pages_per_visit": 1.8863454260730714,
+      "average_time": 150.87056519930331,
+      "bounce_rate": 0.6718323203343409,
+      "rank": null
+    },
+    {
+      "country": 414,
+      "share": 0.0007641469506060567,
+      "visits": 1318396.7407647206,
+      "pages_per_visit": 2.2757897140859704,
+      "average_time": 220.19293919943337,
+      "bounce_rate": 0.5360627803716543,
+      "rank": null
+    },
+    {
+      "country": 400,
+      "share": 0.0007391390745341374,
+      "visits": 1275250.193781163,
+      "pages_per_visit": 2.409574996697004,
+      "average_time": 202.3810568763505,
+      "bounce_rate": 0.5370170142347908,
+      "rank": null
+    },
+    {
+      "country": 780,
+      "share": 0.0007356765111169593,
+      "visits": 1269276.1696483989,
+      "pages_per_visit": 2.4037378399805425,
+      "average_time": 229.07080625235815,
+      "bounce_rate": 0.5433865437992452,
+      "rank": null
+    },
+    {
+      "country": 498,
+      "share": 0.0007105942609182338,
+      "visits": 1226001.303620578,
+      "pages_per_visit": 2.0288118139265676,
+      "average_time": 207.7062790524771,
+      "bounce_rate": 0.6006829083899538,
+      "rank": null
+    },
+    {
+      "country": 70,
+      "share": 0.0006940253827987334,
+      "visits": 1197414.7144919396,
+      "pages_per_visit": 1.778721679948363,
+      "average_time": 147.7475528892628,
+      "bounce_rate": 0.6855335750360497,
+      "rank": null
+    },
+    {
+      "country": 48,
+      "share": 0.0006890346490001746,
+      "visits": 1188804.1099886755,
+      "pages_per_visit": 3.386840042967054,
+      "average_time": 381.0811834333634,
+      "bounce_rate": 0.41976392775468535,
+      "rank": null
+    },
+    {
+      "country": 894,
+      "share": 0.0006606135520199563,
+      "visits": 1139768.6704073756,
+      "pages_per_visit": 2.803693444136657,
+      "average_time": 369.5815327793167,
+      "bounce_rate": 0.43647276084949216,
+      "rank": null
+    },
+    {
+      "country": 340,
+      "share": 0.0006516398554319425,
+      "visits": 1124286.187195389,
+      "pages_per_visit": 1.6363728904092558,
+      "average_time": 143.805490014488,
+      "bounce_rate": 0.7462721625682655,
+      "rank": null
+    },
+    {
+      "country": 558,
+      "share": 0.0006165443169697748,
+      "visits": 1063735.2113821537,
+      "pages_per_visit": 2.1179369773260706,
+      "average_time": 234.369222126139,
+      "bounce_rate": 0.5893333432671494,
+      "rank": null
+    },
+    {
+      "country": 242,
+      "share": 0.0005834758609452436,
+      "visits": 1006681.5980551809,
+      "pages_per_visit": 3.2594040058622373,
+      "average_time": 360.38251099169514,
+      "bounce_rate": 0.441133365901319,
+      "rank": null
+    },
+    {
+      "country": 51,
+      "share": 0.0005728608920518626,
+      "visits": 988367.3976500717,
+      "pages_per_visit": 1.8108874732263713,
+      "average_time": 130.92641716782376,
+      "bounce_rate": 0.6637056652633153,
+      "rank": null
+    },
+    {
+      "country": 630,
+      "share": 0.0005304178239799196,
+      "visits": 915139.5943201956,
+      "pages_per_visit": 1.9430995188428544,
+      "average_time": 141.61572714276952,
+      "bounce_rate": 0.6518115415156447,
+      "rank": null
+    },
+    {
+      "country": 516,
+      "share": 0.0004918372039239462,
+      "visits": 848575.7433513002,
+      "pages_per_visit": 2.644174837959116,
+      "average_time": 301.83596476649495,
+      "bounce_rate": 0.45188632208741897,
+      "rank": null
+    },
+    {
+      "country": 104,
+      "share": 0.0004917791500273144,
+      "visits": 848475.5818993083,
+      "pages_per_visit": 2.362659448724414,
+      "average_time": 208.74022182697726,
+      "bounce_rate": 0.5905569016642582,
+      "rank": null
+    },
+    {
+      "country": 788,
+      "share": 0.0004821429736840321,
+      "visits": 831850.110222242,
+      "pages_per_visit": 1.6811472860863856,
+      "average_time": 102.37302757895677,
+      "bounce_rate": 0.7158281692031567,
+      "rank": null
+    },
+    {
+      "country": 807,
+      "share": 0.00043422643361265805,
+      "visits": 749178.825322501,
+      "pages_per_visit": 1.822001884762266,
+      "average_time": 153.32506845544626,
+      "bounce_rate": 0.682580895064619,
+      "rank": null
+    },
+    {
+      "country": 417,
+      "share": 0.0004337475119643913,
+      "visits": 748352.5330240683,
+      "pages_per_visit": 1.7965259186159221,
+      "average_time": 148.40960986433532,
+      "bounce_rate": 0.7041382457543752,
+      "rank": null
+    },
+    {
+      "country": 446,
+      "share": 0.0004318568586569333,
+      "visits": 745090.5542168616,
+      "pages_per_visit": 2.2666879591184923,
+      "average_time": 198.95784094538487,
+      "bounce_rate": 0.5688278505269881,
+      "rank": null
+    },
+    {
+      "country": 422,
+      "share": 0.0004077301260804339,
+      "visits": 703464.2602573935,
+      "pages_per_visit": 2.197382073884696,
+      "average_time": 187.92825130803982,
+      "bounce_rate": 0.6477238823980784,
+      "rank": null
+    },
+    {
+      "country": 388,
+      "share": 0.00039510476205507504,
+      "visits": 681681.4882803546,
+      "pages_per_visit": 2.4330537456537007,
+      "average_time": 294.88196896200094,
+      "bounce_rate": 0.5302785569061828,
+      "rank": null
+    },
+    {
+      "country": 192,
+      "share": 0.00039469163965797266,
+      "visits": 680968.7206360623,
+      "pages_per_visit": 2.647738057576716,
+      "average_time": 228.30433407149636,
+      "bounce_rate": 0.49319835495096487,
+      "rank": null
+    },
+    {
+      "country": 454,
+      "share": 0.00039412214748394206,
+      "visits": 679986.1653493632,
+      "pages_per_visit": 2.8708475628686743,
+      "average_time": 355.6147159267308,
+      "bounce_rate": 0.44551381558522196,
+      "rank": null
+    },
+    {
+      "country": 20,
+      "share": 0.00037322507399142494,
+      "visits": 643932.0614074387,
+      "pages_per_visit": 4.647834274952919,
+      "average_time": 328.7768361581921,
+      "bounce_rate": 0.3757062146892655,
+      "rank": null
+    },
+    {
+      "country": 646,
+      "share": 0.00036964578602647155,
+      "visits": 637756.6502728261,
+      "pages_per_visit": 2.285808830481233,
+      "average_time": 276.3572846742933,
+      "bounce_rate": 0.5170653304339605,
+      "rank": null
+    },
+    {
+      "country": 418,
+      "share": 0.00035804986093621006,
+      "visits": 617749.9881602214,
+      "pages_per_visit": 2.253384912959381,
+      "average_time": 179.52756286266924,
+      "bounce_rate": 0.5464216634429401,
+      "rank": null
+    },
+    {
+      "country": 8,
+      "share": 0.00035406031256845767,
+      "visits": 610866.7472325487,
+      "pages_per_visit": 2.2470334024397025,
+      "average_time": 195.02794096571645,
+      "bounce_rate": 0.6037306274216555,
+      "rank": null
+    },
+    {
+      "country": 496,
+      "share": 0.0003407219929686785,
+      "visits": 587853.8999344211,
+      "pages_per_visit": 2.037576194194711,
+      "average_time": 199.06310087262213,
+      "bounce_rate": 0.5930954163451362,
+      "rank": null
+    },
+    {
+      "country": 508,
+      "share": 0.00033755273440773474,
+      "visits": 582385.920046423,
+      "pages_per_visit": 2.266571018651363,
+      "average_time": 228.7164992826399,
+      "bounce_rate": 0.5279770444763271,
+      "rank": null
+    },
+    {
+      "country": 499,
+      "share": 0.0003337838330391675,
+      "visits": 575883.3654309242,
+      "pages_per_visit": 2.0600035090292463,
+      "average_time": 126.83531290764063,
+      "bounce_rate": 0.5852937614897226,
+      "rank": null
+    },
+    {
+      "country": 24,
+      "share": 0.00029426294176809054,
+      "visits": 507697.2472993526,
+      "pages_per_visit": 2.4992323894584403,
+      "average_time": 298.0863192405337,
+      "bounce_rate": 0.5290612785701276,
+      "rank": null
+    },
+    {
+      "country": 275,
+      "share": 0.00028169013252617083,
+      "visits": 486005.1490535154,
+      "pages_per_visit": 1.9243510108703181,
+      "average_time": 158.63010547843442,
+      "bounce_rate": 0.6562745663000263,
+      "rank": null
+    },
+    {
+      "country": 462,
+      "share": 0.00024038444409611278,
+      "visits": 414739.6876680572,
+      "pages_per_visit": 2.1833030852994555,
+      "average_time": 213.57199032062917,
+      "bounce_rate": 0.5486993345432547,
+      "rank": null
+    },
+    {
+      "country": 686,
+      "share": 0.00023749274249703966,
+      "visits": 409750.5818940193,
+      "pages_per_visit": 2.1546716345001276,
+      "average_time": 227.29532244061534,
+      "bounce_rate": 0.5794528765863136,
+      "rank": null
+    },
+    {
+      "country": 180,
+      "share": 0.00023299914240298725,
+      "visits": 401997.69128364645,
+      "pages_per_visit": 2.39217032967033,
+      "average_time": 260.7699175824176,
+      "bounce_rate": 0.5315934065934066,
+      "rank": null
+    },
+    {
+      "country": 44,
+      "share": 0.00023291409663606322,
+      "visits": 401850.96026307566,
+      "pages_per_visit": 3.112201963534362,
+      "average_time": 330.75081813931746,
+      "bounce_rate": 0.4684431977559607,
+      "rank": null
+    },
+    {
+      "country": 832,
+      "share": 0.00021567314111310936,
+      "visits": 372104.8236710183,
+      "pages_per_visit": 1.3030746705710103,
+      "average_time": 87.88433382137629,
+      "bounce_rate": 0.849194729136164,
+      "rank": null
+    },
+    {
+      "country": 72,
+      "share": 0.00021417426762175763,
+      "visits": 369518.7897618998,
+      "pages_per_visit": 2.396292745286034,
+      "average_time": 250.57590284435923,
+      "bounce_rate": 0.5554490252476829,
+      "rank": null
+    },
+    {
+      "country": 706,
+      "share": 0.0002117865971075693,
+      "visits": 365399.2980575499,
+      "pages_per_visit": 2.8148215586307357,
+      "average_time": 328.7119446467589,
+      "bounce_rate": 0.4211580480699199,
+      "rank": null
+    },
+    {
+      "country": 760,
+      "share": 0.00020273297372086542,
+      "visits": 349778.9156747179,
+      "pages_per_visit": 1.9237092216799383,
+      "average_time": 178.19624967891087,
+      "bounce_rate": 0.6496275366041613,
+      "rank": null
+    },
+    {
+      "country": 96,
+      "share": 0.00018876046835632887,
+      "visits": 325671.89605197083,
+      "pages_per_visit": 2.5163701985047693,
+      "average_time": 191.9762825470482,
+      "bounce_rate": 0.531580304202114,
+      "rank": null
+    },
+    {
+      "country": 312,
+      "share": 0.0001800025662887704,
+      "visits": 310561.7270816594,
+      "pages_per_visit": 1.7120253164556962,
+      "average_time": 161.77215189873417,
+      "bounce_rate": 0.6466244725738397,
+      "rank": null
+    },
+    {
+      "country": 434,
+      "share": 0.0001525002172936793,
+      "visits": 263111.4202398348,
+      "pages_per_visit": 1.868421052631579,
+      "average_time": 135.71547681083896,
+      "bounce_rate": 0.6714434601354873,
+      "rank": null
+    },
+    {
+      "country": 831,
+      "share": 0.00014657954416034643,
+      "visits": 252896.37435641093,
+      "pages_per_visit": 2.128698224852071,
+      "average_time": 88.6198224852071,
+      "bounce_rate": 0.4911242603550296,
+      "rank": null
+    },
+    {
+      "country": 887,
+      "share": 0.00014319368472449302,
+      "visits": 247054.68900861728,
+      "pages_per_visit": 1.945041061276058,
+      "average_time": 194.03379658875554,
+      "bounce_rate": 0.638660770688566,
+      "rank": null
+    },
+    {
+      "country": 736,
+      "share": 0.0001312862428062513,
+      "visits": 226510.5612025661,
+      "pages_per_visit": 3.6722428748451055,
+      "average_time": 311.9002478314746,
+      "bounce_rate": 0.39343246592317227,
+      "rank": null
+    },
+    {
+      "country": 60,
+      "share": 0.00012929327223703665,
+      "visits": 223072.05254816572,
+      "pages_per_visit": 2.8162762022194823,
+      "average_time": 283.0616522811344,
+      "bounce_rate": 0.4155363748458693,
+      "rank": null
+    },
+    {
+      "country": 638,
+      "share": 0.00012617141280504504,
+      "visits": 217685.85124617923,
+      "pages_per_visit": 2.195823097931329,
+      "average_time": 219.2028694342471,
+      "bounce_rate": 0.47646954487757437,
+      "rank": null
+    },
+    {
+      "country": 384,
+      "share": 0.00012483016142092178,
+      "visits": 215371.76564788976,
+      "pages_per_visit": 2.0759208963432907,
+      "average_time": 196.63205018297714,
+      "bounce_rate": 0.6289233207581406,
+      "rank": null
+    },
+    {
+      "country": 332,
+      "share": 0.00010993936120124013,
+      "visits": 189680.39507913144,
+      "pages_per_visit": 1.6256983240223464,
+      "average_time": 202.58739026336792,
+      "bounce_rate": 0.6807661612130886,
+      "rank": null
+    },
+    {
+      "country": 136,
+      "share": 0.00010025409643940882,
+      "visits": 172970.2302537474,
+      "pages_per_visit": 6.783303730017762,
+      "average_time": 620.1936056838366,
+      "bounce_rate": 0.1936056838365897,
+      "rank": null
+    },
+    {
+      "country": 120,
+      "share": 9.765381139368578E-05,
+      "visits": 168483.9108008967,
+      "pages_per_visit": 1.9674938832576023,
+      "average_time": 201.01013631597343,
+      "bounce_rate": 0.6724921356169171,
+      "rank": null
+    },
+    {
+      "country": 795,
+      "share": 8.75019809648278E-05,
+      "visits": 150968.77167799984,
+      "pages_per_visit": 1.7383177570093458,
+      "average_time": 202.97196261682242,
+      "bounce_rate": 0.7289719626168224,
+      "rank": null
+    },
+    {
+      "country": 316,
+      "share": 8.133233409080098E-05,
+      "visits": 140324.16683604507,
+      "pages_per_visit": 1.9887820512820513,
+      "average_time": 160.50801282051282,
+      "bounce_rate": 0.6041666666666666,
+      "rank": null
+    },
+    {
+      "country": 466,
+      "share": 7.925877721364787E-05,
+      "visits": 136746.621147404,
+      "pages_per_visit": 2.4278242677824267,
+      "average_time": 325.51255230125525,
+      "bounce_rate": 0.5345188284518828,
+      "rank": null
+    },
+    {
+      "country": 84,
+      "share": 7.622479092901528E-05,
+      "visits": 131512.02899727892,
+      "pages_per_visit": 1.6464968152866242,
+      "average_time": 102.45541401273886,
+      "bounce_rate": 0.6942675159235668,
+      "rank": null
+    },
+    {
+      "country": 450,
+      "share": 7.565663608336398E-05,
+      "visits": 130531.781027746,
+      "pages_per_visit": 2.1507271925958573,
+      "average_time": 179.73468488320847,
+      "bounce_rate": 0.5839576906126047,
+      "rank": null
+    },
+    {
+      "country": 204,
+      "share": 7.527455511358464E-05,
+      "visits": 129872.5697270063,
+      "pages_per_visit": 1.6692342546443135,
+      "average_time": 177.7068418667875,
+      "bounce_rate": 0.6284549161758043,
+      "rank": null
+    },
+    {
+      "country": 762,
+      "share": 6.940258629124172E-05,
+      "visits": 119741.55428408789,
+      "pages_per_visit": 1.731852833941001,
+      "average_time": 140.03712296983758,
+      "bounce_rate": 0.7172688100762347,
+      "rank": null
+    },
+    {
+      "country": 768,
+      "share": 6.626466589722538E-05,
+      "visits": 114327.64270992125,
+      "pages_per_visit": 1.8254281949934124,
+      "average_time": 211.89789196310934,
+      "bounce_rate": 0.6212121212121212,
+      "rank": null
+    },
+    {
+      "country": 740,
+      "share": 5.8044570932734095E-05,
+      "visits": 100145.36219258548,
+      "pages_per_visit": 1.5288753799392096,
+      "average_time": 177.93768996960486,
+      "bounce_rate": 0.7127659574468085,
+      "rank": null
+    },
+    {
+      "country": 598,
+      "share": 5.767602546423079E-05,
+      "visits": 99509.50394030429,
+      "pages_per_visit": 2.702064896755162,
+      "average_time": 269.2448377581121,
+      "bounce_rate": 0.49852507374631266,
+      "rank": null
+    },
+    {
+      "country": 850,
+      "share": 5.067432182764028E-05,
+      "visits": 87429.33631422117,
+      "pages_per_visit": 2.021671826625387,
+      "average_time": 138.87616099071207,
+      "bounce_rate": 0.5356037151702786,
+      "rank": null
+    },
+    {
+      "country": 328,
+      "share": 3.36497951807734E-05,
+      "visits": 58056.60842923794,
+      "pages_per_visit": 2.4369114877589455,
+      "average_time": 341.90772128060263,
+      "bounce_rate": 0.576271186440678,
+      "rank": null
+    },
+    {
+      "country": 266,
+      "share": 2.6049629810802185E-05,
+      "visits": 44943.90380469431,
+      "pages_per_visit": 1.7486486486486486,
+      "average_time": 169.16486486486485,
+      "bounce_rate": 0.6594594594594595,
+      "rank": null
+    },
+    {
+      "country": 474,
+      "share": 2.2918300345267906E-05,
+      "visits": 39541.36368025008,
+      "pages_per_visit": 1.9005847953216375,
+      "average_time": 139.7017543859649,
+      "bounce_rate": 0.6491228070175439,
+      "rank": null
+    },
+    {
+      "country": 854,
+      "share": 1.7728520392522145E-05,
+      "visits": 30587.341198632566,
+      "pages_per_visit": 1.8561872909698998,
+      "average_time": 198.91638795986623,
+      "bounce_rate": 0.6120401337792643,
+      "rank": null
+    },
+    {
+      "country": 540,
+      "share": 1.7151473424350214E-05,
+      "visits": 29591.75148712138,
+      "pages_per_visit": 1.7533039647577093,
+      "average_time": 89.7136563876652,
+      "bounce_rate": 0.7136563876651982,
+      "rank": null
+    },
+    {
+      "country": 662,
+      "share": 1.6787126921968128E-05,
+      "visits": 28963.137788056567,
+      "pages_per_visit": 2.9529411764705884,
+      "average_time": 345.44117647058823,
+      "bounce_rate": 0.5176470588235295,
+      "rank": null
+    },
+    {
+      "country": 132,
+      "share": 1.3112876210273804E-05,
+      "visits": 22623.885685815887,
+      "pages_per_visit": 2.3181818181818183,
+      "average_time": 229.8181818181818,
+      "bounce_rate": 0.6060606060606061,
+      "rank": null
+    },
+    {
+      "country": 258,
+      "share": 1.2338474850422696E-05,
+      "visits": 21287.79682481641,
+      "pages_per_visit": 1.8833333333333333,
+      "average_time": 150.04166666666666,
+      "bounce_rate": 0.725,
+      "rank": null
+    },
+    {
+      "country": 254,
+      "share": 9.323598866546057E-06,
+      "visits": 16086.176026879164,
+      "pages_per_visit": 3.138728323699422,
+      "average_time": 391.4971098265896,
+      "bounce_rate": 0.35260115606936415,
+      "rank": null
+    },
+    {
+      "country": 148,
+      "share": 7.098153368328199E-06,
+      "visits": 12246.574116182632,
+      "pages_per_visit": 1.4285714285714286,
+      "average_time": 85.19047619047619,
+      "bounce_rate": 0.7142857142857143,
+      "rank": null
+    },
+    {
+      "country": 438,
+      "share": 6.704774929487042E-06,
+      "visits": 11567.871084986913,
+      "pages_per_visit": 4.4,
+      "average_time": 489.8,
+      "bounce_rate": 0.5,
+      "rank": null
+    }
+  ]
+}

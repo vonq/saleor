@@ -13,6 +13,8 @@ from .plugins.views import (
 )
 from .product.views import digital_product
 
+from api.urls import urlpatterns as pkb_urls
+
 urlpatterns = [
     url(r"^graphql/$", csrf_exempt(GraphQLView.as_view(schema=schema)), name="api"),
     url(
@@ -36,6 +38,7 @@ urlpatterns = [
         handle_plugin_webhook,
         name="plugins",
     ),
+    url(r"^pkb/", include(pkb_urls))
 ]
 
 if settings.DEBUG:
