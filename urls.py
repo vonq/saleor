@@ -28,6 +28,7 @@ from api.products.views import (
     JobFunctionsViewSet,
     ChannelsViewSet,
 )
+from api.settings import is_development
 
 schema_view = get_schema_view(
     openapi.Info(title="VONQ Product Knowledge Base API", default_version="v1"),
@@ -74,4 +75,5 @@ urlpatterns = [
     ),
 ]
 
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+if not is_development():
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

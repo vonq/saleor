@@ -1129,9 +1129,21 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
     available_in_ats = models.BooleanField(default=True)
     available_in_jmp = models.BooleanField(default=True)
 
-    duration_days = models.IntegerField(null=True, blank=True)
-    time_to_process = models.IntegerField(
-        null=True, blank=True, verbose_name="Time to process (hours)"
+    duration_days = models.PositiveIntegerField(null=True, blank=True)
+    supplier_setup_time = models.PositiveIntegerField(
+        null=True,
+        blank=False,
+        verbose_name="Supplier setup time (hours)",
+        default=0,
+    )
+    supplier_time_to_process = models.PositiveIntegerField(
+        null=True,
+        blank=False,
+        verbose_name="Supplier time to process (hours)",
+        default=0,
+    )
+    vonq_time_to_process = models.PositiveIntegerField(
+        null=True, blank=False, verbose_name="VONQ time to process (hours)", default=24
     )
 
     unit_price = models.FloatField(null=True, blank=True, verbose_name="Unit Price (€)")

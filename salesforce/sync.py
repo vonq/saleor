@@ -38,7 +38,7 @@ def make_salesforce_product(product_instance):
         "Available_in_ATS__c": product_instance.available_in_ats,
         "Available_in_JMP__c": product_instance.available_in_jmp,
         "Duration__c": product_instance.duration_days,
-        "TimeToGoLive__c": product_instance.time_to_process,
+        "TimeToGoLive__c": product_instance.supplier_time_to_process,
         "Product_Status__c": None
         if product_instance.status == Product.Status.ACTIVE
         else product_instance.status,

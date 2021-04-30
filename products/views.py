@@ -61,6 +61,7 @@ from api.products.paginators import (
 from api.products.search.search import query_search_index, get_results_ids
 
 from api.products.serializers import (
+    ProductJmpSerializer,
     ProductSerializer,
     LocationSerializer,
     JobTitleSerializer,
@@ -165,7 +166,9 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 
 class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
-    serializer_class = ProductSerializer
+    serializers = {
+        "default": None,
+    }
     http_method_names = ("get", "post")
     queryset = Product.objects.all().prefetch_related(
         "locations",
@@ -213,6 +216,13 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
                 else StandardResultsSetPagination()
             )
         return self._paginator
+
+    def get_serializer_class(self):
+        return (
+            ProductJmpSerializer
+            if self.request.user.profile.type == Profile.Type.JMP
+            else ProductSerializer
+        )
 
     def get_queryset(self):
         queryset = self.queryset.filter(
@@ -395,7 +405,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         responses={
             400: openapi.Response(description="In case of a bad request."),
             200: openapi.Response(
-                schema=serializer_class(many=True),
+                schema=ProductJmpSerializer(many=True),
                 description="In case of a successful search.",
                 examples={
                     "application/json": {
@@ -431,6 +441,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
                                 ],
                                 "duration": {"range": "days", "period": None},
                                 "time_to_process": {"range": "hours", "period": None},
+                                "time_to_setup": {"range": "hours", "period": None},
                                 "product_id": "ab379c3b-600d-5592-9f9d-3c4805086364",
                                 "vonq_price": [{"amount": 123, "currency": "EUR"}],
                                 "ratecard_price": [{"amount": 234, "currency": "EUR"}],

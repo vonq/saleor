@@ -1,5 +1,6 @@
-from typing import Optional, Dict
+from typing import Optional, Dict, TypedDict
 
+from drf_yasg2.utils import swagger_serializer_method
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework_recursive.fields import RecursiveField
@@ -110,6 +111,28 @@ class LimitedChannelSerializer(serializers.Serializer):
     id = serializers.IntegerField()
 
 
+class ProductPriceSerializer(serializers.Serializer):
+    amount = serializers.FloatField(min_value=0)
+    currency = serializers.CharField(
+        min_length=3, max_length=3, label="ISO-4217 code for a currency"
+    )
+
+
+class ProductLogoSerializer(serializers.Serializer):
+    url = serializers.URLField()
+
+
+class ProductLogoWithSizeSerializer(ProductLogoSerializer):
+    size = serializers.CharField(
+        help_text="Size format: WIDTHxHEIGHT", min_length=3, allow_blank=True
+    )
+
+
+class DeliveryTimeSerializer(serializers.Serializer):
+    range = serializers.ChoiceField(choices=["hours", "days"])
+    period = serializers.IntegerField()
+
+
 class ProductSerializer(serializers.Serializer):
     _selected_currency: Optional[str] = None
     _exchange_rates: Dict[str, float] = {}
@@ -148,16 +171,23 @@ class ProductSerializer(serializers.Serializer):
     def get_type(self, product):
         return getattr(product.channel, "type", None)
 
+    @swagger_serializer_method(serializer_or_field=ProductLogoSerializer(many=True))
     def get_logo_url(self, product):
         if product.logo_rectangle_uncropped:
             return [{"url": product.logo_rectangle_uncropped_url}]
         return None
 
+    @swagger_serializer_method(
+        serializer_or_field=ProductLogoWithSizeSerializer(many=True)
+    )
     def get_logo_square_url(self, product):
         if product.logo_square:
             return [{"size": "68x68", "url": product.logo_square_url}]
         return None
 
+    @swagger_serializer_method(
+        serializer_or_field=ProductLogoWithSizeSerializer(many=True)
+    )
     def get_logo_rectangle_url(self, product):
         if product.logo_rectangle:
             return [{"size": "270x90", "url": product.logo_rectangle_url}]
@@ -178,20 +208,26 @@ class ProductSerializer(serializers.Serializer):
             return filter(lambda x: x["currency"] == self._selected_currency, prices)
         return prices
 
+    @swagger_serializer_method(serializer_or_field=ProductPriceSerializer)
     def get_vonq_price(self, product):
         prices = self.get_prices(product.unit_price)
         if self._selected_currency:
             return filter(lambda x: x["currency"] == self._selected_currency, prices)
         return prices
 
+    @swagger_serializer_method(serializer_or_field=ProductPriceSerializer)
     def get_ratecard_price(self, product):
         prices = self.get_prices(product.rate_card_price)
         if self._selected_currency:
             return filter(lambda x: x["currency"] == self._selected_currency, prices)
         return prices
 
-    def get_time_to_process(self, product):
-        return {"range": "hours", "period": product.time_to_process}
+    @swagger_serializer_method(serializer_or_field=DeliveryTimeSerializer)
+    def get_time_to_process(self, product) -> dict:
+        return {
+            "range": "hours",
+            "period": product.supplier_time_to_process + product.vonq_time_to_process,
+        }
 
     locations = LimitedLocationSerializer(many=True, read_only=True)
     job_functions = LimitedJobFunctionSerializer(many=True, read_only=True)
@@ -290,6 +326,17 @@ class ProductSearchSerializer(serializers.Serializer):
                 detail="Cannot search by both job title and job function. Please use either field."
             )
         return attrs
+
+
+class ProductJmpSerializer(ProductSerializer):
+    @swagger_serializer_method(serializer_or_field=DeliveryTimeSerializer)
+    def get_time_to_setup(self, product) -> dict:
+        return {
+            "range": "days",
+            "period": product.supplier_setup_time,
+        }
+
+    time_to_setup = serializers.SerializerMethodField()
 
 
 class ChannelSerializer(serializers.Serializer):
