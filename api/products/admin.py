@@ -217,7 +217,7 @@ class ChannelForm(forms.ModelForm):
         required=False,
     )
     salesforce_account_id = AutoCompleteSelectField(
-        "account", required=True, help_text=None, label="Salesforce Account"
+        "channel_account", required=True, help_text=None, label="Salesforce Account"
     )
 
     def __init__(self, *args, **kwargs):

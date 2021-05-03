@@ -134,7 +134,7 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
+
 
 EMAIL_URL = os.environ.get("EMAIL_URL")
 SENDGRID_USERNAME = os.environ.get("SENDGRID_USERNAME")
@@ -511,6 +511,7 @@ DEFAULT_PLACEHOLDER = "images/placeholder255x255.png"
 AUTHENTICATION_BACKENDS = [
     "saleor.core.auth_backend.JSONWebTokenBackend",
     "saleor.core.auth_backend.PluginBackend",
+    "django.contrib.auth.backends.ModelBackend"
 ]
 
 # CELERY SETTINGS
@@ -642,3 +643,7 @@ JWT_TTL_REQUEST_EMAIL_CHANGE = timedelta(
 
 assert hasattr(schema_printer, "_print_object")
 schema_printer._print_object = patched_print_object
+
+AJAX_LOOKUP_CHANNELS = {
+    'channel_account'  : {'model': 'products.Channel', 'search_field': 'salesforce_account_id'},
+}
