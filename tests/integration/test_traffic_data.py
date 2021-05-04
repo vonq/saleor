@@ -154,12 +154,10 @@ class TrafficLocationsDataTestCase(SearchTestCase):
         resp = self.client.get(reverse("locations") + "?text=berlin")
         berlin_id = resp.json()[0]["id"]
 
-        # TODO: This doesn't apply anymore, since locations aren't treated as inclusive
-        #       review after refactor
-        # resp = self.client.get(
-        #     reverse("api.products:products-list") + f"?includeLocationId={berlin_id}"
-        # )
-        # self.assertEqual(len(resp.json()["results"]), 2)
-        #
-        # # the first result is the European board – since DE is its primary SW location
-        # self.assertEqual(resp.json()["results"][0]["title"], "European Jobs Board")
+        resp = self.client.get(
+            reverse("api.products:products-list") + f"?includeLocationId={berlin_id}"
+        )
+        self.assertEqual(len(resp.json()["results"]), 2)
+
+        # the first result is the European board – since DE is its primary SW location
+        self.assertEqual(resp.json()["results"][0]["title"], "European Jobs Board")

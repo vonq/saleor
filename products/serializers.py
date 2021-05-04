@@ -1,4 +1,5 @@
-from typing import Optional, Dict, TypedDict
+from typing import Dict, Optional
+from uuid import UUID
 
 from drf_yasg2.utils import swagger_serializer_method
 from rest_framework import serializers
@@ -7,11 +8,10 @@ from rest_framework_recursive.fields import RecursiveField
 
 from api.currency.conversion import convert
 from api.currency.models import ExchangeRate
-from api.products.docs import CommonParameters
-from api.products.models import Location, JobFunction, JobTitle, Channel
 from api.products.area import bounding_box_area
-
-from uuid import UUID
+from api.products.docs import CommonOpenApiParameters
+from api.products.models import Channel, JobFunction, JobTitle, Location
+from api.products.search.docs import ProductsOpenApiParameters
 
 
 class LocationSerializer(serializers.ModelSerializer):
@@ -153,7 +153,7 @@ class ProductSerializer(serializers.Serializer):
             )
 
         self._selected_currency = request.query_params.get(
-            CommonParameters.CURRENCY.name
+            CommonOpenApiParameters.CURRENCY.name
         )
 
     def get_audience_group(self, product):
@@ -262,10 +262,13 @@ class ProductSearchSerializer(serializers.Serializer):
     recommended = serializers.BooleanField(required=False, default=False)
     channelType = serializers.CharField(required=False)
     customerId = serializers.CharField(required=False)
+    sortBy = serializers.ChoiceField(required=False, choices=["relevant", "recent"])
 
     @property
     def is_recommendation(self) -> bool:
-        return bool(self.validated_data.get("recommended"))
+        return bool(
+            self.validated_data.get(ProductsOpenApiParameters.ONLY_RECOMMENDED.name)
+        )
 
     @property
     def is_my_own_product_request(self) -> bool:
@@ -286,6 +289,12 @@ class ProductSearchSerializer(serializers.Serializer):
                 self.validated_data.get("channelType"),
                 self.validated_data.get("customerId"),
             )
+        )
+
+    @property
+    def is_sort_by_recent(self) -> bool:
+        return bool(
+            self.validated_data.get(ProductsOpenApiParameters.SORT_BY.name) == "recent"
         )
 
     @staticmethod

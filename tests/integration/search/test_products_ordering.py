@@ -1,11 +1,14 @@
+from datetime import datetime
+
 from django.test import tag
 from rest_framework.reverse import reverse
 
-from api.products.models import Industry, Location, Product
+from api.products.models import Industry, JobFunction, Location, Product
 from api.products.search.index import ProductIndex
 from api.tests import SearchTestCase
 from api.vonqtaxonomy.models import (
     Industry as VonqIndustry,
+    JobCategory as VonqJobCategory,
 )
 
 
@@ -112,3 +115,77 @@ class ProductSearchOrderByFrequencyTestCase(SearchTestCase):
         self.assertEqual(response[0]["product_id"], "medium")
         self.assertEqual(response[1]["product_id"], "low")
         self.assertEqual(response[2]["product_id"], "high")
+
+
+@tag("algolia")
+@tag("integration")
+class ProductSearchOrderByRecencyTestCase(SearchTestCase):
+    model_index_class_pairs = [
+        (
+            Product,
+            ProductIndex,
+        )
+    ]
+
+    @classmethod
+    def setUpSearchClass(cls):
+        vonq_job_category = VonqJobCategory.objects.create(mapi_id=1, name="Something")
+        cls.job_function = JobFunction.objects.create(
+            name_en="Some job function", vonq_taxonomy_value_id=vonq_job_category.id
+        )
+
+        cls.date_format = "%d/%m/%Y %H:%M:%S"
+        cls.dates = [
+            "01/01/1969 01:02:03",
+            "01/01/2019 01:02:03",
+            "01/01/2020 01:02:03",
+            "01/01/2020 01:02:04",
+            "01/01/2021 01:02:03",
+            "01/01/2022 01:02:03",
+        ]
+        cls.dates.sort()
+
+        for i in range(len(cls.dates)):
+            Product.objects.create(
+                created=datetime.strptime(cls.dates[i], cls.date_format),
+                status=Product.Status.ACTIVE,
+                title=cls.dates[i],
+                salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+                # newer products have lower order frequency
+                order_frequency=1.0 - i / 10,
+            )
+            p = Product(
+                created=datetime.strptime(cls.dates[i], cls.date_format),
+                status=Product.Status.ACTIVE,
+                title=cls.dates[i],
+                salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+                # newer products have lower order frequency
+                order_frequency=1.0 - i / 10,
+            )
+            p.save()
+            p.job_functions.add(cls.job_function)
+            p.save()
+
+    def test_it_sorts_all_products_by_recency_when_sortBy_parameter_is_used(self):
+        def check_products_are_sorted_descending_by_created_date(products):
+            for i in range(len(products) - 1):
+                current_product_time = datetime.strptime(
+                    products[i]["title"], self.date_format
+                )
+                next_product_time = datetime.strptime(
+                    products[i + 1]["title"], self.date_format
+                )
+                self.assertGreaterEqual(current_product_time, next_product_time)
+
+        products = self.client.get(
+            reverse("api.products:products-list") + f"?sortBy=recent"
+        ).json()["results"]
+
+        check_products_are_sorted_descending_by_created_date(products)
+
+        products = self.client.get(
+            reverse("api.products:products-list")
+            + f"?jobFunctionId={self.job_function.id}&sortBy=recent"
+        ).json()["results"]
+
+        check_products_are_sorted_descending_by_created_date(products)

@@ -895,6 +895,13 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
             ("can_view_product_job_functions", "Can view product job functions"),
             ("can_change_product_job_functions", "Can change product job functions"),
         )
+        indexes = [
+            models.Index(
+                fields=[
+                    "-created",
+                ]
+            ),
+        ]
 
     class TrackingMethod(models.TextChoices):
         FIXED = "Fixed duration", _("Fixed duration")
@@ -1142,7 +1149,7 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         verbose_name="Supplier time to process (hours)",
         default=0,
     )
-    vonq_time_to_process = models.PositiveIntegerField(
+    vonq_time_to_process = models.IntegerField(
         null=True, blank=False, verbose_name="VONQ time to process (hours)", default=24
     )
 
