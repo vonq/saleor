@@ -226,7 +226,8 @@ class ProductSerializer(serializers.Serializer):
     def get_time_to_process(self, product) -> dict:
         return {
             "range": "hours",
-            "period": product.supplier_time_to_process + product.vonq_time_to_process,
+            "period": (product.supplier_time_to_process or 0)
+            + (product.vonq_time_to_process or 0),
         }
 
     locations = LimitedLocationSerializer(many=True, read_only=True)

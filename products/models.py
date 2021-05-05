@@ -1144,7 +1144,7 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         default=0,
     )
     supplier_time_to_process = models.PositiveIntegerField(
-        null=True,
+        null=False,
         blank=False,
         verbose_name="Supplier time to process (hours)",
         default=0,
