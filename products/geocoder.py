@@ -21,7 +21,7 @@ class Geocoder:
         response = MapboxGeocoder().forward(
             address=text, types=["country", "region", "place", "district"]
         )
-        return response.geojson()["features"]
+        return response.geojson().get("features", [])
 
     @staticmethod
     @lru_cache
