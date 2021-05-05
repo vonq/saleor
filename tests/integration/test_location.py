@@ -97,6 +97,16 @@ class ExtendedLocationResultsTestCase(AuthenticatedTestCase):
             ],
         )
 
+    def test_endpoint_can_match_on_brackets(self):
+        response = self.client.get(reverse("locations") + "?text=Belgium / Namen (BE")
+
+        self.assertNotEqual(
+            response.json()[0]["place_type"],
+            [
+                "continent",
+            ],
+        )
+
     def test_get_continents_search(self):
         cont = Geocoder.get_continents("eur")
         self.assertEqual(len(cont), 1)

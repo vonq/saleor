@@ -41,7 +41,7 @@ class Geocoder:
     @lru_cache
     def get_continents(text):
         matching_continent_names = list(
-            filter(lambda x: re.search(text, x, re.IGNORECASE), CONTINENTS)
+            filter(lambda x: re.search(re.escape(text), x, re.IGNORECASE), CONTINENTS)
         )
         if matching_continent_names:
             Location = apps.get_model("products", "Location")
