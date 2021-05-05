@@ -220,7 +220,8 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     def get_serializer_class(self):
         return (
             ProductJmpSerializer
-            if self.request.user.profile.type == Profile.Type.JMP
+            if self.request.user.is_authenticated
+            and self.request.user.profile.type == Profile.Type.JMP
             else ProductSerializer
         )
 
