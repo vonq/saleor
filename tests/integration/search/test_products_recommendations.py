@@ -102,17 +102,50 @@ class ProductRecommendationsTestCase(SearchTestCase):
 
         resp = self.client.get(
             reverse("api.products:products-list")
+            + f"?jobFunctionId={self.job_function_for_recommendations_id}&recommended=false"
+        )
+        products = resp.json()["results"]
+        products_count = resp.json()["count"]
+        products_ids = set(map(lambda p: p["product_id"], products))
+
+        resp_with_recommendations_only = self.client.get(
+            reverse("api.products:products-list")
             + f"?jobFunctionId={self.job_function_for_recommendations_id}&recommended=true"
         )
+        recommended_products = resp_with_recommendations_only.json()["results"]
+        recommended_products_count = resp_with_recommendations_only.json()["count"]
+        recommended_products_ids = set(
+            map(lambda p: p["product_id"], recommended_products)
+        )
 
-        self.assertEqual(resp.json()["count"], 6)
-
-        response = resp.json()["results"]
-
-        self.assertFalse(is_a_free_product_present(response))
+        self.assertEqual(recommended_products_count, 6)
+        self.assertFalse(is_a_free_product_present(recommended_products))
         self.assertEqual(
             get_number_of_products_for_channel_type(
-                response, Channel.Type.SOCIAL_MEDIA
+                recommended_products, Channel.Type.SOCIAL_MEDIA
             ),
             2,
+        )
+
+        resp_excluding_recommendations = self.client.get(
+            reverse("api.products:products-list")
+            + f"?jobFunctionId={self.job_function_for_recommendations_id}&excludeRecommended=true"
+        )
+        products_excluding_recommendations_count = (
+            resp_excluding_recommendations.json()["count"]
+        )
+        products_ids_excluding_recommendations = set(
+            map(
+                lambda p: p["product_id"],
+                resp_excluding_recommendations.json()["results"],
+            )
+        )
+
+        self.assertEqual(
+            products_excluding_recommendations_count,
+            products_count - recommended_products_count,
+        )
+        self.assertSetEqual(
+            products_ids - products_ids_excluding_recommendations,
+            recommended_products_ids,
         )

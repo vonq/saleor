@@ -13,7 +13,15 @@ class ProductsOpenApiParameters:
     ONLY_RECOMMENDED = openapi.Parameter(
         "recommended",
         in_=openapi.IN_QUERY,
-        description="Only return recommended products.",
+        description="Only return recommended products. Cannot be used in combination with 'excludeRecommended'",
+        type=openapi.TYPE_BOOLEAN,
+        default=False,
+        required=False,
+    )
+    EXCLUDE_RECOMMENDED = openapi.Parameter(
+        "excludeRecommended",
+        in_=openapi.IN_QUERY,
+        description=f"Exclude recommended products from search results. Cannot be used in combination with 'recommended'.",
         type=openapi.TYPE_BOOLEAN,
         default=False,
         required=False,

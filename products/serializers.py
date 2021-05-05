@@ -260,6 +260,7 @@ class ProductSearchSerializer(serializers.Serializer):
     currency = serializers.CharField(required=False, max_length=3)
     name = serializers.CharField(required=False)
     recommended = serializers.BooleanField(required=False, default=False)
+    excludeRecommended = serializers.BooleanField(required=False, default=False)
     channelType = serializers.CharField(required=False)
     customerId = serializers.CharField(required=False)
     sortBy = serializers.ChoiceField(required=False, choices=["relevant", "recent"])
@@ -268,6 +269,12 @@ class ProductSearchSerializer(serializers.Serializer):
     def is_recommendation(self) -> bool:
         return bool(
             self.validated_data.get(ProductsOpenApiParameters.ONLY_RECOMMENDED.name)
+        )
+
+    @property
+    def excludes_recommendations(self) -> bool:
+        return bool(
+            self.validated_data.get(ProductsOpenApiParameters.EXCLUDE_RECOMMENDED.name)
         )
 
     @property

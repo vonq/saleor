@@ -185,6 +185,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     search_results_count: int = None
 
     is_recommendation: bool = False
+    excludes_recommendations: bool = False
     is_my_own_product_request: bool = False
 
     search_filters: Tuple[Type[FacetFilter]] = (
@@ -318,10 +319,15 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(ids)])
         )
 
-        if self.is_recommendation:
-            queryset = self.add_recommendation_filter(queryset)
-            self.search_results_count = queryset.count()
-            return queryset
+        recommendation_queryset = self.add_recommendation_filter(queryset)
+        if self.is_recommendation is True:
+            self.search_results_count = recommendation_queryset.count()
+            return recommendation_queryset
+
+        if self.excludes_recommendations is True:
+            exclude_ids = recommendation_queryset.values_list("pk", flat=True)
+            self.search_results_count -= len(exclude_ids)
+            queryset = queryset.exclude(pk__in=exclude_ids)
 
         if sort_by_recent is True:
             return queryset.order_by("-created")
@@ -404,6 +410,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             CommonOpenApiParameters.ACCEPT_LANGUAGE,
             ProductsOpenApiParameters.PRODUCT_NAME,
             ProductsOpenApiParameters.ONLY_RECOMMENDED,
+            ProductsOpenApiParameters.EXCLUDE_RECOMMENDED,
             CommonOpenApiParameters.CURRENCY,
             ProductsOpenApiParameters.SORT_BY,
         ],
@@ -470,8 +477,16 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         search_serializer = ProductSearchSerializer(data=self.request.query_params)
         search_serializer.is_valid(raise_exception=True)
         self.is_recommendation = search_serializer.is_recommendation
+        self.excludes_recommendations = search_serializer.excludes_recommendations
         self.is_my_own_product_request = search_serializer.is_my_own_product_request
 
+        if self.is_recommendation is True and self.excludes_recommendations:
+            return JsonResponse(
+                data={
+                    "error": "Parameters 'recommended' and 'excludeRecommended' cannot both be set to true."
+                },
+                status=HTTP_400_BAD_REQUEST,
+            )
         queryset = self.get_queryset()
         if search_serializer.is_search_request:
             # a pure list view doesn't need to hit the search index
