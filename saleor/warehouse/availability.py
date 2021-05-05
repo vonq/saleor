@@ -57,15 +57,8 @@ def check_stock_quantity_bulk(variants, country_code, quantities):
         stocks = variant_stocks.get(variant.pk, [])
         available_quantity = sum([stock.available_quantity for stock in stocks])
 
-        if not stocks:
-            insufficient_stocks.append(
-                InsufficientStockData(
-                    variant=variant, available_quantity=available_quantity
-                )
-            )
-
         if variant.track_inventory:
-            if quantity > available_quantity:
+            if not stocks or quantity > available_quantity:
                 insufficient_stocks.append(
                     InsufficientStockData(
                         variant=variant, available_quantity=available_quantity
