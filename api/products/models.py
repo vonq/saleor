@@ -894,6 +894,8 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
             ("can_change_product_job_functions", "Can change product job functions"),
         )
 
+        db_table = "products_pkb_product"
+
     class TrackingMethod(models.TextChoices):
         FIXED = "Fixed duration", _("Fixed duration")
         SLOTS = "Slots", _("Slots")
