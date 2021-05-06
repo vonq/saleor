@@ -345,6 +345,11 @@ class ProductSearchSerializer(serializers.Serializer):
         return attrs
 
 
+class ProductCategorySerializer(serializers.Serializer):
+    name = serializers.CharField(read_only=True)
+    type = serializers.CharField(read_only=True)
+
+
 class ProductJmpSerializer(ProductSerializer):
     @swagger_serializer_method(serializer_or_field=DeliveryTimeSerializer)
     def get_time_to_setup(self, product) -> dict:
@@ -354,6 +359,7 @@ class ProductJmpSerializer(ProductSerializer):
         }
 
     time_to_setup = serializers.SerializerMethodField()
+    categories = ProductCategorySerializer(many=True)
 
 
 class ChannelSerializer(serializers.Serializer):
