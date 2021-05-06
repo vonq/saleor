@@ -85,6 +85,9 @@ class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = "__all__"
+        help_texts = {
+            "time_to_process": "This is auto-calculated by summing up the supplier time to process and vonq time to process.",
+        }
 
     @staticmethod
     def is_valid_cropping_area(cropping_string):
@@ -145,8 +148,16 @@ class ProductAdmin(
         "salesforce_last_sync",
         "updated",
         "created",
+        "time_to_process",
     ]
     inlines = (JobFunctionModelInline,)
+
+    def time_to_process(self, product):
+        return (product.supplier_time_to_process or 0) + (
+            product.vonq_time_to_process or 0
+        )
+
+    time_to_process.short_description = "Time to process"
 
     fields = [
         "title",
@@ -174,8 +185,9 @@ class ProductAdmin(
         "salesforce_product_type",
         "cross_postings",
         "duration_days",
-        "supplier_setup_time",
+        "time_to_process",
         "supplier_time_to_process",
+        "supplier_setup_time",
         "vonq_time_to_process",
         "product_id",
         "unit_price",
