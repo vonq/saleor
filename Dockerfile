@@ -9,6 +9,7 @@ RUN apt-get -y update \
 
 # Install Python dependencies
 COPY requirements_dev.txt /app/
+COPY pkb_requirements.txt /app/
 WORKDIR /app
 RUN pip install -r requirements_dev.txt
 
