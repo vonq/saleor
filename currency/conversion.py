@@ -5,7 +5,7 @@ import requests
 
 
 def convert(original_value: Optional[float], conversion_rate: float):
-    if not original_value:
+    if original_value is None:
         return
     return round(original_value * conversion_rate, 2)
 
