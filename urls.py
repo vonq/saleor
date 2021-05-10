@@ -22,6 +22,7 @@ from rest_framework import permissions
 from django.conf import settings
 from ajax_select import urls as ajax_select_urls
 
+from api.products.admin import get_admin_from_sf_uuid
 from api.products.views import (
     LocationSearchViewSet,
     JobTitleSearchViewSet,
@@ -38,6 +39,7 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path(r"admin/", include("massadmin.urls")),
+    path(r"admin/edit/<str:uuid>/", get_admin_from_sf_uuid, name="saleforce-edit"),
     path("admin/", admin.site.urls),
     re_path(r"health/?", include("health_check.urls")),
     path(

@@ -2,6 +2,7 @@ from algoliasearch_django.decorators import disable_auto_indexing
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.test import TestCase, tag
+from django.urls import reverse
 
 from api.products.models import Product, Industry, JobFunction
 from api.vonqtaxonomy.models import (
@@ -14,7 +15,7 @@ User = get_user_model()
 
 @tag("unit")
 @disable_auto_indexing
-class AdminTestCase(TestCase):
+class AdminPermissionsTestCase(TestCase):
     def setUp(self) -> None:
 
         base_perms = Permission.objects.filter(
@@ -105,4 +106,23 @@ class AdminTestCase(TestCase):
         self.assertIn(
             b'<select name="industries" id="id_industries" multiple class="selectfilter',
             resp.content,
+        )
+
+
+@tag("unit")
+class TestAdminRedirect(TestCase):
+    def setUp(self) -> None:
+        self.product = Product.objects.create(
+            title="Example", salesforce_id="3f8cb2df-9e08-5982-b97e-edd8b96c6cd9"
+        )
+
+    def test_redirect_from_sf_to_django_admin(self):
+        resp = self.client.get(
+            reverse("saleforce-edit", args=(self.product.salesforce_id,))
+        )
+
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(
+            resp.headers["Location"],
+            f"/admin/products/product/{self.product.id}/change/",
         )

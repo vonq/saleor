@@ -8,6 +8,9 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db.models import Count
+from django.http import JsonResponse, Http404
+from django.shortcuts import redirect
+from django.urls import reverse
 from django_better_admin_arrayfield.admin.mixins import DynamicArrayMixin
 from image_cropping import ImageCroppingMixin
 from modeltranslation.admin import TranslationAdmin
@@ -408,3 +411,16 @@ class CategoryAdmin(TranslationAdmin):
 @admin.register(PostingRequirement)
 class PostingRequirementAdmin(TranslationAdmin):
     list_display = ("posting_requirement_type",)
+
+
+def get_admin_from_sf_uuid(request, uuid):
+    """
+    Small utility view to redirect an admin/edit/<salesforce_uuid>
+    request to the admin panel edit view for the product
+    """
+    try:
+        product = Product.objects.get(salesforce_id=uuid)
+    except Product.DoesNotExist:
+        raise Http404()
+
+    return redirect(reverse("admin:products_product_change", args=(product.id,)))
