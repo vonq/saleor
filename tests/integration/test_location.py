@@ -63,6 +63,10 @@ class MapboxLocationsTestCase(AuthenticatedTestCase):
             ],
         )
 
+    def test_can_resolve_weird_antarctica_islands(self):
+        resp = self.client.get(reverse("locations") + "?text=oceania")
+        self.assertEqual(resp.status_code, 200)
+
 
 @tag("integration")
 class ExtendedLocationResultsTestCase(AuthenticatedTestCase):
