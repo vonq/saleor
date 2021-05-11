@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     def set_profile(apps, schema_editor):
         Profile = apps.get_model('products', 'Profile')
-        User = apps.get_model('account', 'User')
+        User = get_user_model()
         users = User.objects.all()
         for user in users:
             p, created = Profile.objects.get_or_create(user_id=user.id)
