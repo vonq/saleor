@@ -10,7 +10,7 @@ from api.currency.conversion import convert
 from api.currency.models import ExchangeRate
 from api.products.area import bounding_box_area
 from api.products.docs import CommonOpenApiParameters
-from api.products.models import Channel, JobFunction, JobTitle, Location
+from api.products.models import Channel, JobFunction, JobTitle, Location, Product
 from api.products.search.docs import ProductsOpenApiParameters
 
 
@@ -360,6 +360,16 @@ class ProductJmpSerializer(ProductSerializer):
 
     time_to_setup = serializers.SerializerMethodField()
     categories = ProductCategorySerializer(many=True)
+    # JMP uses these fields to filter products and channels
+    # in the ordered campaign overview
+    # see CHEC-541
+    channel_category = serializers.ChoiceField(
+        source="salesforce_product_category",
+        choices=Product.SalesforceProductCategory.choices,
+    )
+    channel_type = serializers.ChoiceField(
+        source="salesforce_product_type", choices=Product.SalesforceProductType.choices
+    )
 
 
 class ChannelSerializer(serializers.Serializer):
