@@ -10,7 +10,7 @@ from django.db.migrations.executor import MigrationExecutor
 from django.db.models import Model
 from django.test import TestCase, override_settings
 
-from api import settings
+from django.conf import settings
 
 User = get_user_model()
 
@@ -60,6 +60,14 @@ class TestMigrations(TestCase):
 NOW = int(time.time())
 
 
+@override_settings(
+    ALGOLIA={
+        "INDEX_SUFFIX": f"{__name__}_{NOW}",
+        "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
+        "API_KEY": settings.ALGOLIA["API_KEY"],
+        "AUTO_INDEXING": True,
+    }
+)
 class SearchTestCase(AuthenticatedTestCase, metaclass=ABCMeta):
     @property
     @abstractmethod
@@ -80,14 +88,6 @@ class SearchTestCase(AuthenticatedTestCase, metaclass=ABCMeta):
     """
 
     @classmethod
-    @override_settings(
-        ALGOLIA={
-            "INDEX_SUFFIX": f"{__name__}_{NOW}",
-            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
-            "API_KEY": settings.ALGOLIA["API_KEY"],
-            "AUTO_INDEXING": True,
-        }
-    )
     def setUpClass(cls):
         super().setUpClass()
         algolia_engine.reset(settings.ALGOLIA)
@@ -104,19 +104,11 @@ class SearchTestCase(AuthenticatedTestCase, metaclass=ABCMeta):
         algolia_engine.reindex_all(model_class)
 
     @classmethod
-    @override_settings(
-        ALGOLIA={
-            "INDEX_SUFFIX": f"{__name__}_{NOW}",
-            "APPLICATION_ID": settings.ALGOLIA["APPLICATION_ID"],
-            "API_KEY": settings.ALGOLIA["API_KEY"],
-            "AUTO_INDEXING": True,
-        }
-    )
     def tearDownClass(cls):
         super().tearDownClass()
         for model_index_pair in cls.model_index_class_pairs:
             _, index_class = model_index_pair
-            algolia_engine.client.delete_index(
+            algolia_engine.client.init_index(
                 f"{index_class.index_name}_{__name__}_{NOW}"
-            )
+            ).delete()
         algolia_engine.reset(settings.ALGOLIA)
