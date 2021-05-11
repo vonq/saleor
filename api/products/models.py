@@ -714,11 +714,13 @@ class IndexSearchableProductMixin:
 
     @property
     def is_generic(self):
+        industries = list(self.industries.all())
+        job_functions = list(self.job_functions.all())
         return (
-            self.industries.count() == 0
+            len(industries) == 0
             # TODO migrate industry values instead, use "all" root job function
-            or self.industries.filter(name_en="Generic").exists()
-        ) and self.job_functions.count() == 0
+            or any([x.name_en == "Generic" for x in industries])
+        ) and len(job_functions) == 0
 
     @property
     def is_international(self):
@@ -893,8 +895,14 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
             ("can_view_product_job_functions", "Can view product job functions"),
             ("can_change_product_job_functions", "Can change product job functions"),
         )
-
         db_table = "products_pkb_product"
+        indexes = [
+            models.Index(
+                fields=[
+                    "-created",
+                ]
+            ),
+        ]
 
     class TrackingMethod(models.TextChoices):
         FIXED = "Fixed duration", _("Fixed duration")
@@ -1129,9 +1137,21 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
     available_in_ats = models.BooleanField(default=True)
     available_in_jmp = models.BooleanField(default=True)
 
-    duration_days = models.IntegerField(null=True, blank=True)
-    time_to_process = models.IntegerField(
-        null=True, blank=True, verbose_name="Time to process (hours)"
+    duration_days = models.PositiveIntegerField(null=True, blank=True)
+    supplier_setup_time = models.PositiveIntegerField(
+        null=True,
+        blank=False,
+        verbose_name="Supplier setup time (hours)",
+        default=0,
+    )
+    supplier_time_to_process = models.PositiveIntegerField(
+        null=False,
+        blank=False,
+        verbose_name="Supplier time to process (hours)",
+        default=0,
+    )
+    vonq_time_to_process = models.IntegerField(
+        null=True, blank=False, verbose_name="VONQ time to process (hours)", default=24
     )
 
     unit_price = models.FloatField(null=True, blank=True, verbose_name="Unit Price (€)")
