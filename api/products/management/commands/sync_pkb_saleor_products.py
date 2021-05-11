@@ -25,7 +25,7 @@ class Command(BaseCommand):
 
         gbp_channel, _ = Channel.objects.get_or_create(name="Default GBP Channel", currency_code="GBP", slug="gbp-channel", is_active=True)
         usd_channel, _ = Channel.objects.get_or_create(name="Default USD Channel", currency_code="USD", slug="usd-channel", is_active=True)
-        eur_channel, _ = Channel.objects.get_or_create(name="Default GBP Channel", currency_code="EUR", slug="eur-channel", is_active=True)
+        eur_channel, _ = Channel.objects.get_or_create(name="Default EUR Channel", currency_code="EUR", slug="eur-channel", is_active=True)
 
         default_product_type, _ = ProductType.objects.get_or_create(name="Default", slug="Default", has_variants=False, is_shipping_required=False, is_digital=True)
 
