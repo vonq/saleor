@@ -1012,7 +1012,14 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
 
         @classmethod
         def products(cls):
-            return [cls.JOB_BOARD, cls.SOCIAL, cls.GOOGLE]
+            return [
+                cls.JOB_BOARD,
+                cls.SOCIAL,
+                cls.GOOGLE,
+                cls.OTHER,
+                cls.WALLET,
+                cls.SUBSCRIPTION,
+            ]
 
     @property
     def external_product_name(self):

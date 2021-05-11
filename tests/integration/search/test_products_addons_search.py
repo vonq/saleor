@@ -8,7 +8,7 @@ from api.tests import SearchTestCase
 
 @tag("algolia")
 @tag("integration")
-class AddonSearchTestCase(SearchTestCase):
+class ProductsAddonSearchTestCase(SearchTestCase):
     model_index_class_pairs = [
         (
             Product,
@@ -55,7 +55,8 @@ class AddonSearchTestCase(SearchTestCase):
 
     def test_can_list_all_products(self):
         resp = self.client.get(reverse("api.products:products-list"))
-        self.assertEqual(len(resp.json()["results"]), 2)
+        # lists types of "other", "job board", "social"
+        self.assertEqual(len(resp.json()["results"]), 3)
         self.assertTrue(
             all(["product" in product["title"] for product in resp.json()["results"]])
         )
