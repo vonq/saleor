@@ -723,6 +723,12 @@ class IndexSearchableProductMixin:
         ) and len(job_functions) == 0
 
     @property
+    def audience_group(self):
+        if self.is_generic:
+            return "generic"
+        return "niche"
+
+    @property
     def is_international(self):
         # TODO add parent location for all locations in the database
         # [location.within is None for location in self.locations.all()]

@@ -43,6 +43,7 @@ def make_salesforce_product(product_instance):
         if product_instance.status == Product.Status.ACTIVE
         else product_instance.status,
         "Type__c": cast_none(product_instance.salesforce_product_type),
+        "Target_Group__c": cast_none(product_instance.audience_group.capitalize()),
         "Product_Category__c": cast_none(product_instance.salesforce_product_category),
         "Cross_Posting__c": json.dumps(getattr(product_instance, "cross_postings", [])),
         "Recommended_product__c": product_instance.is_recommended,
