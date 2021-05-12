@@ -9,7 +9,7 @@ from django.core.management.base import BaseCommand
 
 from api.products.models import Product as PkbProduct
 from saleor.product.models import Product as SaleorProduct, ProductVariant, \
-    ProductVariantChannelListing, Channel, ProductType, ProductChannelListing
+    ProductVariantChannelListing, Channel, ProductType, ProductChannelListing, Category
 
 
 class Command(BaseCommand):
@@ -23,17 +23,16 @@ class Command(BaseCommand):
         - Set prices and weights
         """
 
-        gbp_channel, _ = Channel.objects.get_or_create(name="Default GBP Channel", currency_code="GBP", slug="gbp-channel", is_active=True)
-        usd_channel, _ = Channel.objects.get_or_create(name="Default USD Channel", currency_code="USD", slug="usd-channel", is_active=True)
-        eur_channel, _ = Channel.objects.get_or_create(name="Default EUR Channel", currency_code="EUR", slug="eur-channel", is_active=True)
+        eur_channel, _ = Channel.objects.get_or_create(name="Default EUR Channel", currency_code="EUR", slug="default-channel", is_active=True)
 
-        default_product_type, _ = ProductType.objects.get_or_create(name="Default", slug="Default", has_variants=False, is_shipping_required=False, is_digital=True)
+        default_product_type, _ = ProductType.objects.get_or_create(name="Default", slug="Default", has_variants=False, is_shipping_required=False, is_digital=False)
+        default_product_category, _ = Category.objects.get_or_create(name="Channels", slug="channels")
 
         pkb_products = PkbProduct.objects.all()
-        breakpoint()
         for pkb_product in pkb_products:
             saleor_product, _ = SaleorProduct.objects.get_or_create(
                 product_type=default_product_type,
+                category=default_product_category,
                 name=pkb_product.title or "Untitled",
                 slug=pkb_product.product_id
             )
@@ -53,11 +52,13 @@ class Command(BaseCommand):
                 channel=eur_channel,
                 visible_in_listings=True,
                 is_published=True,
-                available_for_purchase=datetime.datetime(1970, 1, 1, 0, 0)
+                available_for_purchase=datetime.date.today(),
+                discounted_price_amount=pkb_product.unit_price or 0,
             )
             saleor_product_variant_channel_listing, _ = ProductVariantChannelListing.objects.get_or_create(
                 variant=saleor_product_variant,
                 channel=eur_channel,
                 currency="EUR",
-                price_amount=pkb_product.unit_price or 0
+                price_amount=pkb_product.unit_price or 0,
+                cost_price_amount=pkb_product.purchase_price or 0
             )
