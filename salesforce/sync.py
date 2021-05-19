@@ -31,6 +31,7 @@ def make_salesforce_product(product_instance):
         if product_instance.salesforce_id
         else str(product_instance.product_id),
         "Name": product_instance.title_en,
+        "JMP_Product_Name__c": product_instance.title_en,
         "Channel__c": getattr(product_instance.channel, "salesforce_id", None),
         "Description": product_instance.description,
         "Product_Logo__c": product_instance.logo_url,
