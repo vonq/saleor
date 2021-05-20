@@ -70,6 +70,12 @@ from api.products.serializers import (
     ProductSerializer,
 )
 
+MY_OWN_PRODUCTS = (
+    Q(salesforce_product_category=Product.SalesforceProductCategory.CUSTOMER_SPECIFIC)
+    | Q(salesforce_product_solution=Product.SalesforceProductSolution.MY_OWN_CHANNEL)
+    | Q(customer_id__isnull=False)
+)
+
 
 class IsMapiOrJmpUser(BasePermission):
     def has_permission(self, request, view):
@@ -232,11 +238,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         )
 
         if self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]:
-            queryset = queryset.filter(available_in_jmp=True).exclude(
-                salesforce_product_category=Product.SalesforceProductCategory.CUSTOMER_SPECIFIC,
-                salesforce_product_solution=Product.SalesforceProductSolution.MY_OWN_CHANNEL,
-            )
-            queryset = queryset.filter(available_in_jmp=True)
+            queryset = queryset.filter(available_in_jmp=True).exclude(MY_OWN_PRODUCTS)
 
         if self.is_recommendation:
             queryset = self.add_recommendation_filter(queryset)
@@ -527,7 +529,9 @@ class AddonsViewSet(ProductsViewSet):
             salesforce_product_type__in=Product.SalesforceProductType.addons(),
         )
         if self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]:
-            return active_products.filter(available_in_jmp=True)
+            return active_products.filter(available_in_jmp=True).exclude(
+                MY_OWN_PRODUCTS
+            )
         return active_products
 
 

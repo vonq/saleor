@@ -3,7 +3,7 @@ from unittest import skip
 from django.test import tag
 from rest_framework.reverse import reverse
 
-from api.products.search.index import JobTitleIndex, ProductIndex
+from api.products.geocoder import MAPBOX_INTERNATIONAL_PLACE_TYPE
 from api.products.models import (
     Product,
     Industry,
@@ -12,21 +12,17 @@ from api.products.models import (
     JobTitle,
     Channel,
 )
+from api.products.search.index import JobTitleIndex, ProductIndex
+from api.tests import SearchTestCase
 from api.tests.integration import force_user_login
 from api.tests.integration.search import (
     how_many_products_with_value,
     is_generic_product,
 )
-
 from api.vonqtaxonomy.models import (
     JobCategory as VonqJobCategory,
     Industry as VonqIndustry,
 )
-
-from api.tests import SearchTestCase
-
-from api.products.geocoder import MAPBOX_INTERNATIONAL_PLACE_TYPE
-
 
 INTERNATIONAL_LOCATION_NAME = "International"
 
@@ -312,17 +308,32 @@ class ProductSearchTestCase(SearchTestCase):
         web_development_board.job_functions.add(cls.web_development)
         web_development_board.save()
 
-        my_own_product = Product(
+        # my own products
+        cls.my_own_product_1 = Product.objects.create(
             title="my_own_product",
             status=Product.Status.ACTIVE,
             salesforce_id="my_own_product",
             customer_id="f17d9484-b9ba-5262-8f8e-b986e4b8c79d",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+        )
+
+        cls.my_own_product_2 = Product.objects.create(
+            title="my_own_product",
+            status=Product.Status.ACTIVE,
+            salesforce_id="my_own_product_2",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
             salesforce_product_solution=Product.SalesforceProductSolution.MY_OWN_CHANNEL,
+        )
+
+        cls.my_own_product_3 = Product.objects.create(
+            title="my_own_product",
+            status=Product.Status.ACTIVE,
+            salesforce_id="my_own_product_3",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
             salesforce_product_category=Product.SalesforceProductCategory.CUSTOMER_SPECIFIC,
         )
-        my_own_product.save()
-        not_my_own_product = Product(
+
+        cls.not_my_own_product = Product(
             title="not_my_own_product",
             status=Product.Status.ACTIVE,
             salesforce_id="not_my_own_product",
@@ -330,7 +341,7 @@ class ProductSearchTestCase(SearchTestCase):
             salesforce_product_solution=Product.SalesforceProductSolution.JOB_MARKETING,
             salesforce_product_category=Product.SalesforceProductCategory.GENERIC,
         )
-        not_my_own_product.save()
+        cls.not_my_own_product.save()
 
     def setUp(self) -> None:
         super().setUp()
@@ -339,6 +350,19 @@ class ProductSearchTestCase(SearchTestCase):
         self.client.get(reverse("locations") + "?text=england")
         self.client.get(reverse("locations") + "?text=slough")
         self.client.get(reverse("locations") + "?text=united%20kingdom")
+
+    def test_can_define_mocs_correctly(self):
+        self.assertTrue(
+            all(
+                (
+                    self.my_own_product_1.is_my_own_product,
+                    self.my_own_product_2.is_my_own_product,
+                    self.my_own_product_3.is_my_own_product,
+                )
+            )
+        )
+
+        self.assertFalse(self.not_my_own_product.is_my_own_product)
 
     def test_mapi_does_not_receive_my_own_products_by_default(self):
         force_user_login(self.client, "mapi")
@@ -484,7 +508,7 @@ class ProductSearchTestCase(SearchTestCase):
 
     def test_return_all_products_with_no_locations(self):
         resp = self.client.get(reverse("api.products:products-list"))
-        self.assertEquals(len(resp.json()["results"]), 16)
+        self.assertEquals(len(resp.json()["results"]), 18)
 
     def test_products_with_global_locations(self):
         resp_global = self.client.get(
@@ -505,8 +529,8 @@ class ProductSearchTestCase(SearchTestCase):
             reverse("api.products:products-list")
             + f"?includeLocationId={self.united_kingdom_id}"
         )
-        # 1 UK product, 5 global products
-        self.assertEqual(resp_one.json()["count"], 6)
+        # 1 UK product, 8 global products
+        self.assertEqual(resp_one.json()["count"], 8)
 
     def test_can_search_by_exact_location(self):
         only_filtered_response = self.client.get(

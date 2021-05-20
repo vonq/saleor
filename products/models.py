@@ -1070,8 +1070,9 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         if (
             self.salesforce_product_solution
             == self.SalesforceProductSolution.MY_OWN_CHANNEL
-            and self.salesforce_product_category
+            or self.salesforce_product_category
             == self.SalesforceProductCategory.CUSTOMER_SPECIFIC
+            or self.customer_id is not None
         ):
             return True
         return False
