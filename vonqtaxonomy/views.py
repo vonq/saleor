@@ -18,10 +18,14 @@ def get_job_category_mapping(request):
 
     text = unquote(job_function_name)
     try:
-        job_category = JobCategory.objects.get(
-            Q(jobfunction__name_en__iexact=text)
-            | Q(jobfunction__name_nl__iexact=text)
-            | Q(jobfunction__name_de__iexact=text)
+        job_category = (
+            JobCategory.objects.filter(
+                Q(jobfunction__name_en__iexact=text)
+                | Q(jobfunction__name_nl__iexact=text)
+                | Q(jobfunction__name_de__iexact=text)
+            )
+            .distinct()
+            .get()
         )
     except api.vonqtaxonomy.models.JobCategory.DoesNotExist:
         return JsonResponse({"error": "Mapping not found"}, status=404)
@@ -42,10 +46,14 @@ def get_industry_mapping(request):
 
     text = unquote(industry_name)
     try:
-        industry = Industry.objects.get(
-            Q(industry__name_en__iexact=text)
-            | Q(industry__name_nl__iexact=text)
-            | Q(industry__name_de__iexact=text)
+        industry = (
+            Industry.objects.filter(
+                Q(industry__name_en__iexact=text)
+                | Q(industry__name_nl__iexact=text)
+                | Q(industry__name_de__iexact=text)
+            )
+            .distinct()
+            .get()
         )
     except api.vonqtaxonomy.models.Industry.DoesNotExist:
         return JsonResponse({"error": "Mapping not found"}, status=404)
