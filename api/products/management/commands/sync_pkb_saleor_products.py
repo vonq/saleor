@@ -17,6 +17,11 @@ class Command(BaseCommand):
         """
         Pick a PKB product
         - Create a Product
+        -- product type - boards and addons
+        -- product category?
+        -- name
+        -- price in each currency for each channel?
+
         - Create a Channel (possibly a default channel...)
         - Attach a Product Variant
         - Attach a Product Variant Channel Listing
