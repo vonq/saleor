@@ -254,7 +254,8 @@ class CheckoutCreate(ModelMutation, I18nMixin):
     def clean_checkout_lines(
         cls, lines, country, channel
     ) -> Tuple[List[product_models.ProductVariant], List[int]]:
-        variant_ids = [line["variant_id"] for line in lines]
+        # Avoid checking for 0 quantities
+        variant_ids = [line["variant_id"] for line in lines if line['quantity'] > 0]
         variants = cls.get_nodes_or_error(
             variant_ids,
             "variant_id",

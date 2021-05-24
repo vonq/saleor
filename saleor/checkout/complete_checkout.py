@@ -432,6 +432,7 @@ def _prepare_checkout(
     payment,
 ):
     """Prepare checkout object to complete the checkout process."""
+    manager.preprocess_checkout_creation(checkout_info, discounts, lines)
     checkout = checkout_info.checkout
     clean_checkout_shipping(checkout_info, lines, CheckoutErrorCode)
     clean_checkout_payment(

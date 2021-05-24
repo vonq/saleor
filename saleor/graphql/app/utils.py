@@ -18,6 +18,7 @@ def ensure_can_manage_permissions(requestor, permission_items):
         error_msg = "You can't add permission that you don't have."
         code = AppErrorCode.OUT_OF_SCOPE_PERMISSION.value
         params = {"permissions": missing_permissions}
+        # SEETHIS
         raise ValidationError(
             {"permissions": ValidationError(error_msg, code=code, params=params)}
         )
