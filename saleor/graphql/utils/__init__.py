@@ -102,9 +102,13 @@ def get_nodes(
 
     nodes_pk_list = [str(node.pk) for node in nodes]
     for pk in pks:
-        assert pk in nodes_pk_list, "There is no node of type {} with pk {}".format(
-            graphene_type, pk
-        )
+        try:
+            assert pk in nodes_pk_list, "There is no node of type {} with pk {}".format(
+                graphene_type, pk
+            )
+        except AssertionError as e:
+            breakpoint()
+            raise e
     return nodes
 
 
