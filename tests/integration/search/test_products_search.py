@@ -13,11 +13,11 @@ from api.products.models import (
     Channel,
 )
 from api.products.search.index import JobTitleIndex, ProductIndex
-from api.tests import SearchTestCase
 from api.tests.integration import force_user_login
 from api.tests.integration.search import (
     how_many_products_with_value,
     is_generic_product,
+    SearchTestCase,
 )
 from api.vonqtaxonomy.models import (
     JobCategory as VonqJobCategory,
@@ -51,7 +51,7 @@ class ProductSearchTestCase(SearchTestCase):
     ]
 
     @classmethod
-    def setUpSearchClass(cls):
+    def setUpTestData(cls) -> None:
         pkb_industry = VonqIndustry.objects.create(mapi_id=1, name="Something")
 
         # populate industries
@@ -703,7 +703,7 @@ class ChannelTypeSearchTestCase(SearchTestCase):
     model_index_class_pairs = [(Product, ProductIndex)]
 
     @classmethod
-    def setUpSearchClass(cls):
+    def setUpTestData(cls) -> None:
         jobboard_channel = Channel.objects.create(type=Channel.Type.JOB_BOARD)
         community_channel = Channel.objects.create(type=Channel.Type.COMMUNITY)
         publication_channel = Channel.objects.create(type=Channel.Type.PUBLICATION)

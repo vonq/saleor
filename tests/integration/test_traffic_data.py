@@ -1,13 +1,10 @@
-import time
-
-from algoliasearch_django import algolia_engine
 from django.test import tag
 from rest_framework.reverse import reverse
 
 from api.products.geocoder import Geocoder
 from api.products.search.index import ProductIndex
 from api.products.models import Product, Location
-from api.tests import SearchTestCase
+from api.tests.integration.search import SearchTestCase
 
 
 @tag("integration")
@@ -16,7 +13,7 @@ class TrafficLocationsDataTestCase(SearchTestCase):
     model_index_class_pairs = [(Product, ProductIndex)]
 
     @classmethod
-    def setUpSearchClass(cls):
+    def setUpTestData(cls) -> None:
         cls.rome_location = Location(
             canonical_name="Rome, Italy",
             mapbox_id="place.9045806458813870",
@@ -122,9 +119,6 @@ class TrafficLocationsDataTestCase(SearchTestCase):
         cls.amsterdam_board.save()
         cls.amsterdam_board.locations.set([cls.amsterdam_location])
         cls.amsterdam_board.save()
-
-        # wait for algolia to complete the index
-        algolia_engine.reindex_all(Product)
 
     def test_get_country_shortcode_works(self):
         geocoder_response = Geocoder.geocode("reading uk")

@@ -111,6 +111,7 @@ class AdminPermissionsTestCase(TestCase):
 
 @tag("unit")
 class TestAdminRedirect(TestCase):
+    @disable_auto_indexing()
     def setUp(self) -> None:
         self.product = Product.objects.create(
             title="Example", salesforce_id="3f8cb2df-9e08-5982-b97e-edd8b96c6cd9"

@@ -1,7 +1,11 @@
+import logging
 from typing import Optional
 from xml.etree import ElementTree
 
 import requests
+
+
+logger = logging.getLogger(__name__)
 
 
 def convert(original_value: Optional[float], conversion_rate: float):
@@ -15,16 +19,16 @@ def get_exchance_rate_for(code, feed):
 
     currency = feed.find(f".//*[@currency='{code}']")
     if currency is None:
-        print(f"Couldn't find currency for {code}, skipping.")
+        logger.warning(f"Couldn't find currency for {code}, skipping.")
         return None, None
 
     rate = float(currency.get("rate"))
 
     if not rate:
-        print(f"Couldn't find rate for {code}, skipping.")
+        logger.warning(f"Couldn't find rate for {code}, skipping.")
         return None, None
 
-    print(f"Exchange rate for {code} is {rate}.")
+    logger.info(f"Exchange rate for {code} is {rate}.")
 
     return rate, exchange_date
 

@@ -1,16 +1,14 @@
 import time
+from unittest import skip
 
-from algoliasearch_django import algolia_engine
 from django.test import tag
 from django.urls import reverse
 
 from api.products.models import JobFunction, Location, Product
 from api.products.search.index import ProductIndex
-from api.tests import SearchTestCase
+from api.tests.integration.search import SearchTestCase
 
 from api.vonqtaxonomy.models import JobCategory as VonqJobCategory
-
-NOW = int(time.time())
 
 
 @tag("algolia")
@@ -19,7 +17,7 @@ class ProductSearchWithNestedJobFunctionAndLocationTest(SearchTestCase):
     model_index_class_pairs = [(Product, ProductIndex)]
 
     @classmethod
-    def setUpSearchClass(cls):
+    def setUpTestData(cls) -> None:
         # dummy desq job category
         desq_job_category = VonqJobCategory.objects.create(mapi_id=1, name="Something")
 
@@ -92,8 +90,6 @@ class ProductSearchWithNestedJobFunctionAndLocationTest(SearchTestCase):
                 product.job_functions.add(job_function)
                 product.locations.add(location)
                 product.save()
-
-        algolia_engine.reindex_all(Product)
 
     def test_products_match_job_function_whole_hiearchy(self):
         resp = self.client.get(

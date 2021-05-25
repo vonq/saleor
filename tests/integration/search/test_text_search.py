@@ -3,7 +3,7 @@ from django.urls import reverse
 
 from api.products.models import Location, Product
 from api.products.search.index import ProductIndex
-from api.tests import SearchTestCase
+from api.tests.integration.search import SearchTestCase
 
 
 @tag("algolia")
@@ -14,7 +14,7 @@ class ProductSearchByTextTest(SearchTestCase):
     ]
 
     @classmethod
-    def setUpSearchClass(cls):
+    def setUpTestData(cls) -> None:
         Product.objects.create(
             title="Reddit - job ad",
             status=Product.Status.ACTIVE,
@@ -26,8 +26,6 @@ class ProductSearchByTextTest(SearchTestCase):
             status=Product.Status.ACTIVE,
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
         )
-
-        #######################
 
         Product.objects.create(
             title="Linkedin - Job posting",

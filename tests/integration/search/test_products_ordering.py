@@ -5,7 +5,7 @@ from rest_framework.reverse import reverse
 
 from api.products.models import Industry, JobFunction, Location, Product
 from api.products.search.index import ProductIndex
-from api.tests import SearchTestCase
+from api.tests.integration.search import SearchTestCase
 from api.vonqtaxonomy.models import (
     Industry as VonqIndustry,
     JobCategory as VonqJobCategory,
@@ -23,7 +23,7 @@ class ProductSearchOrderByFrequencyTestCase(SearchTestCase):
     ]
 
     @classmethod
-    def setUpSearchClass(cls):
+    def setUpTestData(cls) -> None:
         pkb_industry = VonqIndustry.objects.create(mapi_id=1, name="Something")
         cls.recruitment_industry = Industry(
             name_en="Recruitment", vonq_taxonomy_value_id=pkb_industry.id
@@ -128,7 +128,7 @@ class ProductSearchOrderByRecencyTestCase(SearchTestCase):
     ]
 
     @classmethod
-    def setUpSearchClass(cls):
+    def setUpTestData(cls) -> None:
         vonq_job_category = VonqJobCategory.objects.create(mapi_id=1, name="Something")
         cls.job_function = JobFunction.objects.create(
             name_en="Some job function", vonq_taxonomy_value_id=vonq_job_category.id

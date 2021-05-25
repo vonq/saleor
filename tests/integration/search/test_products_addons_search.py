@@ -3,7 +3,7 @@ from rest_framework.reverse import reverse
 
 from api.products.models import Product
 from api.products.search.index import ProductIndex
-from api.tests import SearchTestCase
+from api.tests.integration.search import SearchTestCase
 
 
 @tag("algolia")
@@ -17,7 +17,7 @@ class ProductsAddonSearchTestCase(SearchTestCase):
     ]
 
     @classmethod
-    def setUpSearchClass(cls):
+    def setUpTestData(cls) -> None:
         addon_product_1 = Product.objects.create(
             title="This is an addon",
             salesforce_product_type=Product.SalesforceProductType.VONQ_SERVICES,

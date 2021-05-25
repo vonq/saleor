@@ -1,12 +1,13 @@
 import json
 import os
+from unittest import skipUnless
 
+from django.conf import settings
+from jsonschema import validate
 from rest_framework.reverse import reverse
 
 from api.products.models import Product
 from api.tests import AuthenticatedTestCase
-
-from jsonschema import validate
 
 
 def load_json_schema():
@@ -19,6 +20,7 @@ def load_json_schema():
     return schema
 
 
+@skipUnless(settings.ENV == "ci", "Only run this test in CI")
 class TestSchemaIntegration(AuthenticatedTestCase):
     def setUp(self) -> None:
         super().setUp()

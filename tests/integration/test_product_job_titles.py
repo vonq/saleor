@@ -1,12 +1,11 @@
 from urllib.parse import quote_plus
 
-from algoliasearch_django import algolia_engine
 from django.test import tag
 from rest_framework.reverse import reverse
 
 from api.products.models import JobFunction, JobTitle
 from api.vonqtaxonomy.models import JobCategory as VonqJobCategory
-from api.tests import SearchTestCase
+from api.tests.integration.search import SearchTestCase
 from api.products.search.index import JobTitleIndex
 
 
@@ -16,7 +15,7 @@ class JobTitleSearchTestCase(SearchTestCase):
     model_index_class_pairs = [(JobTitle, JobTitleIndex)]
 
     @classmethod
-    def setUpSearchClass(cls):
+    def setUpTestData(cls) -> None:
         pkb_job_category = VonqJobCategory.objects.create(mapi_id=1, name="Something")
 
         software_development = JobFunction(name="Software Development")
@@ -79,9 +78,6 @@ class JobTitleSearchTestCase(SearchTestCase):
                 canonical=True,
                 active=True,
             )
-
-        # waiting for algolia to re-index
-        algolia_engine.reindex_all(JobTitle)
 
     def test_can_search_in_default_language(self):
         resp = self.client.get(reverse("job-titles") + "?text=pyth")

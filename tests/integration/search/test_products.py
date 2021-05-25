@@ -1,5 +1,6 @@
 import random
 
+from algoliasearch_django.decorators import disable_auto_indexing
 from django.test import tag
 from rest_framework.reverse import reverse
 
@@ -12,48 +13,48 @@ from api.tests.integration import force_user_login
 @tag("integration")
 class ProductsTestCase(AuthenticatedTestCase):
     @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.active_product = Product(
-            status=Product.Status.ACTIVE,
-            salesforce_id="active_product",
-            title="Negotiated product",
-            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
-            duration_days=40,
-        )
-        cls.active_product.save()
+    def setUpTestData(cls) -> None:
+        with disable_auto_indexing():
+            cls.active_product = Product(
+                status=Product.Status.ACTIVE,
+                salesforce_id="active_product",
+                title="Negotiated product",
+                salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+                duration_days=40,
+            )
+            cls.active_product.save()
 
-        cls.inactive_product = Product(
-            status="Disabled",
-            salesforce_id="inactive_product",
-            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
-        )
-        cls.inactive_product.save()
+            cls.inactive_product = Product(
+                status="Disabled",
+                salesforce_id="inactive_product",
+                salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            )
+            cls.inactive_product.save()
 
-        cls.available_in_jmp_product = Product(
-            status=Product.Status.ACTIVE,
-            available_in_jmp=True,
-            title="Product available in JMP",
-            salesforce_id="available_jmp_product",
-            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
-            duration_days=90,
-        )
-        cls.available_in_jmp_product.save()
+            cls.available_in_jmp_product = Product(
+                status=Product.Status.ACTIVE,
+                available_in_jmp=True,
+                title="Product available in JMP",
+                salesforce_id="available_jmp_product",
+                salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+                duration_days=90,
+            )
+            cls.available_in_jmp_product.save()
 
-        cls.unavailable_in_jmp_product = Product(
-            status=Product.Status.ACTIVE,
-            available_in_jmp=False,
-            salesforce_id="unavailable_jmp_product",
-            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
-        )
-        cls.unavailable_in_jmp_product.save()
+            cls.unavailable_in_jmp_product = Product(
+                status=Product.Status.ACTIVE,
+                available_in_jmp=False,
+                salesforce_id="unavailable_jmp_product",
+                salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            )
+            cls.unavailable_in_jmp_product.save()
 
-        cls.unwanted_status_product = Product(
-            status=Product.Status.BLACKLISTED,
-            salesforce_id="unwanted_status_product",
-            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
-        )
-        cls.unwanted_status_product.save()
+            cls.unwanted_status_product = Product(
+                status=Product.Status.BLACKLISTED,
+                salesforce_id="unwanted_status_product",
+                salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            )
+            cls.unwanted_status_product.save()
 
     def test_products_can_offset_and_limit(self):
         resp_one = self.client.get(reverse("api.products:products-list"))

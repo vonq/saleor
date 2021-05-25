@@ -3,8 +3,7 @@ from rest_framework.reverse import reverse
 
 from api.products.models import Channel, JobFunction, Product
 from api.products.search.index import ProductIndex
-from api.tests import SearchTestCase
-from api.tests.integration.search import is_generic_product
+from api.tests.integration.search import is_generic_product, SearchTestCase
 from api.vonqtaxonomy.models import (
     JobCategory as VonqJobCategory,
 )
@@ -21,7 +20,7 @@ class ProductRecommendationsTestCase(SearchTestCase):
     ]
 
     @classmethod
-    def setUpSearchClass(cls):
+    def setUpTestData(cls) -> None:
         pkb_job_category = VonqJobCategory.objects.create(mapi_id=1, name="Whatever")
 
         jobboard_channel = Channel(type=Channel.Type.JOB_BOARD)
