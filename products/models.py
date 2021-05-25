@@ -16,6 +16,7 @@ from modeltranslation.fields import TranslationFieldDescriptor
 from mptt.models import MPTTModel
 from PIL import Image
 from api.field_permissions.models import FieldPermissionModelMixin
+from api.arrayfield import PKBArrayField
 from api.products.geocoder import Geocoder, MAPBOX_INTERNATIONAL_PLACE_TYPE
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
@@ -1231,7 +1232,7 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         base_field=models.CharField(max_length=80, blank=False), default=list
     )
 
-    cross_postings = ArrayField(
+    cross_postings = PKBArrayField(
         base_field=models.CharField(max_length=255, blank=False),
         default=list,
         null=True,

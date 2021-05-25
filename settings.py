@@ -81,6 +81,8 @@ INSTALLED_APPS = [
     "easy_thumbnails",
     "image_cropping",
     "django_better_admin_arrayfield",
+    "reversion",
+    "reversion_compare",
 ]
 
 ALGOLIA = {
@@ -227,6 +229,9 @@ SALESFORCE_CLIENT_ID = os.getenv("SALESFORCE_CLIENT_ID")
 SALESFORCE_CLIENT_SECRET = os.getenv("SALESFORCE_CLIENT_SECRET")
 SALESFORCE_API_USERNAME = os.getenv("SALESFORCE_API_USERNAME")
 SALESFORCE_API_PASSWORD = os.getenv("SALESFORCE_API_PASSWORD")
+
+# Related to django-reversion
+ADD_REVERSION_ADMIN = True
 
 if not is_development():
     sentry_sdk.init(

@@ -8,7 +8,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db.models import Count
-from django.http import JsonResponse, Http404
+from django.http import Http404
 from django.shortcuts import redirect
 from django.urls import reverse
 from django_better_admin_arrayfield.admin.mixins import DynamicArrayMixin
@@ -17,6 +17,7 @@ from modeltranslation.admin import TranslationAdmin
 from mptt.admin import MPTTModelAdmin
 from mptt.forms import TreeNodeChoiceField
 from rest_framework.utils import json
+from reversion_compare.admin import CompareVersionAdmin
 
 from api.field_permissions.admin import PermissionBasedFieldsMixin
 from api.products.models import (
@@ -129,7 +130,11 @@ class ProductForm(forms.ModelForm):
 
 @admin.register(Product)
 class ProductAdmin(
-    ImageCroppingMixin, PermissionBasedFieldsMixin, TranslationAdmin, DynamicArrayMixin
+    CompareVersionAdmin,
+    ImageCroppingMixin,
+    PermissionBasedFieldsMixin,
+    TranslationAdmin,
+    DynamicArrayMixin,
 ):
     form = ProductForm
     list_display = [
@@ -253,7 +258,7 @@ class ChannelForm(forms.ModelForm):
 
 
 @admin.register(Channel)
-class ChannelAdmin(TranslationAdmin):
+class ChannelAdmin(CompareVersionAdmin, TranslationAdmin):
     form = ChannelForm
     list_display = ("name", "url", "type", "is_active")
     list_filter = ("type", "is_active")
