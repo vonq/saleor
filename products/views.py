@@ -534,6 +534,113 @@ class AddonsViewSet(ProductsViewSet):
             )
         return active_products
 
+    @swagger_auto_schema(
+        operation_description="""
+        This endpoint exposes a list of Products with the options to search by Location, Job Title, Job Function and Industry. as it is configured for every Partner individually.
+        Products are ranked by their relevancy to the search terms.
+        Optionally, products can filtered by Location.
+        Values for each parameter can be fetched by calling the other endpoints in this section.
+        Calling this endpoint will guarantee that the Products you see are configured for you as our Partner.
+        """,
+        operation_id="Addons Search",
+        operation_summary="Search and filter for addons by various criteria.",
+        manual_parameters=[item.parameter for item in search_filters if item.parameter]
+        + [
+            CommonOpenApiParameters.ACCEPT_LANGUAGE,
+            ProductsOpenApiParameters.PRODUCT_NAME,
+            ProductsOpenApiParameters.ONLY_RECOMMENDED,
+            ProductsOpenApiParameters.EXCLUDE_RECOMMENDED,
+            CommonOpenApiParameters.CURRENCY,
+            ProductsOpenApiParameters.SORT_BY,
+        ],
+        tags=[ProductsConfig.verbose_name],
+        responses={
+            400: openapi.Response(description="In case of a bad request."),
+            200: openapi.Response(
+                schema=ProductJmpSerializer(many=True),
+                description="In case of a successful search.",
+                examples={
+                    "application/json": {
+                        "count": 286,
+                        "next": "http://host/products/?includeLocationId=2384&limit=1&offset=1",
+                        "previous": None,
+                        "results": [
+                            {
+                                "title": "Job board name - Premium Job",
+                                "locations": [
+                                    {
+                                        "id": 2378,
+                                        "fully_qualified_place_name": "United Kingdom",
+                                        "canonical_name": "United Kingdom",
+                                        "place_type": ["country"],
+                                        "within": {
+                                            "id": 2483,
+                                            "fully_qualified_place_name": "Europe",
+                                            "canonical_name": "Europe",
+                                            "place_type": ["continent"],
+                                            "within": None,
+                                        },
+                                    },
+                                ],
+                                "job_functions": {"id": 36, "name": "Tax", "parent": 9},
+                                "industries": [],
+                                "description": "Description",
+                                "homepage": "https://www.example.com",
+                                "logo_url": [
+                                    {
+                                        "url": "https://example.com/logo.png",
+                                    }
+                                ],
+                                "duration": {"range": "days", "period": None},
+                                "time_to_process": {"range": "hours", "period": None},
+                                "time_to_setup": {"range": "hours", "period": None},
+                                "product_id": "ab379c3b-600d-5592-9f9d-3c4805086364",
+                                "vonq_price": [{"amount": 123, "currency": "EUR"}],
+                                "ratecard_price": [{"amount": 234, "currency": "EUR"}],
+                                "type": None,
+                                "cross_postings": [],
+                                "channel": {
+                                    "name": "Channel Name",
+                                    "url": "https://www.channel.jobs/",
+                                    "type": "job board",
+                                    "id": 12,
+                                },
+                            }
+                        ],
+                    }
+                },
+            ),
+        },
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_id="Retrieve Addon details",
+        operation_summary="This endpoint retrieves an Addon by its id.",
+        operation_description="Sometimes you already have access to the Identification code of any particular Addon and you want to retrieve the most up-to-date information about it.",
+        manual_parameters=(CommonOpenApiParameters.ACCEPT_LANGUAGE,),
+        tags=[ProductsConfig.verbose_name],
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_id="Retrieve multiple Addons details",
+        operation_summary="This endpoint retrieves a list of Addons, given a comma-separated list of their ids.",
+        operation_description="Sometimes you already have access to the Identification code of any particular Addon and you want to retrieve the most up-to-date information about it.",
+        manual_parameters=(CommonOpenApiParameters.ACCEPT_LANGUAGE,),
+        tags=[ProductsConfig.verbose_name],
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        permission_classes=[IsAuthenticated],
+        url_path="multiple/(?P<product_ids>.+)",
+    )
+    def multiple(self, request, product_ids=None):
+        return super().multiple(request, product_ids)
+
 
 class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     queryset = JobTitle.objects.all()

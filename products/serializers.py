@@ -10,7 +10,14 @@ from api.currency.conversion import convert
 from api.currency.models import ExchangeRate
 from api.products.area import bounding_box_area
 from api.products.docs import CommonOpenApiParameters
-from api.products.models import Channel, JobFunction, JobTitle, Location, Product
+from api.products.models import (
+    Channel,
+    JobFunction,
+    JobTitle,
+    Location,
+    Product,
+    Category,
+)
 from api.products.search.docs import ProductsOpenApiParameters
 
 
@@ -344,7 +351,7 @@ class ProductSearchSerializer(serializers.Serializer):
 
 class ProductCategorySerializer(serializers.Serializer):
     name = serializers.CharField(read_only=True)
-    type = serializers.CharField(read_only=True)
+    type = serializers.ChoiceField(read_only=True, choices=Category.Type.choices)
 
 
 class ProductJmpSerializer(ProductSerializer):
