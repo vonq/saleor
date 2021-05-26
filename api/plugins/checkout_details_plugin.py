@@ -2,18 +2,11 @@ from typing import List, Optional, Iterable, Any
 
 from django.core.exceptions import ValidationError
 
+from api.plugins.metadata import CheckoutMetadata
 from saleor.checkout.fetch import CheckoutInfo, CheckoutLineInfo
 from saleor.checkout.models import Checkout
 from saleor.discount import DiscountInfo
 from saleor.plugins.base_plugin import BasePlugin
-from dataclasses import dataclass
-
-
-class VacancyDetails:
-    @classmethod
-    def validate(cls, metadata):
-        return False
-
 
 
 class CheckoutDetailsPlugin(BasePlugin):
@@ -24,34 +17,24 @@ class CheckoutDetailsPlugin(BasePlugin):
     DEFAULT_CONFIGURATION = []
     DEFAULT_ACTIVE = False
 
-
-    def preprocess_checkout_creation(
-            self, checkout_info: "CheckoutInfo",
-            discounts: List["DiscountInfo"],
-            lines: Optional[Iterable["CheckoutLineInfo"]], previous_value: Any):
-        print("Preprocessing in progress")
-        checkout_info.checkout.metadata = {'added': True}
-        return
-
     def preprocess_order_creation(
-        self,
-        checkout_info: "CheckoutInfo",
-        discounts: List["DiscountInfo"],
-        lines: Optional[Iterable["CheckoutLineInfo"]],
-        previous_value: Any,
+            self,
+            checkout_info: "CheckoutInfo",
+            discounts: List["DiscountInfo"],
+            lines: Optional[Iterable["CheckoutLineInfo"]],
+            previous_value: Any,
     ):
-        # if not checkout_info.checkout.metadata:
-        #    raise ValidationError("No metadata provided")
-        raise ValidationError("This should raise!")
+        if not checkout_info.checkout.metadata:
+            raise ValidationError("No metadata provided in the checkout object")
+
+        checkout_metadata = CheckoutMetadata(
+            data=checkout_info.checkout.metadata)
+        if not checkout_metadata.is_valid(raise_exception=False):
+            raise ValidationError(checkout_metadata.errors)
+        return previous_value
 
     def checkout_updated(self, checkout: "Checkout", previous_value: Any) -> Any:
+        checkout_metdata = CheckoutMetadata(data=checkout.metadata, partial=True)
+        if not checkout_metdata.is_valid():
+            raise ValidationError(checkout_metadata.errors)
         return previous_value
-        {
-            "vacancy": {
-                "seniority": 1,
-            },
-            "target_group": {
-                "industry": 2
-            }
-        }
-        raise ValidationError({"address": "Address invalid?!"})
