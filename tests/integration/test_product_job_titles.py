@@ -6,13 +6,19 @@ from rest_framework.reverse import reverse
 from api.products.models import JobFunction, JobTitle
 from api.vonqtaxonomy.models import JobCategory as VonqJobCategory
 from api.tests.integration.search import SearchTestCase
-from api.products.search.index import JobTitleIndex
+from api.products.search.index import JobFunctionIndex, JobTitleIndex
 
 
 @tag("algolia")
 @tag("integration")
 class JobTitleSearchTestCase(SearchTestCase):
-    model_index_class_pairs = [(JobTitle, JobTitleIndex)]
+    model_index_class_pairs = [
+        (JobTitle, JobTitleIndex),
+        (
+            JobFunction,
+            JobFunctionIndex,
+        ),
+    ]
 
     @classmethod
     def setUpTestData(cls) -> None:

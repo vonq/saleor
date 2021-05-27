@@ -56,4 +56,10 @@ urlpatterns = [
         views.export_categories_csv,
         name="export_categories_csv",
     ),
+    path("parse-title", views.parse_title, name="parse_title"),
+    path(
+        "parse-title-testbench",
+        views.parse_title_testbench,
+        name="parse_title_testbench",
+    ),
 ]

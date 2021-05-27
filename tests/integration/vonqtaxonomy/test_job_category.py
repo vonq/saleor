@@ -1,5 +1,6 @@
 from urllib.parse import quote_plus
 
+from algoliasearch_django.decorators import disable_auto_indexing
 from django.test import tag
 from rest_framework.reverse import reverse
 
@@ -9,21 +10,22 @@ from api.vonqtaxonomy.models import JobCategory as VonqJobCategory
 
 
 @tag("integration")
+@disable_auto_indexing
 class JobCategoryTaxonomyTestCase(AuthenticatedTestCase):
-    def setUp(self) -> None:
-        super().setUp()
+    @classmethod
+    def setUpTestData(cls) -> None:
         vonq_industry = VonqJobCategory(
             name="Badabum Job Function", name_nl="Badabum in Dutch", mapi_id=1
         )
         vonq_industry.save()
 
-        self.industry = PkbJobFunction(
+        cls.industry = PkbJobFunction(
             name="Badabim & Job Function", vonq_taxonomy_value_id=vonq_industry.id
         )
-        self.industry.save()
+        cls.industry.save()
 
-        self.industry.vonq_taxonomy_value = vonq_industry
-        self.industry.save()
+        cls.industry.vonq_taxonomy_value = vonq_industry
+        cls.industry.save()
 
     def test_returns_right_value(self):
         response = self.client.get(

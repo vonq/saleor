@@ -58,16 +58,21 @@ from api.products.search.filters.facet_filters_groups import (
     JobFunctionAndLocationGroup,
     JobFunctionIndustryAndLocationGroup,
 )
-from api.products.search.search import get_results_ids, query_search_index
+from api.products.search.search import (
+    get_results_ids,
+    query_search_index,
+)
 from api.products.serializers import (
     ChannelSerializer,
     IndustrySerializer,
     JobFunctionTreeSerializer,
+    LimitedJobFunctionSerializer,
     JobTitleSerializer,
     LocationSerializer,
     ProductJmpSerializer,
     ProductSearchSerializer,
     ProductSerializer,
+    JobFunctionSerializer,
 )
 
 MY_OWN_PRODUCTS = (
@@ -723,6 +728,7 @@ class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 class JobFunctionsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     permission_classes = [IsAuthenticated]
     serializer_class = JobFunctionTreeSerializer
+    flat_serializer_class = JobFunctionSerializer
     http_method_names = ("get",)
     queryset = JobFunction.objects.all()
 
@@ -758,7 +764,16 @@ class JobFunctionsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         operation_id="Job Functions",
         operation_summary="Search for a Job Function.",
         tags=[ProductsConfig.verbose_name],
-        manual_parameters=[CommonOpenApiParameters.ACCEPT_LANGUAGE],
+        manual_parameters=[
+            CommonOpenApiParameters.ACCEPT_LANGUAGE,
+            openapi.Parameter(
+                "text",
+                in_=openapi.IN_QUERY,
+                description="Search for function based on job title headline",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+        ],
         responses={
             200: openapi.Response(
                 schema=serializer_class(many=True),
@@ -777,8 +792,28 @@ class JobFunctionsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     )
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
-        job_functions_tree = self.job_functions_tree_builder(queryset)
-        serializer = self.serializer_class(job_functions_tree, many=True)
+
+        if not self.request.query_params.get("text"):
+            job_functions_tree = self.job_functions_tree_builder(queryset)
+            serializer = self.serializer_class(job_functions_tree, many=True)
+
+        else:
+            _, results = query_search_index(
+                JobFunction,
+                query=self.request.query_params.get("text"),
+                params={
+                    "analytics": True,
+                    "attributesToRetrieve": "id",
+                    "hitsPerPage": 3,
+                },
+            )
+            ids = get_results_ids(results)
+
+            queryset = self.queryset.filter(pk__in=ids).order_by(
+                Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(ids)])
+            )
+            serializer = self.flat_serializer_class(queryset, many=True)
+
         return Response(serializer.data)
 
 

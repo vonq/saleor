@@ -2,7 +2,7 @@ from django.test import tag
 from rest_framework.reverse import reverse
 
 from api.products.models import Channel, JobFunction, Product
-from api.products.search.index import ProductIndex
+from api.products.search.index import JobFunctionIndex, ProductIndex
 from api.tests.integration.search import is_generic_product, SearchTestCase
 from api.vonqtaxonomy.models import (
     JobCategory as VonqJobCategory,
@@ -16,7 +16,11 @@ class ProductRecommendationsTestCase(SearchTestCase):
         (
             Product,
             ProductIndex,
-        )
+        ),
+        (
+            JobFunction,
+            JobFunctionIndex,
+        ),
     ]
 
     @classmethod

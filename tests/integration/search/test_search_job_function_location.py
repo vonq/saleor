@@ -5,7 +5,7 @@ from django.test import tag
 from django.urls import reverse
 
 from api.products.models import JobFunction, Location, Product
-from api.products.search.index import ProductIndex
+from api.products.search.index import JobFunctionIndex, ProductIndex
 from api.tests.integration.search import SearchTestCase
 
 from api.vonqtaxonomy.models import JobCategory as VonqJobCategory
@@ -14,7 +14,13 @@ from api.vonqtaxonomy.models import JobCategory as VonqJobCategory
 @tag("algolia")
 @tag("integration")
 class ProductSearchWithNestedJobFunctionAndLocationTest(SearchTestCase):
-    model_index_class_pairs = [(Product, ProductIndex)]
+    model_index_class_pairs = [
+        (Product, ProductIndex),
+        (
+            JobFunction,
+            JobFunctionIndex,
+        ),
+    ]
 
     @classmethod
     def setUpTestData(cls) -> None:

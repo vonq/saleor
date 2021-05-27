@@ -4,7 +4,7 @@ from django.test import tag
 from rest_framework.reverse import reverse
 
 from api.products.models import Industry, JobFunction, Location, Product
-from api.products.search.index import ProductIndex
+from api.products.search.index import JobFunctionIndex, ProductIndex
 from api.tests.integration.search import SearchTestCase
 from api.vonqtaxonomy.models import (
     Industry as VonqIndustry,
@@ -124,7 +124,11 @@ class ProductSearchOrderByRecencyTestCase(SearchTestCase):
         (
             Product,
             ProductIndex,
-        )
+        ),
+        (
+            JobFunction,
+            JobFunctionIndex,
+        ),
     ]
 
     @classmethod

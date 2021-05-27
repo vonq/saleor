@@ -1,17 +1,15 @@
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
-from django.contrib.auth.decorators import (
-    permission_required,
-    user_passes_test,
-)
+from django.contrib.auth.decorators import permission_required, login_required
 
 from django.contrib.admin.models import LogEntry, CHANGE
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist
 
 from django.core.exceptions import ObjectDoesNotExist
-from api.products.serializers import MinimalProductSerializer, ProductSerializer
-from rest_framework.renderers import JSONRenderer
+from django.views.decorators.http import require_http_methods
+
+from api.annotations import TITLE_FUNC_MAPPINGS
+from api.products.serializers import MinimalProductSerializer
 
 from api.products.models import (
     Industry,
@@ -24,8 +22,13 @@ from api.products.models import (
     PostingRequirement,
 )
 
+from api import settings
+
 import json
 import csv
+import os
+import requests
+import urllib
 
 from django.db.models import Q
 
@@ -661,3 +664,119 @@ def export_categories_csv(request):
         writer.writerow([category.name_en, category.name_de, category.name_nl])
 
     return response
+
+
+def parse_title_testbench(request):
+    return render(request, "parse_title_testbench.html")
+
+
+@login_required
+@require_http_methods(["POST"])
+def parse_title(request):
+    exclusion_list = ["&", "/", "senior", "specialist", "expert"]
+    try:
+        payload = json.loads(request.body)
+    except TypeError:
+        return JsonResponse({"error": "Request body cannot be parsed as a JSON"})
+
+    if payload["title"] is None:
+        return JsonResponse({"status": "error"})
+
+    title = payload["title"]
+
+    freqs = {"funcs": {}, "tokens": {}}
+    for d in TITLE_FUNC_MAPPINGS:
+        if d["func"] not in freqs["funcs"]:
+            freqs["funcs"][d["func"]] = {}
+        tokens = d["title"].lower().split(" ")
+        for t in tokens:
+            if t in exclusion_list:
+                continue
+            if t in freqs["funcs"][d["func"]]:
+                freqs["funcs"][d["func"]][t] = freqs["funcs"][d["func"]][t] + 1
+            else:
+                freqs["funcs"][d["func"]][t] = 1
+            if t in freqs["tokens"]:
+                freqs["tokens"][t] = freqs["tokens"][t] + 1
+            else:
+                freqs["tokens"][t] = 1  # marginals
+
+    freqs["funcs"][None] = {}
+    freqs["tokens"][None] = {}
+
+    def tokenise(text):
+        return text.lower().split(" ")
+
+    for mapping in TITLE_FUNC_MAPPINGS:
+        mapping["token_list"] = tokenise(mapping["title"])
+
+    title_func_lookup = {m["title"].lower(): m["func"] for m in TITLE_FUNC_MAPPINGS}
+
+    def get_job_functions(title_text):
+        title_text = title_text.lower()
+        # look for exact match
+        if title_text in title_func_lookup:
+            return {
+                "functions": [{"function": title_func_lookup[title_text]}],
+                "estimation_type": "exact_match",
+            }
+
+        # look for sublist of tokens
+        sublist_matches = list(filter(sublist_match, TITLE_FUNC_MAPPINGS))
+
+        if len(sublist_matches) > 1:
+            sublist_matches.sort(key=lambda x: -len(x))  # larger matches first
+            return {"functions": sublist_matches, "estimation_type": "sublist_match"}
+
+        # look for any tokens weight and summed
+        return func_dist(title_text)
+
+    def sublist_match(mapping):
+        return "token_list" in mapping and contains(
+            mapping["token_list"], tokenise(title)
+        )
+
+    def contains(subseq, inseq):
+        return any(
+            inseq[pos : pos + len(subseq)] == subseq
+            for pos in range(0, len(inseq) - len(subseq) + 1)
+        )
+
+    def func_dist(title_text):
+        title_tokens = (
+            title_text.lower().strip().split(" ")
+        )  # .map(lambda t: t.strip())
+        sum_list = []
+        for func in freqs["funcs"]:
+            sum = 0
+            for token in title_tokens:
+                if token in freqs["funcs"][func]:
+                    sum += freqs["funcs"][func][token] / freqs["tokens"][token]
+
+            if sum > 0 and func != "null":
+                sum_list.append({"function": func, "weight": sum})
+
+        sum_list.sort(key=lambda x: -x["weight"])
+        return {"functions": sum_list, "estimation_type": "frequency"}
+
+    headers = {
+        "X-Algolia-API-Key": settings.ALGOLIA["API_KEY"],
+        "X-Algolia-Application-Id": settings.ALGOLIA["APPLICATION_ID"],
+        "X-Algolia-UserToken": "testbench",
+    }
+    r = requests.post(
+        "https://OWF766BMHV-dsn.algolia.net/1/indexes/dev_JobFunction/query",
+        '{ "params": "query='
+        + urllib.parse.quote(title)
+        + '&hitsPerPage=2&getRankingInfo=1" }',
+        headers=headers,
+    )
+
+    return JsonResponse(
+        {
+            "title": title,
+            "title_tokens": tokenise(title),
+            "result": get_job_functions(title),
+            "algolia": r.json(),
+        }
+    )

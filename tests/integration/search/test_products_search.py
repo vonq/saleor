@@ -12,7 +12,7 @@ from api.products.models import (
     JobTitle,
     Channel,
 )
-from api.products.search.index import JobTitleIndex, ProductIndex
+from api.products.search.index import JobFunctionIndex, JobTitleIndex, ProductIndex
 from api.tests.integration import force_user_login
 from api.tests.integration.search import (
     how_many_products_with_value,
@@ -47,6 +47,10 @@ class ProductSearchTestCase(SearchTestCase):
         (
             JobTitle,
             JobTitleIndex,
+        ),
+        (
+            JobFunction,
+            JobFunctionIndex,
         ),
     ]
 

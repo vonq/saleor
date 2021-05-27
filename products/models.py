@@ -155,6 +155,23 @@ class JobFunction(MPTTModel):
 
     objects = AcrossLanguagesQuerySet.as_manager()
 
+    @property
+    def all_job_titles(self) -> Iterable["JobTitle"]:
+
+        all_titles = JobTitle.objects.filter(
+            Q(alias_of__job_function=self) | Q(job_function=self)
+        )
+
+        titles_list = list(
+            itertools.chain(
+                all_titles.values_list("name_en", flat=True),
+                all_titles.values_list("name_de", flat=True),
+                all_titles.values_list("name_nl", flat=True),
+            )
+        )
+
+        return titles_list
+
     def __str__(self):
         return self.name
 
