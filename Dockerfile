@@ -45,7 +45,7 @@ WORKDIR /app
 
 ARG STATIC_URL
 ENV STATIC_URL ${STATIC_URL:-/static/}
-RUN SECRET_KEY=dummy ALALGOLIA_APPLICATION_ID=appid ALGOLIA_API_KEY=apikey STATIC_URL=${STATIC_URL} python3 manage.py collectstatic --no-input
+RUN SECRET_KEY=dummy ALGOLIA_APPLICATION_ID=appid ALGOLIA_API_KEY=apikey STATIC_URL=${STATIC_URL} python3 manage.py collectstatic --no-input
 
 EXPOSE 8000
 ENV PYTHONUNBUFFERED 1
