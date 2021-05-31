@@ -26,25 +26,50 @@ class Tracking(serializers.Serializer):
     utm = serializers.CharField(allow_null=False)
 
 
-
 class Taxonomy(serializers.Serializer):
-    industry = serializers.IntegerField(allow_null=False)
-    jobCategory = serializers.IntegerField(allow_null=False)
-    seniority = serializers.IntegerField(allow_null=False)
-    tracking = serializers.IntegerField(allow_null=False)
+    industryId = serializers.IntegerField(allow_null=False)
+    jobCategoryId = serializers.IntegerField(allow_null=False)
+    seniorityId = serializers.IntegerField(allow_null=False)
+    seniorityId = serializers.IntegerField(allow_null=False)
+    educationLevelId = serializers.IntegerField(allow_null=False)
 
+class WorkingHours(serializers.Serializer):
+    minimum = serializers.IntegerField(min_value=1, allow_null=False)
+    maximum = serializers.IntegerField(min_value=1, allow_null=False)
+
+    def validate(self, attrs):
+        if attrs["maximum"] < attrs["minimum"]:
+            raise serializers.ValidationError("Maximum working hours needs to be greater than or equal to minimum working hours")
+        return attrs
+
+
+class Salary(serializers.Serializer):
+    minimumAmount = serializers.IntegerField(min_value=1, allow_null=False)
+    maximumAmount = serializers.IntegerField(min_value=1, allow_null=False)
+    perPeriod = serializers.ChoiceField(choices=["yearly", "monthly", "weekly", "daily", "hourly"])
+
+    def validate(self, attrs):
+        if attrs["maximumAmount"] < attrs["minimumAmount"]:
+            raise serializers.ValidationError("Maximum salary amount needs to be greater than or equal to minimum salary amount")
+        return attrs
 
 
 class VacancyDetails(serializers.Serializer):
     jobTitle = serializers.CharField(max_length=255, allow_null=False)
+    organizationName = serializers.CharField(max_length=255, allow_null=False)
+    type = serializers.ChoiceField(choices=["permanent", "temporary", "fixed_term", "fixed_term_with_option_for_permanent", "freelance", "traineeship", "internship"], allow_null=False)
     description = serializers.CharField(allow_null=False)
     companyLogo = serializers.URLField(allow_null=False)
     taxonomy = Taxonomy(allow_null=False)
+    workingHours = WorkingHours(allow_null=False)
+    salary = Salary(allow_null=False)
 
 
 
 class ContactInfo(serializers.Serializer):
+    name = serializers.CharField(allow_null=False)
     phoneNumber = serializers.CharField(allow_null=False)
+    emailAddress = serializers.EmailField(allow_null=False)
 
 
 
