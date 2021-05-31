@@ -563,6 +563,8 @@ PLUGINS = [
     "saleor.payment.gateways.adyen.plugin.AdyenGatewayPlugin",
     "saleor.payment.gateways.authorize_net.plugin.AuthorizeNetGatewayPlugin",
     "saleor.plugins.invoicing.plugin.InvoicingPlugin",
+    "api.plugins.checkout_details_plugin.CheckoutDetailsPlugin",
+    "api.plugins.contracts_payment_plugin.ContractsPaymentPlugin",
 ]
 
 # Plugin discovery

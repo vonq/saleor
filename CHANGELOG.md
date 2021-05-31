@@ -23,6 +23,81 @@ All notable, unreleased changes to this project will be documented in this file.
 - Allow to use `Bearer` as an authorization prefix - #6996 by @korycins
 - Update checkout quantity when checkout lines are deleted - #7002 by @IKarbowiak
 - Raise an error when the user is trying to sort products by rank without search - #7013 by @IKarbowiak
+- Fix available shipping methods - return also weight methods without weight limits - #7021 by @IKarbowiak
+- Remove redundant Opentracing spans - #6994 by @fowczarek
+- Trigger `PRODUCT_UPDATED` webhook for collections and categories mutations - #7051 by @d-wysocki
+- Support setting value for AttributeValue mutations - #7037 by @piotrgrundas
+- Validate discount value for percentage vouchers and sales - #7033 by @d-wysocki
+- Optimize children field on Category type - #7045 by @IKarbowiak
+- Added support for querying objects by metadata fields - #6683 by @LeOndaz
+- Add rich text attribute input - #7059 by @piotrgrundas
+- Avoid using `get_plugins_manager` method - #7052 by @IKarbowiak
+- Add field `languageCode` to types: `AccountInput`, `AccountRegisterInput`, `CheckoutCreateInput`, `CustomerInput`, `Order`, `User`. Add field `languageCodeEnum` to `Order` type. Add new mutation `CheckoutLanguageCodeUpdate`. Deprecate field `Order.languageCode`.  - #6609 by @korycins
+- Add benchmarks for triggered product and variants webhooks - #7061 by @d-wysocki
+- Extend `Transaction` type with gateway response and `Payment` type with filter - #7062 by @IKarbowiak
+- Fix invalid tax rates for lines - #7058 by @IKarbowiak
+- Allow seeing unconfirmed orders - #7072 by @IKarbowiak
+- Raise GraphQLError when too big integer value is provided - #7076 by @IKarbowiak
+- Do not update draft order addresses when user is changing - #7088 by @IKarbowiak
+- Recalculate draft order when product/variant was deleted - #7085 by @d-wysocki
+- Added validation for `DraftOrderCreate` with negative quantity line - #7085 by @d-wysocki
+- Remove html tags from product description_plaintext - #7094 by @d-wysocki
+- Performance upgrade on orders query with shipping and billing addresses - #7083 by @tomaszszymanski129
+- Performance upgrade on orders query with payment status - #7125 by @tomaszszymanski129
+- Performance upgrade on orders query with events - #7120 by @tomaszszymanski129
+- Performance upgrade on orders query with `user` and `userEmail` fields - #7091 by @tomaszszymanski129
+- Fix dataloader for fetching checkout info - #7084 by @IKarbowiak
+- Update also draft order line total price after getting the unit price from plugin - #7080 by @IKarbowiak
+- Fix failing product tasks when instances are removed - #7092 by @IKarbowiak
+- Catch invalid object ID and raise ValidationError - #7114 by @d-wysocki
+- Update GraphQL endpoint to only match exactly `/graphql/` without trailing characters - #7117 by @IKarbowiak
+- Introduce traced_resolver decorator instead of graphene middleware - #7159 by @tomaszszymanski129
+- Fix failing export when exporting attribute without values - #7131 by @IKarbowiak
+- Extend Vatlayer functionalities - #7101 by @korycins:
+    - Allow users to enter a list of exceptions (country ISO codes) that will use the source country rather than the destination country for tax purposes.
+    - Allow users to enter a list of countries for which no VAT will be added.
+- Allow passing metadata to `accountRegister` mutation - #7152 by @piotrgrundas
+- Fix incorrect payment data for klarna - #7150 by @IKarbowiak
+- Drop deleted images from storage - #7129 by @IKarbowiak
+- Fix core sorting on related fields - #7195 by @tomaszszymanski129
+- Fix variants dataloaders when querying with default channel - #7206 by @tomaszszymanski129
+- Performance upgrade on orders query with `subtotal` field - #7174 by @tomaszszymanski129
+- Performance upgrade on orders query with `actions` field - #7175 by @tomaszszymanski129
+- Performance upgrade on orders query with `totalAuthorized` field - #7170 by @tomaszszymanski129
+- Fix export with empty assignment values - #7207 by @IKarbowiak
+- Change exported file name - #7218 by @IKarbowiak
+- Performance upgrade on `OrderLine` type with `thumbnail` field - #7224 by @tomaszszymanski129
+- Use GraphQL IDs instead of database IDs in export - #7240 by @IKarbowiak
+- Fix draft order tax mismatch - #7226 by @IKarbowiak
+  - Introduce `calculate_order_line_total` plugin method
+- Raise ValidationError when refund cannot be performed - #7260 by @IKarbowiak
+- Extend order with origin and original order values - #7326 by @IKarbowiak
+- Fix customer addresses missing after customer creation - #7327 by @tomaszszymanski129
+- Extend order webhook payload with fulfillment fields - #7364, #7347 by @korycins
+  - fulfillments extended with:
+    - total_refund_amount
+    - shipping_refund_amount
+    - lines
+  - fulfillment lines extended with:
+    - total_price_net_amount
+    - total_price_gross_amount
+    - undiscounted_unit_price_net
+    - undiscounted_unit_price_gross
+    - unit_price_net
+- Extend order payload with undiscounted prices and add psp_reference to payment model - #7339 by @IKarbowiak
+  - order payload extended with the following fields:
+    - `undiscounted_total_net_amount`
+    - `undiscounted_total_gross_amount`
+    - `psp_reference` on `payment`
+  - order lines extended with:
+    - `undiscounted_unit_price_net_amount`
+    - `undiscounted_unit_price_gross_amount`
+    - `undiscounted_total_price_net_amount`
+    - `undiscounted_total_price_gross_amount`
+- Copy metadata fields when creating reissue - #7358 by @IKarbowiak
+- Fix invoice generation - #7376 by @tomaszszymanski129
+- Allow defining only one field in translations - #7363 by @IKarbowiak
+- Trigger `checkout_updated` hook for checkout meta mutations - #7392 by @maarcingebala
 
 ### Breaking
 - Multichannel MVP: Multicurrency - #6242 by @fowczarek @d-wysocki
