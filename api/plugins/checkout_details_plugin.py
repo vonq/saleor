@@ -3,10 +3,10 @@ from typing import List, Optional, Iterable, Any
 from django.core.exceptions import ValidationError
 
 from .metadata import CheckoutMetadata
-from ...saleor.checkout.fetch import CheckoutInfo, CheckoutLineInfo
-from ...saleor.checkout.models import Checkout
-from ...saleor.discount import DiscountInfo
-from ...saleor.plugins.base_plugin import BasePlugin
+from saleor.checkout.fetch import CheckoutInfo, CheckoutLineInfo
+from saleor.checkout.models import Checkout
+from saleor.discount import DiscountInfo
+from saleor.plugins.base_plugin import BasePlugin
 
 
 class CheckoutDetailsPlugin(BasePlugin):
@@ -36,5 +36,5 @@ class CheckoutDetailsPlugin(BasePlugin):
     def checkout_updated(self, checkout: "Checkout", previous_value: Any) -> Any:
         checkout_metdata = CheckoutMetadata(data=checkout.metadata, partial=True)
         if not checkout_metdata.is_valid():
-            raise ValidationError(checkout_metadata.errors)
+            raise ValidationError(checkout_metdata.errors)
         return previous_value
