@@ -18,61 +18,30 @@ from phonenumber_field.serializerfields import PhoneNumberField
 }
 """
 
-
-
-class Tracking(serializers.Serializer):
-    vacancyUrl = serializers.URLField(allow_null=False)
-    applicationUrl = serializers.URLField(allow_null=False)
-    utm = serializers.CharField(allow_null=False)
-
-
-class Taxonomy(serializers.Serializer):
-    industryId = serializers.IntegerField(allow_null=False)
-    jobCategoryId = serializers.IntegerField(allow_null=False)
-    seniorityId = serializers.IntegerField(allow_null=False)
-    seniorityId = serializers.IntegerField(allow_null=False)
-    educationLevelId = serializers.IntegerField(allow_null=False)
-
-class WorkingHours(serializers.Serializer):
-    minimum = serializers.IntegerField(min_value=1, allow_null=False)
-    maximum = serializers.IntegerField(min_value=1, allow_null=False)
-
-    def validate(self, attrs):
-        if attrs["maximum"] < attrs["minimum"]:
-            raise serializers.ValidationError("Maximum working hours needs to be greater than or equal to minimum working hours")
-        return attrs
-
-
-class Salary(serializers.Serializer):
-    minimumAmount = serializers.IntegerField(min_value=1, allow_null=False)
-    maximumAmount = serializers.IntegerField(min_value=1, allow_null=False)
-    perPeriod = serializers.ChoiceField(choices=["yearly", "monthly", "weekly", "daily", "hourly"])
-
-    def validate(self, attrs):
-        if attrs["maximumAmount"] < attrs["minimumAmount"]:
-            raise serializers.ValidationError("Maximum salary amount needs to be greater than or equal to minimum salary amount")
-        return attrs
-
-
-class VacancyDetails(serializers.Serializer):
-    jobTitle = serializers.CharField(max_length=255, allow_null=False)
-    organizationName = serializers.CharField(max_length=255, allow_null=False)
-    type = serializers.ChoiceField(choices=["permanent", "temporary", "fixed_term", "fixed_term_with_option_for_permanent", "freelance", "traineeship", "internship"], allow_null=False)
-    description = serializers.CharField(allow_null=False)
-    companyLogo = serializers.URLField(allow_null=False)
-    taxonomy = Taxonomy(allow_null=False)
-    workingHours = WorkingHours(allow_null=False)
-    salary = Salary(allow_null=False)
+class MetadataSerializer(serializers.Serializer):
+    vacancy_jobTitle = serializers.CharField(max_length=255, allow_null=True, required=False)
+    vacancy_description = serializers.CharField(max_length=10000, allow_null=True, required=False)
+    vacancy_companyLogo = serializers.URLField(allow_null=True, required=False)
+    vacancy_taxonomy_industry = serializers.IntegerField(allow_null=True, required=False)
+    vacancy_taxonomy_jobCategoryId = serializers.IntegerField(allow_null=True, required=False)
+    vacancy_taxonomy_seniority = serializers.IntegerField(allow_null=True, required=False)
+    vacancy_tracking_vacancy_url = serializers.URLField(allow_null=True, required=False)
+    vacancy_tracking_applicationUrl = serializers.URLField(allow_null=True, required=False)
+    vacancy_tracking_utm = serializers.ListSerializer(child=serializers.CharField(), allow_empty=True, allow_null=True, required=False)
+    contactInfo_name = serializers.CharField(max_length=64, allow_null=True, required=False)
+    contactInfo_phoneNumber = PhoneNumberField(allow_null=True, required=False)
 
 
 
-class ContactInfo(serializers.Serializer):
-    name = serializers.CharField(allow_null=False)
-    phoneNumber = serializers.CharField(allow_null=False)
-    emailAddress = serializers.EmailField(allow_null=False)
-
-
-
-class CheckoutMetadata(serializers.Serializer):
-    vacancy = VacancyDetails(allow_null=False)
-    contactInfo = ContactInfo(allow_null=False)
+class FinalMetadataSerializer(MetadataSerializer):
+    vacancy_jobTitle = serializers.CharField(max_length=255, allow_null=False, required=True)
+    vacancy_description = serializers.CharField(max_length=10000, allow_null=False, required=True)
+    vacancy_companyLogo = serializers.URLField(allow_null=False, required=True)
+    vacancy_taxonomy_industry = serializers.IntegerField(allow_null=False, required=True)
+    vacancy_taxonomy_jobCategoryId = serializers.IntegerField(allow_null=False, required=True)
+    vacancy_taxonomy_seniority = serializers.IntegerField(allow_null=False, required=True)
+    vacancy_tracking_vacancy_url = serializers.URLField(allow_null=False, required=True)
+    vacancy_tracking_applicationUrl = serializers.URLField(allow_null=False, required=True)
+    vacancy_tracking_utm = serializers.ListSerializer(child=serializers.CharField(), allow_empty=False, allow_null=True, required=True)
+    contactInfo_name = serializers.CharField(max_length=64, allow_null=False, required=True)
+    contactInfo_phoneNumber = PhoneNumberField(allow_null=False, required=True)
