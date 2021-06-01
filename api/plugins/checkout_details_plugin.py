@@ -2,7 +2,7 @@ from typing import List, Optional, Iterable, Any
 
 from django.core.exceptions import ValidationError
 
-from .metadata import CheckoutMetadata
+from api.plugins.metadata import MetadataSerializer, FinalMetadataSerializer
 from saleor.checkout.fetch import CheckoutInfo, CheckoutLineInfo
 from saleor.checkout.models import Checkout
 from saleor.discount import DiscountInfo
@@ -27,14 +27,13 @@ class CheckoutDetailsPlugin(BasePlugin):
         if not checkout_info.checkout.metadata:
             raise ValidationError("No metadata provided in the checkout object")
 
-        checkout_metadata = CheckoutMetadata(
+        checkout_metadata = FinalMetadataSerializer(
             data=checkout_info.checkout.metadata)
         if not checkout_metadata.is_valid(raise_exception=False):
             raise ValidationError(checkout_metadata.errors)
         return previous_value
 
     def checkout_updated(self, checkout: "Checkout", previous_value: Any) -> Any:
-        checkout_metdata = CheckoutMetadata(data=checkout.metadata, partial=True)
-        if not checkout_metdata.is_valid():
-            raise ValidationError(checkout_metdata.errors)
-        return previous_value
+        checkout_metadata = MetadataSerializer(data=checkout.metadata)
+        if not checkout_metadata.is_valid(raise_exception=False):
+            raise ValidationError(checkout_metadata.errors)
