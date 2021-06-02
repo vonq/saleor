@@ -19,7 +19,7 @@ PAGE_TYPE_UPDATE_MUTATION = """
                     slug
                 }
             }
-            pageErrors {
+            errors {
                 code
                 field
                 message
@@ -65,7 +65,7 @@ def test_page_type_update_as_staff(
     # then
     content = get_graphql_content(response)
     data = content["data"]["pageTypeUpdate"]
-    errors = data["pageErrors"]
+    errors = data["errors"]
     page_type_data = data["pageType"]
 
     page_type.refresh_from_db()
@@ -127,7 +127,7 @@ def test_page_type_update_as_app(
     # then
     content = get_graphql_content(response)
     data = content["data"]["pageTypeUpdate"]
-    errors = data["pageErrors"]
+    errors = data["errors"]
     page_type_data = data["pageType"]
 
     page_type.refresh_from_db()
@@ -184,7 +184,7 @@ def test_page_type_update_duplicated_attributes(
     # then
     content = get_graphql_content(response)
     data = content["data"]["pageTypeUpdate"]
-    errors = data["pageErrors"]
+    errors = data["errors"]
     page_type_data = data["pageType"]
 
     assert not page_type_data
@@ -228,7 +228,7 @@ def test_page_type_update_not_valid_attributes(
     # then
     content = get_graphql_content(response)
     data = content["data"]["pageTypeUpdate"]
-    errors = data["pageErrors"]
+    errors = data["errors"]
     page_type_data = data["pageType"]
 
     assert not page_type_data
@@ -272,7 +272,7 @@ def test_page_type_update_empty_slug(
     # then
     content = get_graphql_content(response)
     data = content["data"]["pageTypeUpdate"]
-    errors = data["pageErrors"]
+    errors = data["errors"]
     page_type_data = data["pageType"]
 
     assert not page_type_data
@@ -302,7 +302,7 @@ def test_page_type_update_duplicated_slug(
     # then
     content = get_graphql_content(response)
     data = content["data"]["pageTypeUpdate"]
-    errors = data["pageErrors"]
+    errors = data["errors"]
     page_type_data = data["pageType"]
 
     assert not page_type_data
@@ -311,7 +311,7 @@ def test_page_type_update_duplicated_slug(
     assert errors[0]["field"] == "slug"
 
 
-def test_page_type_update_multiply_errors(
+def test_page_type_update_multiple_errors(
     staff_api_client,
     page_type,
     permission_manage_page_types_and_attributes,
@@ -319,7 +319,7 @@ def test_page_type_update_multiply_errors(
     size_page_attribute,
     color_attribute,
 ):
-    """Ensure that if multiply errors occurred all will raised."""
+    """Ensure that if multiple errors occurred all will be raised."""
 
     # given
     staff_user = staff_api_client.user
@@ -346,7 +346,7 @@ def test_page_type_update_multiply_errors(
     # then
     content = get_graphql_content(response)
     data = content["data"]["pageTypeUpdate"]
-    errors = data["pageErrors"]
+    errors = data["errors"]
     page_type_data = data["pageType"]
 
     assert not page_type_data

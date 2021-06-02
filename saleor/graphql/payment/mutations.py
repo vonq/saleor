@@ -1,6 +1,7 @@
 import graphene
 from django.core.exceptions import ValidationError
 
+from ...channel.models import Channel
 from ...checkout.calculations import calculate_checkout_total_with_gift_cards
 from ...checkout.checkout_cleaner import clean_billing_address, clean_checkout_shipping
 from ...checkout.fetch import fetch_checkout_info, fetch_checkout_lines
@@ -79,8 +80,8 @@ class CheckoutPaymentCreate(BaseMutation, I18nMixin):
             )
 
     @classmethod
-    def validate_gateway(cls, gateway_id, currency):
-        if not is_currency_supported(currency, gateway_id):
+    def validate_gateway(cls, manager, gateway_id, currency):
+        if not is_currency_supported(currency, gateway_id, manager):
             raise ValidationError(
                 {
                     "gateway": ValidationError(
@@ -91,9 +92,9 @@ class CheckoutPaymentCreate(BaseMutation, I18nMixin):
             )
 
     @classmethod
-    def validate_token(cls, manager, gateway: str, input_data: dict):
+    def validate_token(cls, manager, gateway: str, input_data: dict, channel_slug: str):
         token = input_data.get("token")
-        is_required = manager.token_is_required_as_payment_input(gateway)
+        is_required = manager.token_is_required_as_payment_input(gateway, channel_slug)
         if not token and is_required:
             raise ValidationError(
                 {
@@ -124,17 +125,24 @@ class CheckoutPaymentCreate(BaseMutation, I18nMixin):
         data = data["input"]
         gateway = data["gateway"]
 
-        cls.validate_gateway(gateway, checkout.currency)
-        cls.validate_token(info.context.plugins, gateway, data)
+        manager = info.context.plugins
+        cls.validate_gateway(manager, gateway, checkout.currency)
         cls.validate_return_url(data)
 
         lines = fetch_checkout_lines(checkout)
-        checkout_info = fetch_checkout_info(checkout, lines, info.context.discounts)
+        checkout_info = fetch_checkout_info(
+            checkout, lines, info.context.discounts, manager
+        )
+
+        cls.validate_token(
+            manager, gateway, data, channel_slug=checkout_info.channel.slug
+        )
+
         address = (
             checkout.shipping_address or checkout.billing_address
         )  # FIXME: check which address we need here
         checkout_total = calculate_checkout_total_with_gift_cards(
-            manager=info.context.plugins,
+            manager=manager,
             checkout_info=checkout_info,
             lines=lines,
             address=address,
@@ -183,8 +191,15 @@ class PaymentCapture(BaseMutation):
         payment = cls.get_node_or_error(
             info, payment_id, field="payment_id", only_type=Payment
         )
+        channel_slug = (
+            payment.order.channel.slug
+            if payment.order
+            else payment.checkout.channel.slug
+        )
         try:
-            gateway.capture(payment, amount)
+            gateway.capture(
+                payment, info.context.plugins, amount=amount, channel_slug=channel_slug
+            )
             payment.refresh_from_db()
         except PaymentError as e:
             raise ValidationError(str(e), code=PaymentErrorCode.PAYMENT_ERROR)
@@ -203,8 +218,15 @@ class PaymentRefund(PaymentCapture):
         payment = cls.get_node_or_error(
             info, payment_id, field="payment_id", only_type=Payment
         )
+        channel_slug = (
+            payment.order.channel.slug
+            if payment.order
+            else payment.checkout.channel.slug
+        )
         try:
-            gateway.refund(payment, amount=amount)
+            gateway.refund(
+                payment, info.context.plugins, amount=amount, channel_slug=channel_slug
+            )
             payment.refresh_from_db()
         except PaymentError as e:
             raise ValidationError(str(e), code=PaymentErrorCode.PAYMENT_ERROR)
@@ -228,8 +250,13 @@ class PaymentVoid(BaseMutation):
         payment = cls.get_node_or_error(
             info, payment_id, field="payment_id", only_type=Payment
         )
+        channel_slug = (
+            payment.order.channel.slug
+            if payment.order
+            else payment.checkout.channel.slug
+        )
         try:
-            gateway.void(payment)
+            gateway.void(payment, info.context.plugins, channel_slug=channel_slug)
             payment.refresh_from_db()
         except PaymentError as e:
             raise ValidationError(str(e), code=PaymentErrorCode.PAYMENT_ERROR)
@@ -244,6 +271,9 @@ class PaymentInitialize(BaseMutation):
             description="A gateway name used to initialize the payment.",
             required=True,
         )
+        channel = graphene.String(
+            description="Slug of a channel for which the data should be returned.",
+        )
         payment_data = graphene.JSONString(
             required=False,
             description=(
@@ -257,9 +287,37 @@ class PaymentInitialize(BaseMutation):
         error_type_field = "payment_errors"
 
     @classmethod
-    def perform_mutation(cls, _root, info, gateway, payment_data):
+    def validate_channel(cls, channel_slug):
         try:
-            response = info.context.plugins.initialize_payment(gateway, payment_data)
+            channel = Channel.objects.get(slug=channel_slug)
+        except Channel.DoesNotExist:
+            raise ValidationError(
+                {
+                    "channel": ValidationError(
+                        f"Channel with '{channel_slug}' slug does not exist.",
+                        code=PaymentErrorCode.NOT_FOUND.value,
+                    )
+                }
+            )
+        if not channel.is_active:
+            raise ValidationError(
+                {
+                    "channel": ValidationError(
+                        f"Channel with '{channel_slug}' is inactive.",
+                        code=PaymentErrorCode.CHANNEL_INACTIVE.value,
+                    )
+                }
+            )
+        return channel
+
+    @classmethod
+    def perform_mutation(cls, _root, info, gateway, channel, payment_data):
+        cls.validate_channel(channel_slug=channel)
+
+        try:
+            response = info.context.plugins.initialize_payment(
+                gateway, payment_data, channel_slug=channel
+            )
         except PaymentError as e:
             raise ValidationError(
                 {

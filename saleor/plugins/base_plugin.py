@@ -1,4 +1,4 @@
-from copy import copy
+from copy import copy, deepcopy
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Union
@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from ..channel.models import Channel
     from ..checkout.fetch import CheckoutInfo, CheckoutLineInfo
     from ..checkout.models import Checkout
+    from ..core.notify_events import NotifyEventType
     from ..core.taxes import TaxType
     from ..discount import DiscountInfo
     from ..invoice.models import Invoice
@@ -30,22 +31,25 @@ if TYPE_CHECKING:
     from ..page.models import Page
     from ..product.models import Product, ProductType, ProductVariant
 
-
 PluginConfigurationType = List[dict]
 
 
 class ConfigurationTypeField:
     STRING = "String"
+    MULTILINE = "Multiline"
     BOOLEAN = "Boolean"
     SECRET = "Secret"
     SECRET_MULTILINE = "SecretMultiline"
     PASSWORD = "Password"
+    OUTPUT = "OUTPUT"
     CHOICES = [
         (STRING, "Field is a String"),
+        (MULTILINE, "Field is a Multiline"),
         (BOOLEAN, "Field is a Boolean"),
         (SECRET, "Field is a Secret"),
         (PASSWORD, "Field is a Password"),
         (SECRET_MULTILINE, "Field is a Secret multiline"),
+        (OUTPUT, "Field is a read only"),
     ]
 
 
@@ -69,12 +73,20 @@ class BasePlugin:
     PLUGIN_ID = ""
     PLUGIN_DESCRIPTION = ""
     CONFIG_STRUCTURE = None
+    CONFIGURATION_PER_CHANNEL = True
     DEFAULT_CONFIGURATION = []
     DEFAULT_ACTIVE = False
 
-    def __init__(self, *, configuration: PluginConfigurationType, active: bool):
+    def __init__(
+        self,
+        *,
+        configuration: PluginConfigurationType,
+        active: bool,
+        channel: Optional["Channel"] = None
+    ):
         self.configuration = self.get_plugin_configuration(configuration)
         self.active = active
+        self.channel = channel
 
     def __str__(self):
         return self.PLUGIN_NAME
@@ -139,6 +151,13 @@ class BasePlugin:
         """
         return NotImplemented
 
+    def notify(self, event: "NotifyEventType", payload: dict, previous_value):
+        """Handle notification request.
+
+        Overwrite this method if the plugin is responsible for sending notifications.
+        """
+        return NotImplemented
+
     def change_user_address(
         self,
         address: "Address",
@@ -160,21 +179,6 @@ class BasePlugin:
 
         Overwrite this method if you need to apply specific logic for the calculation
         of a checkout total. Return TaxedMoney.
-        """
-        return NotImplemented
-
-    def calculate_checkout_subtotal(
-        self,
-        checkout_info: "CheckoutInfo",
-        lines: List["CheckoutLineInfo"],
-        address: Optional["Address"],
-        discounts: List["DiscountInfo"],
-        previous_value: TaxedMoney,
-    ) -> TaxedMoney:
-        """Calculate the subtotal for checkout.
-
-        Overwrite this method if you need to apply specific logic for the calculation
-        of a checkout subtotal. Return TaxedMoney.
         """
         return NotImplemented
 
@@ -203,10 +207,10 @@ class BasePlugin:
         """
         return NotImplemented
 
-    # TODO: Add information about this change to `breaking changes in changelog`
     def calculate_checkout_line_total(
         self,
         checkout_info: "CheckoutInfo",
+        lines: List["CheckoutLineInfo"],
         checkout_line_info: "CheckoutLineInfo",
         address: Optional["Address"],
         discounts: Iterable["DiscountInfo"],
@@ -219,9 +223,25 @@ class BasePlugin:
         """
         return NotImplemented
 
+    def calculate_order_line_total(
+        self,
+        order: "Order",
+        order_line: "OrderLine",
+        variant: "ProductVariant",
+        product: "Product",
+        previous_value: TaxedMoney,
+    ) -> TaxedMoney:
+        """Calculate order line total.
+
+        Overwrite this method if you need to apply specific logic for the calculation
+        of a order line total. Return TaxedMoney.
+        """
+        return NotImplemented
+
     def calculate_checkout_line_unit_price(
         self,
         checkout_info: "CheckoutInfo",
+        lines: List["CheckoutLineInfo"],
         checkout_line_info: "CheckoutLineInfo",
         address: Optional["Address"],
         discounts: Iterable["DiscountInfo"],
@@ -250,6 +270,7 @@ class BasePlugin:
     def get_checkout_line_tax_rate(
         self,
         checkout_info: "CheckoutInfo",
+        lines: List["CheckoutLineInfo"],
         checkout_line_info: "CheckoutLineInfo",
         address: Optional["Address"],
         discounts: Iterable["DiscountInfo"],
@@ -261,6 +282,7 @@ class BasePlugin:
         self,
         order: "Order",
         product: "Product",
+        variant: "ProductVariant",
         address: Optional["Address"],
         previous_value: Decimal,
     ) -> Decimal:
@@ -611,28 +633,22 @@ class BasePlugin:
     def token_is_required_as_payment_input(self, previous_value):
         return previous_value
 
-    def get_payment_gateway(
-        self, currency: Optional[str], previous_value
-    ) -> Optional["PaymentGateway"]:
+    def get_payment_gateways(
+        self, currency: Optional[str], checkout: Optional["Checkout"], previous_value
+    ) -> List["PaymentGateway"]:
         payment_config = self.get_payment_config(previous_value)
         payment_config = payment_config if payment_config != NotImplemented else []
         currencies = self.get_supported_currencies(previous_value=[])
         currencies = currencies if currencies != NotImplemented else []
         if currency and currency not in currencies:
-            return None
-        return PaymentGateway(
+            return []
+        gateway = PaymentGateway(
             id=self.PLUGIN_ID,
             name=self.PLUGIN_NAME,
             config=payment_config,
             currencies=currencies,
         )
-
-    def get_payment_gateway_for_checkout(
-        self,
-        checkout: "Checkout",
-        previous_value,
-    ) -> Optional["PaymentGateway"]:
-        return self.get_payment_gateway(checkout.currency, previous_value)
+        return [gateway]
 
     @classmethod
     def _update_config_items(
@@ -653,6 +669,9 @@ class BasePlugin:
                         and not isinstance(new_value, bool)
                     ):
                         new_value = new_value.lower() == "true"
+                    if item_type == ConfigurationTypeField.OUTPUT:
+                        # OUTPUT field is read only. No need to update it
+                        continue
                     config_item.update([("value", new_value)])
 
         # Get new keys that don't exist in current_config and extend it.
@@ -719,7 +738,7 @@ class BasePlugin:
         for config_field in configuration:
             if config_field["name"] not in desired_config_keys:
                 continue
-            updated_configuration.append(config_field)
+            updated_configuration.append(copy(config_field))
 
         configured_keys = set(d["name"] for d in updated_configuration)
         missing_keys = desired_config_keys - configured_keys

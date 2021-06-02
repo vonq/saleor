@@ -35,6 +35,18 @@ class OrderStatus:
     ]
 
 
+class OrderOrigin:
+    CHECKOUT = "checkout"  # order created from checkout
+    DRAFT = "draft"  # order created from draft order
+    REISSUE = "reissue"  # order created from reissue existing one
+
+    CHOICES = [
+        (CHECKOUT, "Checkout"),
+        (DRAFT, "Draft"),
+        (REISSUE, "Reissue"),
+    ]
+
+
 class FulfillmentStatus:
     FULFILLED = "fulfilled"  # group of products in an order marked as fulfilled
     REFUNDED = "refunded"  # group of refunded products
@@ -62,8 +74,8 @@ class OrderEvents:
     DRAFT_CREATED = "draft_created"
     DRAFT_CREATED_FROM_REPLACE = "draft_created_from_replace"
 
-    DRAFT_ADDED_PRODUCTS = "draft_added_products"
-    DRAFT_REMOVED_PRODUCTS = "draft_removed_products"
+    ADDED_PRODUCTS = "added_products"
+    REMOVED_PRODUCTS = "removed_products"
 
     PLACED = "placed"
     PLACED_FROM_DRAFT = "placed_from_draft"
@@ -113,8 +125,8 @@ class OrderEvents:
     CHOICES = [
         (DRAFT_CREATED, "The draft order was created"),
         (DRAFT_CREATED_FROM_REPLACE, "The draft order with replace lines was created"),
-        (DRAFT_ADDED_PRODUCTS, "Some products were added to the draft order"),
-        (DRAFT_REMOVED_PRODUCTS, "Some products were removed from the draft order"),
+        (ADDED_PRODUCTS, "Some products were added to the order"),
+        (REMOVED_PRODUCTS, "Some products were removed from the order"),
         (PLACED, "The order was placed"),
         (PLACED_FROM_DRAFT, "The draft order was placed"),
         (OVERSOLD_ITEMS, "The draft order was placed with oversold items"),

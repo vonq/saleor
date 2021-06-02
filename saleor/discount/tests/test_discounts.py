@@ -230,8 +230,9 @@ def test_specific_products_voucher_checkout_discount(
         discount=Money(discount_value, channel_USD.currency_code),
     )
     checkout = checkout_with_item
+    manager = get_plugins_manager()
     lines = fetch_checkout_lines(checkout)
-    checkout_info = fetch_checkout_info(checkout, lines, discounts)
+    checkout_info = fetch_checkout_info(checkout, lines, discounts, manager)
     manager = get_plugins_manager()
     discount = get_voucher_discount_for_checkout(
         manager, voucher, checkout_info, lines, checkout.shipping_address, discounts
@@ -244,7 +245,6 @@ def test_sale_applies_to_correct_products(product_type, category, channel_USD):
         name="Test Product",
         slug="test-product",
         description={},
-        pk=111,
         product_type=product_type,
         category=category,
     )
@@ -262,7 +262,7 @@ def test_sale_applies_to_correct_products(product_type, category, channel_USD):
         product_type=product_type,
         category=category,
     )
-    sec_variant = ProductVariant.objects.create(product=product2, sku="secvar", pk=111)
+    sec_variant = ProductVariant.objects.create(product=product2, sku="secvar")
     ProductVariantChannelListing.objects.create(
         variant=sec_variant,
         channel=channel_USD,

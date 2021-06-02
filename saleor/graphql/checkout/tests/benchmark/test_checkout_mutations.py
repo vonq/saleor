@@ -458,7 +458,7 @@ def test_checkout_voucher_code(
                   field
                   message
                 }
-                checkoutErrors {
+                errors {
                   field
                   message
                   code
@@ -491,8 +491,11 @@ def test_checkout_payment_charge(
         }
     """
 
+    manager = get_plugins_manager()
     lines = fetch_checkout_lines(checkout_with_billing_address)
-    checkout_info = fetch_checkout_info(checkout_with_billing_address, lines, [])
+    checkout_info = fetch_checkout_info(
+        checkout_with_billing_address, lines, [], manager
+    )
     manager = get_plugins_manager()
     total = calculations.checkout_total(
         manager=manager,
@@ -590,7 +593,7 @@ COMPLETE_CHECKOUT_MUTATION = (
     + """
     mutation completeCheckout($checkoutId: ID!) {
       checkoutComplete(checkoutId: $checkoutId) {
-        checkoutErrors {
+        errors {
           code
           field
           message
@@ -617,7 +620,7 @@ def test_complete_checkout(api_client, checkout_with_charged_payment, count_quer
     }
 
     response = get_graphql_content(api_client.post_graphql(query, variables))
-    assert not response["data"]["checkoutComplete"]["checkoutErrors"]
+    assert not response["data"]["checkoutComplete"]["errors"]
 
 
 @pytest.mark.django_db
@@ -635,7 +638,7 @@ def test_complete_checkout_with_single_line(
     }
 
     response = get_graphql_content(api_client.post_graphql(query, variables))
-    assert not response["data"]["checkoutComplete"]["checkoutErrors"]
+    assert not response["data"]["checkoutComplete"]["errors"]
 
 
 @pytest.mark.django_db
@@ -652,4 +655,4 @@ def test_customer_complete_checkout(
     }
 
     response = get_graphql_content(api_client.post_graphql(query, variables))
-    assert not response["data"]["checkoutComplete"]["checkoutErrors"]
+    assert not response["data"]["checkoutComplete"]["errors"]

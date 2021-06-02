@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 from django.contrib.auth.models import AnonymousUser
 from django.test import override_settings
@@ -5,9 +7,11 @@ from django.test import override_settings
 from ...account import CustomerEvents
 from ...account.models import CustomerEvent
 from ...core.exceptions import InsufficientStock
+from ...core.notify_events import NotifyEventType
 from ...core.taxes import zero_money, zero_taxed_money
-from ...order import OrderEvents, OrderEventsEmails
+from ...order import OrderEvents
 from ...order.models import OrderEvent
+from ...order.notifications import get_default_order_payload
 from ...plugins.manager import get_plugins_manager
 from ...product.models import ProductTranslation, ProductVariantTranslation
 from ...tests.utils import flush_post_commit_hooks
@@ -17,11 +21,14 @@ from ..fetch import fetch_checkout_info, fetch_checkout_lines
 from ..utils import add_variant_to_checkout
 
 
+@mock.patch("saleor.plugins.manager.PluginsManager.notify")
 def test_create_order_captured_payment_creates_expected_events(
+    mock_notify,
     checkout_with_item,
     customer_user,
     shipping_method,
     payment_txn_captured,
+    channel_USD,
 ):
     checkout = checkout_with_item
     checkout_user = customer_user
@@ -43,7 +50,7 @@ def test_create_order_captured_payment_creates_expected_events(
     # Place checkout
     manager = get_plugins_manager()
     lines = fetch_checkout_lines(checkout)
-    checkout_info = fetch_checkout_info(checkout, lines, [])
+    checkout_info = fetch_checkout_info(checkout, lines, [], manager)
     order = _create_order(
         checkout_info=checkout_info,
         order_data=_prepare_order_data(
@@ -53,6 +60,7 @@ def test_create_order_captured_payment_creates_expected_events(
             discounts=None,
         ),
         user=customer_user,
+        manager=manager,
     )
     flush_post_commit_hooks()
 
@@ -60,9 +68,7 @@ def test_create_order_captured_payment_creates_expected_events(
         order_placed_event,
         payment_captured_event,
         order_fully_paid_event,
-        payment_email_sent_event,
         order_confirmed_event,
-        order_placed_email_sent_event,
     ) = order.events.all()  # type: OrderEvent
 
     # Ensure the correct order event was created
@@ -103,21 +109,27 @@ def test_create_order_captured_payment_creates_expected_events(
     # should not have any additional parameters
     assert not order_fully_paid_event.parameters
 
-    # Ensure the correct email sent event was created
-    # should be email sent event
-    assert payment_email_sent_event.type == OrderEvents.EMAIL_SENT
-    # ensure the user is none or valid
-    assert payment_email_sent_event.user == checkout_user
-    # ensure the mail event is related to order
-    assert payment_email_sent_event.order is order
-    # ensure a date was set
-    assert payment_email_sent_event.date
-    # ensure the correct parameters were set
-    assert payment_email_sent_event.parameters == {
-        "email": order.get_customer_email(),
-        "email_type": OrderEventsEmails.PAYMENT,
+    expected_order_payload = {
+        "order": get_default_order_payload(order, checkout.redirect_url),
+        "recipient_email": order.get_customer_email(),
+        "site_name": "mirumee.com",
+        "domain": "mirumee.com",
     }
 
+    expected_payment_payload = {
+        "order": get_default_order_payload(order),
+        "recipient_email": order.get_customer_email(),
+        "payment": {
+            "created": payment_txn_captured.created,
+            "modified": payment_txn_captured.modified,
+            "charge_status": payment_txn_captured.charge_status,
+            "total": payment_txn_captured.total,
+            "captured_amount": payment_txn_captured.captured_amount,
+            "currency": payment_txn_captured.currency,
+        },
+        "site_name": "mirumee.com",
+        "domain": "mirumee.com",
+    }
     # Ensure the correct order confirmed event was created
     # should be order confirmed event
     assert order_confirmed_event.type == OrderEvents.CONFIRMED
@@ -130,20 +142,21 @@ def test_create_order_captured_payment_creates_expected_events(
     # ensure the event parameters are empty
     assert order_confirmed_event.parameters == {}
 
-    # Ensure the correct email sent event was created
-    # should be email sent event
-    assert order_placed_email_sent_event.type == OrderEvents.EMAIL_SENT
-    # ensure the user is none or valid
-    assert order_placed_email_sent_event.user == checkout_user
-    # ensure the mail event is related to order
-    assert order_placed_email_sent_event.order is order
-    # ensure a date was set
-    assert order_placed_email_sent_event.date
-    # ensure the correct parameters were set
-    assert order_placed_email_sent_event.parameters == {
-        "email": order.get_customer_email(),
-        "email_type": OrderEventsEmails.ORDER_CONFIRMATION,
-    }
+    mock_notify.assert_has_calls(
+        [
+            mock.call(
+                NotifyEventType.ORDER_CONFIRMATION,
+                expected_order_payload,
+                channel_slug=channel_USD.slug,
+            ),
+            mock.call(
+                NotifyEventType.ORDER_PAYMENT_CONFIRMATION,
+                expected_payment_payload,
+                channel_slug=channel_USD.slug,
+            ),
+        ],
+        any_order=True,
+    )
 
     # Ensure the correct customer event was created if the user was not anonymous
     placement_event = customer_user.events.get()  # type: CustomerEvent
@@ -153,14 +166,15 @@ def test_create_order_captured_payment_creates_expected_events(
     assert placement_event.date  # ensure a date was set
     assert not placement_event.parameters  # should not have any additional parameters
 
-    # mock_send_staff_order_confirmation.assert_called_once_with(order.pk)
 
-
+@mock.patch("saleor.plugins.manager.PluginsManager.notify")
 def test_create_order_captured_payment_creates_expected_events_anonymous_user(
+    mock_notify,
     checkout_with_item,
     customer_user,
     shipping_method,
     payment_txn_captured,
+    channel_USD,
 ):
     checkout = checkout_with_item
     checkout_user = None
@@ -183,7 +197,7 @@ def test_create_order_captured_payment_creates_expected_events_anonymous_user(
     # Place checkout
     manager = get_plugins_manager()
     lines = fetch_checkout_lines(checkout)
-    checkout_info = fetch_checkout_info(checkout, lines, [])
+    checkout_info = fetch_checkout_info(checkout, lines, [], manager)
     order = _create_order(
         checkout_info=checkout_info,
         order_data=_prepare_order_data(
@@ -193,6 +207,7 @@ def test_create_order_captured_payment_creates_expected_events_anonymous_user(
             discounts=None,
         ),
         user=AnonymousUser(),
+        manager=manager,
     )
     flush_post_commit_hooks()
 
@@ -200,9 +215,7 @@ def test_create_order_captured_payment_creates_expected_events_anonymous_user(
         order_placed_event,
         payment_captured_event,
         order_fully_paid_event,
-        payment_email_sent_event,
         order_confirmed_event,
-        order_placed_email_sent_event,
     ) = order.events.all()  # type: OrderEvent
 
     # Ensure the correct order event was created
@@ -243,19 +256,26 @@ def test_create_order_captured_payment_creates_expected_events_anonymous_user(
     # should not have any additional parameters
     assert not order_fully_paid_event.parameters
 
-    # Ensure the correct email sent event was created
-    # should be email sent event
-    assert payment_email_sent_event.type == OrderEvents.EMAIL_SENT
-    # ensure the user is none or valid
-    assert payment_email_sent_event.user == checkout_user
-    # ensure the mail event is related to order
-    assert payment_email_sent_event.order is order
-    # ensure a date was set
-    assert payment_email_sent_event.date
-    # ensure the correct parameters were set
-    assert payment_email_sent_event.parameters == {
-        "email": order.get_customer_email(),
-        "email_type": OrderEventsEmails.PAYMENT,
+    expected_order_payload = {
+        "order": get_default_order_payload(order, checkout.redirect_url),
+        "recipient_email": order.get_customer_email(),
+        "site_name": "mirumee.com",
+        "domain": "mirumee.com",
+    }
+
+    expected_payment_payload = {
+        "order": get_default_order_payload(order),
+        "recipient_email": order.get_customer_email(),
+        "payment": {
+            "created": payment_txn_captured.created,
+            "modified": payment_txn_captured.modified,
+            "charge_status": payment_txn_captured.charge_status,
+            "total": payment_txn_captured.total,
+            "captured_amount": payment_txn_captured.captured_amount,
+            "currency": payment_txn_captured.currency,
+        },
+        "site_name": "mirumee.com",
+        "domain": "mirumee.com",
     }
 
     # Ensure the correct order confirmed event was created
@@ -270,30 +290,34 @@ def test_create_order_captured_payment_creates_expected_events_anonymous_user(
     # ensure the event parameters are empty
     assert order_confirmed_event.parameters == {}
 
-    # Ensure the correct email sent event was created
-    # should be email sent event
-    assert order_placed_email_sent_event.type == OrderEvents.EMAIL_SENT
-    # ensure the user is none or valid
-    assert order_placed_email_sent_event.user == checkout_user
-    # ensure the mail event is related to order
-    assert order_placed_email_sent_event.order is order
-    # ensure a date was set
-    assert order_placed_email_sent_event.date
-    # ensure the correct parameters were set
-    assert order_placed_email_sent_event.parameters == {
-        "email": order.get_customer_email(),
-        "email_type": OrderEventsEmails.ORDER_CONFIRMATION,
-    }
+    mock_notify.assert_has_calls(
+        [
+            mock.call(
+                NotifyEventType.ORDER_CONFIRMATION,
+                expected_order_payload,
+                channel_slug=channel_USD.slug,
+            ),
+            mock.call(
+                NotifyEventType.ORDER_PAYMENT_CONFIRMATION,
+                expected_payment_payload,
+                channel_slug=channel_USD.slug,
+            ),
+        ],
+        any_order=True,
+    )
 
     # Check no event was created if the user was anonymous
     assert not CustomerEvent.objects.exists()  # should not have created any event
 
 
+@mock.patch("saleor.plugins.manager.PluginsManager.notify")
 def test_create_order_preauth_payment_creates_expected_events(
+    mock_notify,
     checkout_with_item,
     customer_user,
     shipping_method,
     payment_txn_preauth,
+    channel_USD,
 ):
     checkout = checkout_with_item
     checkout_user = customer_user
@@ -315,7 +339,7 @@ def test_create_order_preauth_payment_creates_expected_events(
     # Place checkout
     manager = get_plugins_manager()
     lines = fetch_checkout_lines(checkout)
-    checkout_info = fetch_checkout_info(checkout, lines, [])
+    checkout_info = fetch_checkout_info(checkout, lines, [], manager)
     order = _create_order(
         checkout_info=checkout_info,
         order_data=_prepare_order_data(
@@ -325,6 +349,7 @@ def test_create_order_preauth_payment_creates_expected_events(
             discounts=None,
         ),
         user=customer_user,
+        manager=manager,
     )
     flush_post_commit_hooks()
 
@@ -332,7 +357,6 @@ def test_create_order_preauth_payment_creates_expected_events(
         order_placed_event,
         payment_authorized_event,
         order_confirmed_event,
-        order_placed_email_sent_event,
     ) = order.events.all()  # type: OrderEvent
 
     # Ensure the correct order event was created
@@ -361,6 +385,13 @@ def test_create_order_preauth_payment_creates_expected_events(
     assert "payment_id" in payment_authorized_event.parameters.keys()
     assert "payment_gateway" in payment_authorized_event.parameters.keys()
 
+    expected_payload = {
+        "order": get_default_order_payload(order, checkout.redirect_url),
+        "recipient_email": order.get_customer_email(),
+        "site_name": "mirumee.com",
+        "domain": "mirumee.com",
+    }
+
     # Ensure the correct order confirmed event was created
     # should be order confirmed event
     assert order_confirmed_event.type == OrderEvents.CONFIRMED
@@ -373,20 +404,11 @@ def test_create_order_preauth_payment_creates_expected_events(
     # ensure the event parameters are empty
     assert order_confirmed_event.parameters == {}
 
-    # Ensure the correct email sent event was created
-    # should be email sent event
-    assert order_placed_email_sent_event.type == OrderEvents.EMAIL_SENT
-    # ensure the user is none or valid
-    assert order_placed_email_sent_event.user == checkout_user
-    # ensure the mail event is related to order
-    assert order_placed_email_sent_event.order is order
-    # ensure a date was set
-    assert order_placed_email_sent_event.date
-    # ensure the correct parameters were set
-    assert order_placed_email_sent_event.parameters == {
-        "email": order.get_customer_email(),
-        "email_type": OrderEventsEmails.ORDER_CONFIRMATION,
-    }
+    mock_notify.assert_called_once_with(
+        NotifyEventType.ORDER_CONFIRMATION,
+        expected_payload,
+        channel_slug=channel_USD.slug,
+    )
 
     # Ensure the correct customer event was created if the user was not anonymous
     placement_event = customer_user.events.get()  # type: CustomerEvent
@@ -396,14 +418,15 @@ def test_create_order_preauth_payment_creates_expected_events(
     assert placement_event.date  # ensure a date was set
     assert not placement_event.parameters  # should not have any additional parameters
 
-    # mock_send_staff_order_confirmation.assert_called_once_with(order.pk)
 
-
+@mock.patch("saleor.plugins.manager.PluginsManager.notify")
 def test_create_order_preauth_payment_creates_expected_events_anonymous_user(
+    mock_notify,
     checkout_with_item,
     customer_user,
     shipping_method,
     payment_txn_preauth,
+    channel_USD,
 ):
     checkout = checkout_with_item
     checkout_user = None
@@ -426,7 +449,7 @@ def test_create_order_preauth_payment_creates_expected_events_anonymous_user(
     # Place checkout
     manager = get_plugins_manager()
     lines = fetch_checkout_lines(checkout)
-    checkout_info = fetch_checkout_info(checkout, lines, [])
+    checkout_info = fetch_checkout_info(checkout, lines, [], manager)
     order = _create_order(
         checkout_info=checkout_info,
         order_data=_prepare_order_data(
@@ -436,6 +459,7 @@ def test_create_order_preauth_payment_creates_expected_events_anonymous_user(
             discounts=None,
         ),
         user=AnonymousUser(),
+        manager=manager,
     )
     flush_post_commit_hooks()
 
@@ -443,7 +467,6 @@ def test_create_order_preauth_payment_creates_expected_events_anonymous_user(
         order_placed_event,
         payment_captured_event,
         order_confirmed_event,
-        order_placed_email_sent_event,
     ) = order.events.all()  # type: OrderEvent
 
     # Ensure the correct order event was created
@@ -472,6 +495,12 @@ def test_create_order_preauth_payment_creates_expected_events_anonymous_user(
     assert "payment_id" in payment_captured_event.parameters.keys()
     assert "payment_gateway" in payment_captured_event.parameters.keys()
 
+    expected_payload = {
+        "order": get_default_order_payload(order, checkout.redirect_url),
+        "recipient_email": order.get_customer_email(),
+        "site_name": "mirumee.com",
+        "domain": "mirumee.com",
+    }
     # Ensure the correct order confirmed event was created
     # should be order confirmed event
     assert order_confirmed_event.type == OrderEvents.CONFIRMED
@@ -484,20 +513,11 @@ def test_create_order_preauth_payment_creates_expected_events_anonymous_user(
     # ensure the event parameters are empty
     assert order_confirmed_event.parameters == {}
 
-    # Ensure the correct email sent event was created
-    # should be email sent event
-    assert order_placed_email_sent_event.type == OrderEvents.EMAIL_SENT
-    # ensure the user is none or valid
-    assert order_placed_email_sent_event.user == checkout_user
-    # ensure the mail event is related to order
-    assert order_placed_email_sent_event.order is order
-    # ensure a date was set
-    assert order_placed_email_sent_event.date
-    # ensure the correct parameters were set
-    assert order_placed_email_sent_event.parameters == {
-        "email": order.get_customer_email(),
-        "email_type": OrderEventsEmails.ORDER_CONFIRMATION,
-    }
+    mock_notify.assert_called_once_with(
+        NotifyEventType.ORDER_CONFIRMATION,
+        expected_payload,
+        channel_slug=channel_USD.slug,
+    )
 
     # Check no event was created if the user was anonymous
     assert not CustomerEvent.objects.exists()  # should not have created any event
@@ -507,16 +527,17 @@ def test_create_order_insufficient_stock(
     checkout, customer_user, product_without_shipping
 ):
     variant = product_without_shipping.variants.get()
-    add_variant_to_checkout(checkout, variant, 10, check_quantity=False)
+    manager = get_plugins_manager()
+    checkout_info = fetch_checkout_info(checkout, [], [], manager)
+
+    add_variant_to_checkout(checkout_info, variant, 10, check_quantity=False)
     checkout.user = customer_user
     checkout.billing_address = customer_user.default_billing_address
     checkout.shipping_address = customer_user.default_billing_address
     checkout.tracking_code = "tracking_code"
     checkout.save()
 
-    manager = get_plugins_manager()
     lines = fetch_checkout_lines(checkout)
-    checkout_info = fetch_checkout_info(checkout, lines, [])
     with pytest.raises(InsufficientStock):
         _prepare_order_data(
             manager=manager,
@@ -540,7 +561,7 @@ def test_create_order_doesnt_duplicate_order(
 
     manager = get_plugins_manager()
     lines = fetch_checkout_lines(checkout)
-    checkout_info = fetch_checkout_info(checkout, lines, [])
+    checkout_info = fetch_checkout_info(checkout, lines, [], manager)
     order_data = _prepare_order_data(
         manager=manager, checkout_info=checkout_info, lines=lines, discounts=None
     )
@@ -549,6 +570,7 @@ def test_create_order_doesnt_duplicate_order(
         checkout_info=checkout_info,
         order_data=order_data,
         user=customer_user,
+        manager=manager,
     )
     assert order_1.checkout_token == checkout.token
 
@@ -556,6 +578,7 @@ def test_create_order_doesnt_duplicate_order(
         checkout_info=checkout_info,
         order_data=order_data,
         user=customer_user,
+        manager=manager,
     )
     assert order_1.pk == order_2.pk
 
@@ -576,7 +599,7 @@ def test_create_order_with_gift_card(
 
     manager = get_plugins_manager()
     lines = fetch_checkout_lines(checkout)
-    checkout_info = fetch_checkout_info(checkout, lines, [])
+    checkout_info = fetch_checkout_info(checkout, lines, [], manager)
 
     subtotal = calculations.checkout_subtotal(
         manager=manager,
@@ -604,6 +627,7 @@ def test_create_order_with_gift_card(
             discounts=None,
         ),
         user=customer_user if not is_anonymous_user else AnonymousUser(),
+        manager=manager,
     )
 
     assert order.gift_cards.count() == 1
@@ -625,7 +649,7 @@ def test_create_order_with_gift_card_partial_use(
 
     manager = get_plugins_manager()
     lines = fetch_checkout_lines(checkout)
-    checkout_info = fetch_checkout_info(checkout, lines, [])
+    checkout_info = fetch_checkout_info(checkout, lines, [], manager)
 
     price_without_gift_card = calculations.checkout_total(
         manager=manager,
@@ -647,6 +671,7 @@ def test_create_order_with_gift_card_partial_use(
             discounts=None,
         ),
         user=customer_user,
+        manager=manager,
     )
 
     gift_card_used.refresh_from_db()
@@ -678,7 +703,7 @@ def test_create_order_with_many_gift_cards(
 
     manager = get_plugins_manager()
     lines = fetch_checkout_lines(checkout)
-    checkout_info = fetch_checkout_info(checkout, lines, [])
+    checkout_info = fetch_checkout_info(checkout, lines, [], manager)
 
     price_without_gift_card = calculations.checkout_total(
         manager=manager,
@@ -704,6 +729,7 @@ def test_create_order_with_many_gift_cards(
             discounts=None,
         ),
         user=customer_user,
+        manager=manager,
     )
 
     gift_card_created_by_staff.refresh_from_db()
@@ -725,7 +751,7 @@ def test_note_in_created_order(checkout_with_item, address, customer_user):
     checkout_with_item.save()
     manager = get_plugins_manager()
     lines = fetch_checkout_lines(checkout_with_item)
-    checkout_info = fetch_checkout_info(checkout_with_item, lines, [])
+    checkout_info = fetch_checkout_info(checkout_with_item, lines, [], manager)
     order = _create_order(
         checkout_info=checkout_info,
         order_data=_prepare_order_data(
@@ -735,6 +761,7 @@ def test_note_in_created_order(checkout_with_item, address, customer_user):
             discounts=None,
         ),
         user=customer_user,
+        manager=manager,
     )
     assert order.customer_note == checkout_with_item.note
 
@@ -749,12 +776,11 @@ def test_create_order_with_variant_tracking_false(
     checkout.tracking_code = ""
     checkout.redirect_url = "https://www.example.com"
     checkout.save()
-    add_variant_to_checkout(checkout, variant, 10, check_quantity=False)
-
     manager = get_plugins_manager()
-    lines = fetch_checkout_lines(checkout)
-    checkout_info = fetch_checkout_info(checkout, lines, [])
+    checkout_info = fetch_checkout_info(checkout, [], [], manager)
+    add_variant_to_checkout(checkout_info, variant, 10, check_quantity=False)
 
+    lines = fetch_checkout_lines(checkout)
     order_data = _prepare_order_data(
         manager=manager, checkout_info=checkout_info, lines=lines, discounts=None
     )
@@ -763,6 +789,7 @@ def test_create_order_with_variant_tracking_false(
         checkout_info=checkout_info,
         order_data=order_data,
         user=customer_user,
+        manager=manager,
     )
     assert order_1.checkout_token == checkout.token
 
@@ -781,11 +808,12 @@ def test_create_order_use_tanslations(
     checkout.shipping_method = shipping_method
     checkout.tracking_code = ""
     checkout.redirect_url = "https://www.example.com"
+    checkout.language_code = "fr"
     checkout.save()
 
     manager = get_plugins_manager()
     lines = fetch_checkout_lines(checkout)
-    checkout_info = fetch_checkout_info(checkout, lines, [])
+    checkout_info = fetch_checkout_info(checkout, lines, [], manager)
 
     variant = lines[0].variant
     product = lines[0].product

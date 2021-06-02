@@ -10,15 +10,13 @@ from measurement.measures import Weight
 from prices import Money
 
 from ..channel.models import Channel
+from ..core.db.fields import SanitizedJSONField
 from ..core.models import ModelWithMetadata
 from ..core.permissions import ShippingPermissions
+from ..core.units import WeightUnits
+from ..core.utils.editorjs import clean_editor_js
 from ..core.utils.translations import TranslationProxy
-from ..core.weight import (
-    WeightUnits,
-    convert_weight,
-    get_default_weight_unit,
-    zero_weight,
-)
+from ..core.weight import convert_weight, get_default_weight_unit, zero_weight
 from . import PostalCodeRuleInclusionType, ShippingMethodType
 from .postal_codes import filter_shipping_methods_by_postal_code_rules
 
@@ -80,6 +78,7 @@ class ShippingZone(ModelWithMetadata):
     countries = CountryField(multiple=True, default=[], blank=True)
     default = models.BooleanField(default=False)
     description = models.TextField(blank=True)
+    channels = models.ManyToManyField(Channel, related_name="shipping_zones")
 
     def __str__(self):
         return self.name
@@ -96,6 +95,12 @@ class ShippingMethodQueryset(models.QuerySet):
 
     def weight_based(self):
         return self.filter(type=ShippingMethodType.WEIGHT_BASED)
+
+    def for_channel(self, channel_slug: str):
+        return self.filter(
+            shipping_zone__channels__slug=channel_slug,
+            channel_listings__channel__slug=channel_slug,
+        )
 
     @staticmethod
     def applicable_shipping_methods_by_channel(shipping_methods, channel_id):
@@ -122,6 +127,7 @@ class ShippingMethodQueryset(models.QuerySet):
         """
         qs = self.filter(
             shipping_zone__countries__contains=country_code,
+            shipping_zone__channels__id=channel_id,
             channel_listings__currency=price.currency,
             channel_listings__channel_id=channel_id,
         )
@@ -180,19 +186,23 @@ class ShippingMethod(ModelWithMetadata):
     )
     minimum_order_weight = MeasurementField(
         measurement=Weight,
-        unit_choices=WeightUnits.CHOICES,
+        unit_choices=WeightUnits.CHOICES,  # type: ignore
         default=zero_weight,
         blank=True,
         null=True,
     )
     maximum_order_weight = MeasurementField(
-        measurement=Weight, unit_choices=WeightUnits.CHOICES, blank=True, null=True
+        measurement=Weight,
+        unit_choices=WeightUnits.CHOICES,  # type: ignore
+        blank=True,
+        null=True,
     )
     excluded_products = models.ManyToManyField(
         "product.Product", blank=True
     )  # type: ignore
     maximum_delivery_days = models.PositiveIntegerField(null=True, blank=True)
     minimum_delivery_days = models.PositiveIntegerField(null=True, blank=True)
+    description = SanitizedJSONField(blank=True, null=True, sanitizer=clean_editor_js)
 
     objects = ShippingMethodQueryset.as_manager()
     translated = TranslationProxy()
@@ -288,6 +298,7 @@ class ShippingMethodTranslation(models.Model):
     shipping_method = models.ForeignKey(
         ShippingMethod, related_name="translations", on_delete=models.CASCADE
     )
+    description = SanitizedJSONField(blank=True, null=True, sanitizer=clean_editor_js)
 
     class Meta:
         unique_together = (("language_code", "shipping_method"),)

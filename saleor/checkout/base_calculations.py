@@ -5,7 +5,7 @@ manager.
 """
 
 from decimal import Decimal
-from typing import TYPE_CHECKING, Iterable, List, Optional
+from typing import TYPE_CHECKING, Iterable, Optional
 
 from prices import TaxedMoney
 
@@ -15,16 +15,9 @@ from ..discount import DiscountInfo
 from .fetch import CheckoutLineInfo
 
 if TYPE_CHECKING:
-    # flake8: noqa
     from ..channel.models import Channel
     from ..checkout.fetch import CheckoutInfo
-    from ..product.models import (
-        Collection,
-        Product,
-        ProductVariant,
-        ProductVariantChannelListing,
-    )
-    from .models import Checkout, CheckoutLine
+    from ..order.models import OrderLine
 
 
 def base_checkout_shipping_price(
@@ -50,11 +43,6 @@ def base_checkout_shipping_price(
     return quantize_price(
         TaxedMoney(net=shipping_price, gross=shipping_price), shipping_price.currency
     )
-
-
-def base_checkout_subtotal(line_totals: List[TaxedMoney], currency: str) -> TaxedMoney:
-    """Return the total cost of all checkout lines."""
-    return sum(line_totals, zero_taxed_money(currency))
 
 
 def base_checkout_total(
@@ -85,6 +73,11 @@ def base_checkout_line_total(
     amount = checkout_line_info.line.quantity * variant_price
     price = quantize_price(amount, amount.currency)
     return TaxedMoney(net=price, gross=price)
+
+
+def base_order_line_total(order_line: "OrderLine"):
+    unit_price = order_line.unit_price * order_line.quantity
+    return quantize_price(unit_price, unit_price.currency)
 
 
 def base_tax_rate(price: TaxedMoney):

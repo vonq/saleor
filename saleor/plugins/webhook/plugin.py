@@ -1,5 +1,7 @@
+import json
 from typing import TYPE_CHECKING, Any, List, Optional
 
+from ...core.utils.json_serializer import CustomJsonEncoder
 from ...webhook.event_types import WebhookEventType
 from ...webhook.payloads import (
     generate_checkout_payload,
@@ -18,6 +20,7 @@ from .tasks import trigger_webhooks_for_event
 if TYPE_CHECKING:
     from ...account.models import User
     from ...checkout.models import Checkout
+    from ...core.notify_events import NotifyEventType
     from ...invoice.models import Invoice
     from ...order.models import Fulfillment, Order
     from ...page.models import Page
@@ -28,6 +31,7 @@ class WebhookPlugin(BasePlugin):
     PLUGIN_ID = "mirumee.webhooks"
     PLUGIN_NAME = "Webhooks"
     DEFAULT_ACTIVE = True
+    CONFIGURATION_PER_CHANNEL = False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -144,7 +148,7 @@ class WebhookPlugin(BasePlugin):
     ) -> Any:
         if not self.active:
             return previous_value
-        product_variant_data = generate_product_variant_payload(product_variant)
+        product_variant_data = generate_product_variant_payload([product_variant])
         trigger_webhooks_for_event.delay(
             WebhookEventType.PRODUCT_VARIANT_CREATED, product_variant_data
         )
@@ -154,7 +158,7 @@ class WebhookPlugin(BasePlugin):
     ) -> Any:
         if not self.active:
             return previous_value
-        product_variant_data = generate_product_variant_payload(product_variant)
+        product_variant_data = generate_product_variant_payload([product_variant])
         trigger_webhooks_for_event.delay(
             WebhookEventType.PRODUCT_VARIANT_UPDATED, product_variant_data
         )
@@ -164,7 +168,7 @@ class WebhookPlugin(BasePlugin):
     ) -> Any:
         if not self.active:
             return previous_value
-        product_variant_data = generate_product_variant_payload(product_variant)
+        product_variant_data = generate_product_variant_payload([product_variant])
         trigger_webhooks_for_event.delay(
             WebhookEventType.PRODUCT_VARIANT_DELETED, product_variant_data
         )
@@ -182,7 +186,15 @@ class WebhookPlugin(BasePlugin):
             return previous_value
         checkout_data = generate_checkout_payload(checkout)
         trigger_webhooks_for_event.delay(
-            WebhookEventType.CHECKOUT_UPADTED, checkout_data
+            WebhookEventType.CHECKOUT_UPDATED, checkout_data
+        )
+
+    def notify(self, event: "NotifyEventType", payload: dict, previous_value) -> Any:
+        if not self.active:
+            return previous_value
+        data = {"notify_event": event, "payload": payload}
+        trigger_webhooks_for_event.delay(
+            WebhookEventType.NOTIFY_USER, json.dumps(data, cls=CustomJsonEncoder)
         )
 
     def page_created(self, page: "Page", previous_value: Any) -> Any:

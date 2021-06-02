@@ -9,8 +9,8 @@ from django.core.validators import MaxLengthValidator, RegexValidator
 from django.db import models
 
 from ..core.permissions import SitePermissions
+from ..core.units import WeightUnits
 from ..core.utils.translations import TranslationProxy
-from ..core.weight import WeightUnits
 from .error_codes import SiteErrorCode
 from .patch_sites import patch_contrib_sites
 
@@ -44,7 +44,9 @@ class SiteSettings(models.Model):
     charge_taxes_on_shipping = models.BooleanField(default=True)
     track_inventory_by_default = models.BooleanField(default=True)
     default_weight_unit = models.CharField(
-        max_length=10, choices=WeightUnits.CHOICES, default=WeightUnits.KILOGRAM
+        max_length=30,
+        choices=WeightUnits.CHOICES,  # type: ignore
+        default=WeightUnits.KG,  # type: ignore
     )
     automatic_fulfillment_digital_products = models.BooleanField(default=False)
     default_digital_max_downloads = models.IntegerField(blank=True, null=True)
@@ -52,6 +54,8 @@ class SiteSettings(models.Model):
     company_address = models.ForeignKey(
         "account.Address", blank=True, null=True, on_delete=models.SET_NULL
     )
+    # FIXME these values are configurable from email plugin. Not needed to be placed
+    # here
     default_mail_sender_name = models.CharField(
         max_length=settings.DEFAULT_MAX_EMAIL_DISPLAY_NAME_LENGTH,
         blank=True,

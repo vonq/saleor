@@ -5,7 +5,9 @@ from .attributes import (
     VariantAttributesByProductTypeIdLoader,
 )
 from .products import (
+    AvailableProductVariantsByProductIdAndChannel,
     CategoryByIdLoader,
+    CategoryChildrenByCategoryIdLoader,
     CollectionByIdLoader,
     CollectionChannelListingByCollectionIdAndChannelSlugLoader,
     CollectionChannelListingByCollectionIdLoader,
@@ -21,21 +23,24 @@ from .products import (
     ProductChannelListingByIdLoader,
     ProductChannelListingByProductIdAndChannelSlugLoader,
     ProductChannelListingByProductIdLoader,
+    ProductImageByProductIdLoader,
     ProductMediaByIdLoader,
     ProductTypeByIdLoader,
     ProductTypeByProductIdLoader,
     ProductTypeByVariantIdLoader,
     ProductVariantByIdLoader,
     ProductVariantChannelListingByIdLoader,
+    ProductVariantsByProductIdAndChannel,
     ProductVariantsByProductIdLoader,
     VariantChannelListingByVariantIdAndChannelIdLoader,
     VariantChannelListingByVariantIdAndChannelSlugLoader,
     VariantChannelListingByVariantIdLoader,
-    VariantsChannelListingByProductIdAndChanneSlugLoader,
+    VariantsChannelListingByProductIdAndChannelSlugLoader,
 )
 
 __all__ = [
     "CategoryByIdLoader",
+    "CategoryChildrenByCategoryIdLoader",
     "CollectionByIdLoader",
     "CollectionChannelListingByCollectionIdAndChannelSlugLoader",
     "CollectionChannelListingByCollectionIdLoader",
@@ -52,6 +57,7 @@ __all__ = [
     "ProductTypeByVariantIdLoader",
     "ProductChannelListingByIdLoader",
     "ProductChannelListingByProductIdLoader",
+    "ProductImageByProductIdLoader",
     "ProductChannelListingByProductIdAndChannelSlugLoader",
     "ProductTypeByIdLoader",
     "ProductVariantByIdLoader",
@@ -65,5 +71,7 @@ __all__ = [
     "VariantChannelListingByVariantIdAndChannelSlugLoader",
     "VariantChannelListingByVariantIdAndChannelIdLoader",
     "VariantChannelListingByVariantIdLoader",
-    "VariantsChannelListingByProductIdAndChanneSlugLoader",
+    "VariantsChannelListingByProductIdAndChannelSlugLoader",
+    "ProductVariantsByProductIdAndChannel",
+    "AvailableProductVariantsByProductIdAndChannel",
 ]

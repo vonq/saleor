@@ -2,21 +2,24 @@ import graphene
 from django.contrib.auth import password_validation
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db import transaction
 
 from ....account import events as account_events
 from ....account import models
-from ....account.emails import (
-    send_set_password_email_with_url,
-    send_user_password_reset_email_with_url,
-)
 from ....account.error_codes import AccountErrorCode
+from ....account.notifications import (
+    send_password_reset_notification,
+    send_set_password_notification,
+)
+from ....checkout import AddressType
 from ....core.exceptions import PermissionDenied
 from ....core.permissions import AccountPermissions
+from ....core.tracing import traced_atomic_transaction
 from ....core.utils.url import validate_storefront_url
 from ....order.utils import match_orders_with_new_user
 from ...account.i18n import I18nMixin
 from ...account.types import Address, AddressInput, User
+from ...channel.utils import clean_channel, validate_channel
+from ...core.enums import LanguageCodeEnum
 from ...core.mutations import (
     BaseMutation,
     ModelDeleteMutation,
@@ -111,6 +114,12 @@ class RequestPasswordReset(BaseMutation):
                 "reset the password. URL in RFC 1808 format."
             ),
         )
+        channel = graphene.String(
+            description=(
+                "Slug of a channel which will be used for notify user. Optional when "
+                "only one channel exists."
+            )
+        )
 
     class Meta:
         description = "Sends an email with the account password modification link."
@@ -118,9 +127,8 @@ class RequestPasswordReset(BaseMutation):
         error_type_field = "account_errors"
 
     @classmethod
-    def perform_mutation(cls, _root, info, **data):
-        email = data["email"]
-        redirect_url = data["redirect_url"]
+    def clean_user(cls, email, redirect_url):
+
         try:
             validate_storefront_url(redirect_url)
         except ValidationError as error:
@@ -139,7 +147,6 @@ class RequestPasswordReset(BaseMutation):
                     )
                 }
             )
-
         if not user.is_active:
             raise ValidationError(
                 {
@@ -149,7 +156,31 @@ class RequestPasswordReset(BaseMutation):
                     )
                 }
             )
-        send_user_password_reset_email_with_url(redirect_url, user)
+        return user
+
+    @classmethod
+    def perform_mutation(cls, _root, info, **data):
+        email = data["email"]
+        redirect_url = data["redirect_url"]
+        channel_slug = data.get("channel")
+        user = cls.clean_user(email, redirect_url)
+
+        if not user.is_staff:
+            channel_slug = clean_channel(
+                channel_slug, error_class=AccountErrorCode
+            ).slug
+        elif channel_slug is not None:
+            channel_slug = validate_channel(
+                channel_slug, error_class=AccountErrorCode
+            ).slug
+
+        send_password_reset_notification(
+            redirect_url,
+            user,
+            info.context.plugins,
+            channel_slug=channel_slug,
+            staff=user.is_staff,
+        )
         return RequestPasswordReset()
 
 
@@ -357,7 +388,9 @@ class UserAddressInput(graphene.InputObjectType):
 
 
 class CustomerInput(UserInput, UserAddressInput):
-    pass
+    language_code = graphene.Field(
+        LanguageCodeEnum, required=False, description="User language code."
+    )
 
 
 class UserCreateInput(CustomerInput):
@@ -365,6 +398,12 @@ class UserCreateInput(CustomerInput):
         description=(
             "URL of a view where users should be redirected to "
             "set the password. URL in RFC 1808 format."
+        )
+    )
+    channel = graphene.String(
+        description=(
+            "Slug of a channel which will be used for notify user. Optional when "
+            "only one channel exists."
         )
     )
 
@@ -389,6 +428,7 @@ class BaseCustomerCreate(ModelMutation, I18nMixin):
         if shipping_address_data:
             shipping_address = cls.validate_address(
                 shipping_address_data,
+                address_type=AddressType.SHIPPING,
                 instance=getattr(instance, SHIPPING_ADDRESS_FIELD),
                 info=info,
             )
@@ -397,6 +437,7 @@ class BaseCustomerCreate(ModelMutation, I18nMixin):
         if billing_address_data:
             billing_address = cls.validate_address(
                 billing_address_data,
+                address_type=AddressType.BILLING,
                 instance=getattr(instance, BILLING_ADDRESS_FIELD),
                 info=info,
             )
@@ -413,9 +454,8 @@ class BaseCustomerCreate(ModelMutation, I18nMixin):
         return cleaned_input
 
     @classmethod
-    @transaction.atomic
+    @traced_atomic_transaction()
     def save(cls, info, instance, cleaned_input):
-        # FIXME: save address in user.addresses as well
         default_shipping_address = cleaned_input.get(SHIPPING_ADDRESS_FIELD)
         if default_shipping_address:
             default_shipping_address = info.context.plugins.change_user_address(
@@ -433,6 +473,10 @@ class BaseCustomerCreate(ModelMutation, I18nMixin):
 
         is_creation = instance.pk is None
         super().save(info, instance, cleaned_input)
+        if default_billing_address:
+            instance.addresses.add(default_billing_address)
+        if default_shipping_address:
+            instance.addresses.add(default_shipping_address)
 
         # The instance is a new object in db, create an event
         if is_creation:
@@ -442,6 +486,18 @@ class BaseCustomerCreate(ModelMutation, I18nMixin):
             info.context.plugins.customer_updated(instance)
 
         if cleaned_input.get("redirect_url"):
-            send_set_password_email_with_url(
-                cleaned_input.get("redirect_url"), instance
+            channel_slug = cleaned_input.get("channel")
+            if not instance.is_staff:
+                channel_slug = clean_channel(
+                    channel_slug, error_class=AccountErrorCode
+                ).slug
+            elif channel_slug is not None:
+                channel_slug = validate_channel(
+                    channel_slug, error_class=AccountErrorCode
+                ).slug
+            send_set_password_notification(
+                cleaned_input.get("redirect_url"),
+                instance,
+                info.context.plugins,
+                channel_slug,
             )

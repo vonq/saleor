@@ -4,7 +4,10 @@ from django.db import models
 from django.db.models import F, Q
 
 from ...account.utils import requestor_is_staff_member_or_app
+from ...core.db.fields import SanitizedJSONField
 from ...core.models import ModelWithMetadata, SortableModel
+from ...core.units import MeasurementUnits
+from ...core.utils.editorjs import clean_editor_js
 from ...core.utils.translations import TranslationProxy
 from ...page.models import PageType
 from ...product.models import ProductType
@@ -134,6 +137,12 @@ class Attribute(ModelWithMetadata):
         through_fields=("attribute", "page_type"),
     )
 
+    unit = models.CharField(
+        max_length=100,
+        choices=MeasurementUnits.CHOICES,  # type: ignore
+        blank=True,
+        null=True,
+    )
     value_required = models.BooleanField(default=False, blank=True)
     is_variant_only = models.BooleanField(default=False, blank=True)
     visible_in_storefront = models.BooleanField(default=True, blank=True)
@@ -189,6 +198,7 @@ class AttributeValue(SortableModel):
     attribute = models.ForeignKey(
         Attribute, related_name="values", on_delete=models.CASCADE
     )
+    rich_text = SanitizedJSONField(blank=True, null=True, sanitizer=clean_editor_js)
 
     translated = TranslationProxy()
 
@@ -213,6 +223,7 @@ class AttributeValueTranslation(models.Model):
         AttributeValue, related_name="translations", on_delete=models.CASCADE
     )
     name = models.CharField(max_length=100)
+    rich_text = SanitizedJSONField(blank=True, null=True, sanitizer=clean_editor_js)
 
     class Meta:
         unique_together = (("language_code", "attribute_value"),)

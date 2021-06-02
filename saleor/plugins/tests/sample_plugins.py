@@ -26,6 +26,7 @@ class PluginSample(BasePlugin):
     PLUGIN_NAME = "PluginSample"
     PLUGIN_DESCRIPTION = "Test plugin description"
     DEFAULT_ACTIVE = True
+    CONFIGURATION_PER_CHANNEL = False
     DEFAULT_CONFIGURATION = [
         {"name": "Username", "value": "admin"},
         {"name": "Password", "value": None},
@@ -74,12 +75,6 @@ class PluginSample(BasePlugin):
         total = Money("1.0", currency=checkout_info.checkout.currency)
         return TaxedMoney(total, total)
 
-    def calculate_checkout_subtotal(
-        self, checkout_info, lines, address, discounts, previous_value
-    ):
-        subtotal = Money("1.0", currency=checkout_info.checkout.currency)
-        return TaxedMoney(subtotal, subtotal)
-
     def calculate_checkout_shipping(
         self, checkout_info, lines, address, discounts, previous_value
     ):
@@ -93,6 +88,7 @@ class PluginSample(BasePlugin):
     def calculate_checkout_line_total(
         self,
         checkout_info: "CheckoutInfo",
+        lines: Iterable["CheckoutLineInfo"],
         checkout_line_info: "CheckoutLineInfo",
         address: Optional["Address"],
         discounts: Iterable["DiscountInfo"],
@@ -101,9 +97,21 @@ class PluginSample(BasePlugin):
         price = Money("1.0", currency=checkout_info.checkout.currency)
         return TaxedMoney(price, price)
 
+    def calculate_order_line_total(
+        self,
+        order: "Order",
+        order_line: "OrderLine",
+        variant: "ProductVariant",
+        product: "Product",
+        previous_value: TaxedMoney,
+    ) -> TaxedMoney:
+        price = Money("1.0", currency=order.currency)
+        return TaxedMoney(price, price)
+
     def calculate_checkout_line_unit_price(
         self,
         checkout_info: "CheckoutInfo",
+        lines: Iterable["CheckoutLineInfo"],
         checkout_line_info: "CheckoutLineInfo",
         address: Optional["Address"],
         discounts: Iterable["DiscountInfo"],
@@ -182,6 +190,7 @@ class PluginSample(BasePlugin):
     def get_checkout_line_tax_rate(
         self,
         checkout_info: "CheckoutInfo",
+        lines: Iterable["CheckoutLineInfo"],
         checkout_line_info: "CheckoutLineInfo",
         address: Optional["Address"],
         discounts: Iterable["DiscountInfo"],
@@ -193,6 +202,7 @@ class PluginSample(BasePlugin):
         self,
         order: "Order",
         product: "Product",
+        variant: "ProductVariant",
         address: Optional["Address"],
         previous_value: Decimal,
     ) -> Decimal:
@@ -212,10 +222,44 @@ class PluginSample(BasePlugin):
         return Decimal("0.080").quantize(Decimal(".01"))
 
 
+class ChannelPluginSample(PluginSample):
+    PLUGIN_ID = "channel.plugin.sample"
+    PLUGIN_NAME = "Channel Plugin"
+    PLUGIN_DESCRIPTION = "Test channel plugin"
+    DEFAULT_ACTIVE = True
+    CONFIGURATION_PER_CHANNEL = True
+    DEFAULT_CONFIGURATION = [{"name": "input-per-channel", "value": None}]
+    CONFIG_STRUCTURE = {
+        "input-per-channel": {
+            "type": ConfigurationTypeField.STRING,
+            "help_text": "Test input",
+            "label": "Input per channel",
+        }
+    }
+
+
+class InactiveChannelPluginSample(PluginSample):
+    PLUGIN_ID = "channel.plugin.inactive.sample"
+    PLUGIN_NAME = "Inactive Channel Plugin"
+    PLUGIN_DESCRIPTION = "Test channel plugin"
+    DEFAULT_ACTIVE = False
+    CONFIGURATION_PER_CHANNEL = True
+    DEFAULT_CONFIGURATION = [{"name": "input-per-channel", "value": None}]
+    CONFIG_STRUCTURE = {
+        "input-per-channel": {
+            "type": ConfigurationTypeField.STRING,
+            "help_text": "Test input",
+            "label": "Input per channel",
+        }
+    }
+
+
 class PluginInactive(BasePlugin):
-    PLUGIN_ID = "plugin.inactive"
+    PLUGIN_ID = "mirumee.taxes.plugin.inactive"
     PLUGIN_NAME = "PluginInactive"
     PLUGIN_DESCRIPTION = "Test plugin description_2"
+    CONFIGURATION_PER_CHANNEL = False
+    DEFAULT_ACTIVE = False
 
     def external_obtain_access_tokens(
         self, data: dict, request: WSGIRequest, previous_value
@@ -226,14 +270,15 @@ class PluginInactive(BasePlugin):
 
 
 class ActivePlugin(BasePlugin):
-    PLUGIN_ID = "plugin.active"
+    PLUGIN_ID = "mirumee.x.plugin.active"
     PLUGIN_NAME = "Active"
     PLUGIN_DESCRIPTION = "Not working"
     DEFAULT_ACTIVE = True
+    CONFIGURATION_PER_CHANNEL = False
 
 
 class ActivePaymentGateway(BasePlugin):
-    PLUGIN_ID = "gateway.active"
+    PLUGIN_ID = "mirumee.gateway.active"
     CLIENT_CONFIG = [
         {"field": "foo", "value": "bar"},
     ]

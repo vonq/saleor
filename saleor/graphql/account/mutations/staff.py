@@ -3,17 +3,17 @@ from copy import copy
 
 import graphene
 from django.core.exceptions import ValidationError
-from django.db import transaction
 
 from ....account import events as account_events
 from ....account import models, utils
-from ....account.emails import send_set_password_email_with_url
 from ....account.error_codes import AccountErrorCode
+from ....account.notifications import send_set_password_notification
 from ....account.thumbnails import create_user_avatar_thumbnails
 from ....account.utils import remove_staff_member
 from ....checkout import AddressType
 from ....core.exceptions import PermissionDenied
 from ....core.permissions import AccountPermissions
+from ....core.tracing import traced_atomic_transaction
 from ....core.utils.url import validate_storefront_url
 from ...account.enums import AddressTypeEnum
 from ...account.types import Address, AddressInput, User
@@ -242,12 +242,16 @@ class StaffCreate(ModelMutation):
     def save(cls, info, user, cleaned_input):
         user.save()
         if cleaned_input.get("redirect_url"):
-            send_set_password_email_with_url(
-                redirect_url=cleaned_input.get("redirect_url"), user=user, staff=True
+            send_set_password_notification(
+                redirect_url=cleaned_input.get("redirect_url"),
+                user=user,
+                manager=info.context.plugins,
+                channel_slug=None,
+                staff=True,
             )
 
     @classmethod
-    @transaction.atomic
+    @traced_atomic_transaction()
     def _save_m2m(cls, info, instance, cleaned_data):
         super()._save_m2m(info, instance, cleaned_data)
         groups = cleaned_data.get("add_groups")
@@ -370,7 +374,7 @@ class StaffUpdate(StaffCreate):
             errors["is_active"].append(error)
 
     @classmethod
-    @transaction.atomic
+    @traced_atomic_transaction()
     def _save_m2m(cls, info, instance, cleaned_data):
         super()._save_m2m(info, instance, cleaned_data)
         add_groups = cleaned_data.get("add_groups")
@@ -499,7 +503,9 @@ class AddressSetDefault(BaseMutation):
         else:
             address_type = AddressType.SHIPPING
 
-        utils.change_user_default_address(user, address, address_type)
+        utils.change_user_default_address(
+            user, address, address_type, info.context.plugins
+        )
         info.context.plugins.customer_updated(user)
         return cls(user=user)
 

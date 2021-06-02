@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union
 
 import opentracing
+from django.conf import settings
 from django_countries.fields import Country
 from prices import MoneyRange, TaxedMoney, TaxedMoneyRange
 
@@ -9,7 +10,6 @@ from ...channel.models import Channel
 from ...core.utils import to_local_currency
 from ...discount import DiscountInfo
 from ...discount.utils import calculate_discounted_price
-from ...plugins.manager import get_plugins_manager
 from ...product.models import (
     Collection,
     Product,
@@ -146,13 +146,14 @@ def get_product_availability(
     collections: Iterable[Collection],
     discounts: Iterable[DiscountInfo],
     channel: Channel,
+    manager: "PluginsManager",
     country: Optional[Country] = None,
     local_currency: Optional[str] = None,
-    plugins: Optional["PluginsManager"] = None,
 ) -> ProductAvailability:
+    country = country or Country(settings.DEFAULT_COUNTRY)
     with opentracing.global_tracer().start_active_span("get_product_availability"):
-        if not plugins:
-            plugins = get_plugins_manager()
+        channel_slug = channel.slug
+
         discounted = None
         discounted_net_range = get_product_price_range(
             product=product,
@@ -164,11 +165,17 @@ def get_product_availability(
         )
         if discounted_net_range is not None:
             discounted = TaxedMoneyRange(
-                start=plugins.apply_taxes_to_product(
-                    product, discounted_net_range.start, country
+                start=manager.apply_taxes_to_product(
+                    product,
+                    discounted_net_range.start,
+                    country,
+                    channel_slug=channel_slug,
                 ),
-                stop=plugins.apply_taxes_to_product(
-                    product, discounted_net_range.stop, country
+                stop=manager.apply_taxes_to_product(
+                    product,
+                    discounted_net_range.stop,
+                    country,
+                    channel_slug=channel_slug,
                 ),
             )
 
@@ -183,11 +190,17 @@ def get_product_availability(
         )
         if undiscounted_net_range is not None:
             undiscounted = TaxedMoneyRange(
-                start=plugins.apply_taxes_to_product(
-                    product, undiscounted_net_range.start, country
+                start=manager.apply_taxes_to_product(
+                    product,
+                    undiscounted_net_range.start,
+                    country,
+                    channel_slug=channel_slug,
                 ),
-                stop=plugins.apply_taxes_to_product(
-                    product, undiscounted_net_range.stop, country
+                stop=manager.apply_taxes_to_product(
+                    product,
+                    undiscounted_net_range.stop,
+                    country,
+                    channel_slug=channel_slug,
                 ),
             )
 
@@ -223,13 +236,13 @@ def get_variant_availability(
     collections: Iterable[Collection],
     discounts: Iterable[DiscountInfo],
     channel: Channel,
+    plugins: "PluginsManager",
     country: Optional[Country] = None,
     local_currency: Optional[str] = None,
-    plugins: Optional["PluginsManager"] = None,
 ) -> VariantAvailability:
+    country = country or Country(settings.DEFAULT_COUNTRY)
     with opentracing.global_tracer().start_active_span("get_variant_availability"):
-        if not plugins:
-            plugins = get_plugins_manager()
+        channel_slug = channel.slug
         discounted = plugins.apply_taxes_to_product(
             product,
             get_variant_price(
@@ -241,6 +254,7 @@ def get_variant_availability(
                 channel=channel,
             ),
             country,
+            channel_slug=channel_slug,
         )
         undiscounted = plugins.apply_taxes_to_product(
             product,
@@ -253,6 +267,7 @@ def get_variant_availability(
                 channel=channel,
             ),
             country,
+            channel_slug=channel_slug,
         )
 
         discount = _get_total_discount(undiscounted, discounted)

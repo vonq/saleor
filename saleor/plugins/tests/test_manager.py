@@ -6,11 +6,8 @@ from django.http import HttpResponseNotFound, JsonResponse
 from django_countries.fields import Country
 from prices import Money, TaxedMoney
 
-from ...checkout.fetch import (
-    CheckoutLineInfo,
-    fetch_checkout_info,
-    fetch_checkout_lines,
-)
+from ...checkout.fetch import fetch_checkout_info, fetch_checkout_lines
+from ...core.prices import quantize_price
 from ...core.taxes import TaxType
 from ...payment.interface import PaymentGateway
 from ...product.models import Product
@@ -20,6 +17,7 @@ from ..models import PluginConfiguration
 from ..tests.sample_plugins import (
     ActiveDummyPaymentGateway,
     ActivePaymentGateway,
+    ChannelPluginSample,
     InactivePaymentGateway,
     PluginInactive,
     PluginSample,
@@ -31,7 +29,113 @@ def test_get_plugins_manager(settings):
     settings.PLUGINS = [plugin_path]
     manager = get_plugins_manager()
     assert isinstance(manager, PluginsManager)
-    assert len(manager.plugins) == 1
+    assert len(manager.all_plugins) == 1
+
+
+def test_manager_with_default_configuration_for_channel_plugins(
+    settings, channel_USD, channel_PLN
+):
+    settings.PLUGINS = [
+        "saleor.plugins.tests.sample_plugins.ChannelPluginSample",
+        "saleor.plugins.tests.sample_plugins.PluginSample",
+    ]
+    manager = get_plugins_manager()
+    assert len(manager.global_plugins) == 1
+    assert isinstance(manager.global_plugins[0], PluginSample)
+    assert {channel_PLN.slug, channel_USD.slug} == set(
+        manager.plugins_per_channel.keys()
+    )
+
+    for channel_slug, plugins in manager.plugins_per_channel.items():
+        assert len(plugins) == 2
+        assert all(
+            [
+                isinstance(plugin, (PluginSample, ChannelPluginSample))
+                for plugin in plugins
+            ]
+        )
+
+    # global plugin + plugins for each channel
+    assert len(manager.all_plugins) == 3
+
+
+def test_manager_with_channel_plugins(
+    settings, channel_USD, channel_PLN, channel_plugin_configurations
+):
+    settings.PLUGINS = [
+        "saleor.plugins.tests.sample_plugins.ChannelPluginSample",
+    ]
+    manager = get_plugins_manager()
+
+    assert {channel_PLN.slug, channel_USD.slug} == set(
+        manager.plugins_per_channel.keys()
+    )
+
+    for channel_slug, plugins in manager.plugins_per_channel.items():
+        assert len(plugins) == 1
+        # make sure that we load proper config from DB
+        assert plugins[0].configuration[0]["value"] == channel_slug
+
+    # global plugin + plugins for each channel
+    assert len(manager.all_plugins) == 2
+
+
+def test_manager_get_plugins_with_channel_slug(
+    settings, channel_USD, plugin_configuration, inactive_plugin_configuration
+):
+    settings.PLUGINS = [
+        "saleor.plugins.tests.sample_plugins.PluginInactive",
+        "saleor.plugins.tests.sample_plugins.PluginSample",
+    ]
+    manager = get_plugins_manager()
+
+    plugins = manager.get_plugins(channel_slug=channel_USD.slug)
+
+    assert plugins == manager.plugins_per_channel[channel_USD.slug]
+
+
+def test_manager_get_active_plugins_with_channel_slug(
+    settings, channel_USD, plugin_configuration, inactive_plugin_configuration
+):
+    settings.PLUGINS = [
+        "saleor.plugins.tests.sample_plugins.PluginInactive",
+        "saleor.plugins.tests.sample_plugins.PluginSample",
+    ]
+    manager = get_plugins_manager()
+
+    plugins = manager.get_plugins(channel_slug=channel_USD.slug, active_only=True)
+
+    assert len(plugins) == 1
+    assert isinstance(plugins[0], PluginSample)
+
+
+def test_manager_get_plugins_without_channel_slug(
+    settings, channel_USD, plugin_configuration, inactive_plugin_configuration
+):
+    settings.PLUGINS = [
+        "saleor.plugins.tests.sample_plugins.PluginInactive",
+        "saleor.plugins.tests.sample_plugins.PluginSample",
+    ]
+    manager = get_plugins_manager()
+
+    plugins = manager.get_plugins(channel_slug=None)
+
+    assert plugins == manager.all_plugins
+
+
+def test_manager_get_active_plugins_without_channel_slug(
+    settings, channel_USD, plugin_configuration, inactive_plugin_configuration
+):
+    settings.PLUGINS = [
+        "saleor.plugins.tests.sample_plugins.PluginInactive",
+        "saleor.plugins.tests.sample_plugins.PluginSample",
+    ]
+    manager = get_plugins_manager()
+
+    plugins = manager.get_plugins(channel_slug=None, active_only=True)
+
+    assert len(plugins) == 1
+    assert isinstance(plugins[0], PluginSample)
 
 
 @pytest.mark.parametrize(
@@ -45,7 +149,9 @@ def test_manager_calculates_checkout_total(
     expected_total = Money(total_amount, currency)
     manager = PluginsManager(plugins=plugins)
     lines = fetch_checkout_lines(checkout_with_item)
-    checkout_info = fetch_checkout_info(checkout_with_item, lines, [discount_info])
+    checkout_info = fetch_checkout_info(
+        checkout_with_item, lines, [discount_info], manager
+    )
     taxed_total = manager.calculate_checkout_total(
         checkout_info, lines, None, [discount_info]
     )
@@ -61,8 +167,11 @@ def test_manager_calculates_checkout_subtotal(
 ):
     currency = checkout_with_item.currency
     expected_subtotal = Money(subtotal_amount, currency)
+    manager = PluginsManager(plugins=plugins)
     lines = fetch_checkout_lines(checkout_with_item)
-    checkout_info = fetch_checkout_info(checkout_with_item, lines, [discount_info])
+    checkout_info = fetch_checkout_info(
+        checkout_with_item, lines, [discount_info], manager
+    )
     taxed_subtotal = PluginsManager(plugins=plugins).calculate_checkout_subtotal(
         checkout_info, lines, None, [discount_info]
     )
@@ -78,8 +187,11 @@ def test_manager_calculates_checkout_shipping(
 ):
     currency = checkout_with_item.currency
     expected_shipping_price = Money(shipping_amount, currency)
+    manager = PluginsManager(plugins=plugins)
     lines = fetch_checkout_lines(checkout_with_item)
-    checkout_info = fetch_checkout_info(checkout_with_item, lines, [discount_info])
+    checkout_info = fetch_checkout_info(
+        checkout_with_item, lines, [discount_info], manager
+    )
     taxed_shipping_price = PluginsManager(plugins=plugins).calculate_checkout_shipping(
         checkout_info, lines, None, [discount_info]
     )
@@ -113,23 +225,17 @@ def test_manager_calculates_order_shipping(order_with_lines, plugins, shipping_a
 def test_manager_calculates_checkout_line_total(
     checkout_with_item, discount_info, plugins, amount
 ):
-    line = checkout_with_item.lines.all()[0]
-    channel = checkout_with_item.channel
-    channel_listing = line.variant.channel_listings.get(channel=channel)
     currency = checkout_with_item.currency
     expected_total = Money(amount, currency)
-    checkout_line_info = CheckoutLineInfo(
-        line=line,
-        variant=line.variant,
-        channel_listing=channel_listing,
-        product=line.variant.product,
-        collections=[],
-    )
+    manager = get_plugins_manager()
+    lines = fetch_checkout_lines(checkout_with_item)
     checkout_info = fetch_checkout_info(
-        checkout_with_item, [checkout_line_info], [discount_info]
+        checkout_with_item, lines, [discount_info], manager
     )
+    checkout_line_info = lines[0]
     taxed_total = PluginsManager(plugins=plugins).calculate_checkout_line_total(
         checkout_info,
+        lines,
         checkout_line_info,
         checkout_with_item.shipping_address,
         [discount_info],
@@ -137,27 +243,39 @@ def test_manager_calculates_checkout_line_total(
     assert TaxedMoney(expected_total, expected_total) == taxed_total
 
 
+@pytest.mark.parametrize(
+    "plugins",
+    [["saleor.plugins.tests.sample_plugins.PluginSample"], []],
+)
+def test_manager_calculates_order_line_total(order_line, plugins):
+    currency = order_line.order.currency
+    expected_total = (
+        TaxedMoney(Money("1.0", currency), Money("1.0", currency))
+        if plugins
+        else quantize_price(order_line.unit_price * order_line.quantity, currency)
+    )
+    taxed_total = PluginsManager(plugins=plugins).calculate_order_line_total(
+        order_line.order, order_line, order_line.variant, order_line.variant.product
+    )
+    assert expected_total == taxed_total
+
+
 def test_manager_get_checkout_line_tax_rate_sample_plugin(
     checkout_with_item, discount_info
 ):
-    line = checkout_with_item.lines.all()[0]
     plugins = ["saleor.plugins.tests.sample_plugins.PluginSample"]
     unit_price = TaxedMoney(Money(12, "USD"), Money(15, "USD"))
 
-    variant = line.variant
-    checkout_line_info = CheckoutLineInfo(
-        line=line,
-        variant=variant,
-        channel_listing=variant.channel_listings.first(),
-        product=variant.product,
-        collections=[],
-    )
+    manager = get_plugins_manager()
+    lines = fetch_checkout_lines(checkout_with_item)
     checkout_info = fetch_checkout_info(
-        checkout_with_item, [checkout_line_info], [discount_info]
+        checkout_with_item, lines, [discount_info], manager
     )
+    checkout_line_info = lines[0]
 
     tax_rate = PluginsManager(plugins=plugins).get_checkout_line_tax_rate(
         checkout_info,
+        lines,
         checkout_line_info,
         checkout_with_item.shipping_address,
         [discount_info],
@@ -176,20 +294,15 @@ def test_manager_get_checkout_line_tax_rate_sample_plugin(
 def test_manager_get_checkout_line_tax_rate_no_plugins(
     checkout_with_item, discount_info, unit_price, expected_tax_rate
 ):
-    line = checkout_with_item.lines.all()[0]
-    variant = line.variant
-    checkout_line_info = CheckoutLineInfo(
-        line=line,
-        variant=variant,
-        channel_listing=variant.channel_listings.first(),
-        product=variant.product,
-        collections=[],
-    )
+    manager = get_plugins_manager()
+    lines = fetch_checkout_lines(checkout_with_item)
     checkout_info = fetch_checkout_info(
-        checkout_with_item, [checkout_line_info], [discount_info]
+        checkout_with_item, lines, [discount_info], manager
     )
+    checkout_line_info = lines[0]
     tax_rate = PluginsManager(plugins=[]).get_checkout_line_tax_rate(
         checkout_info,
+        lines,
         checkout_line_info,
         checkout_with_item.shipping_address,
         [discount_info],
@@ -207,6 +320,7 @@ def test_manager_get_order_line_tax_rate_sample_plugin(order_with_lines):
     tax_rate = PluginsManager(plugins=plugins).get_order_line_tax_rate(
         order,
         product,
+        line.variant,
         None,
         unit_price,
     )
@@ -229,6 +343,7 @@ def test_manager_get_order_line_tax_rate_no_plugins(
     tax_rate = PluginsManager(plugins=[]).get_order_line_tax_rate(
         order,
         product,
+        line.variant,
         None,
         unit_price,
     )
@@ -238,25 +353,18 @@ def test_manager_get_order_line_tax_rate_no_plugins(
 def test_manager_get_checkout_shipping_tax_rate_sample_plugin(
     checkout_with_item, discount_info
 ):
-    line = checkout_with_item.lines.all()[0]
     plugins = ["saleor.plugins.tests.sample_plugins.PluginSample"]
     shipping_price = TaxedMoney(Money(12, "USD"), Money(14, "USD"))
 
-    variant = line.variant
-    checkout_line_info = CheckoutLineInfo(
-        line=line,
-        variant=variant,
-        channel_listing=variant.channel_listings.first(),
-        product=variant.product,
-        collections=[],
-    )
+    manager = get_plugins_manager()
+    lines = fetch_checkout_lines(checkout_with_item)
     checkout_info = fetch_checkout_info(
-        checkout_with_item, [checkout_line_info], [discount_info]
+        checkout_with_item, lines, [discount_info], manager
     )
 
     tax_rate = PluginsManager(plugins=plugins).get_checkout_shipping_tax_rate(
         checkout_info,
-        [checkout_line_info],
+        lines,
         checkout_with_item.shipping_address,
         [discount_info],
         shipping_price,
@@ -274,22 +382,15 @@ def test_manager_get_checkout_shipping_tax_rate_sample_plugin(
 def test_manager_get_checkout_shipping_tax_rate_no_plugins(
     checkout_with_item, discount_info, shipping_price, expected_tax_rate
 ):
-    line = checkout_with_item.lines.all()[0]
-    variant = line.variant
-    checkout_line_info = CheckoutLineInfo(
-        line=line,
-        variant=variant,
-        channel_listing=variant.channel_listings.first(),
-        product=variant.product,
-        collections=[],
-    )
+    manager = get_plugins_manager()
+    lines = fetch_checkout_lines(checkout_with_item)
     checkout_info = fetch_checkout_info(
-        checkout_with_item, [checkout_line_info], [discount_info]
+        checkout_with_item, lines, [discount_info], manager
     )
 
     tax_rate = PluginsManager(plugins=[]).get_checkout_shipping_tax_rate(
         checkout_info,
-        [checkout_line_info],
+        lines,
         checkout_with_item.shipping_address,
         [discount_info],
         shipping_price,
@@ -350,23 +451,16 @@ def test_manager_get_order_shipping_tax_rate_no_plugins(
 def test_manager_calculates_checkout_line_unit_price(
     plugins, total_line_price, quantity, checkout_with_item, address
 ):
-    line = checkout_with_item.lines.first()
-    channel = checkout_with_item.channel
-    channel_listing = line.variant.channel_listings.get(channel=channel)
-
-    checkout_line_info = CheckoutLineInfo(
-        line=line,
-        variant=line.variant,
-        channel_listing=channel_listing,
-        product=line.variant.product,
-        collections=[],
-    )
-    checkout_info = fetch_checkout_info(checkout_with_item, [checkout_line_info], [])
+    manager = PluginsManager(plugins=plugins)
+    lines = fetch_checkout_lines(checkout_with_item)
+    checkout_info = fetch_checkout_info(checkout_with_item, lines, [], manager)
+    checkout_line_info = lines[0]
 
     taxed_total = PluginsManager(plugins=plugins).calculate_checkout_line_unit_price(
         total_line_price,
         quantity,
         checkout_info,
+        lines,
         checkout_line_info,
         address,
         [],
@@ -435,6 +529,7 @@ def test_manager_apply_taxes_to_product(product, plugins, price, channel_USD):
             variant.product, [], channel_USD, variant_channel_listing, None
         ),
         country,
+        channel_USD.slug,
     )
     assert TaxedMoney(expected_price, expected_price) == taxed_price
 
@@ -451,7 +546,7 @@ def test_manager_apply_taxes_to_shipping(
     ).price
     expected_price = Money(price_amount, "USD")
     taxed_price = PluginsManager(plugins=plugins).apply_taxes_to_shipping(
-        shipping_price, address
+        shipping_price, address, channel_slug=channel_USD.slug
     )
     assert TaxedMoney(expected_price, expected_price) == taxed_price
 
@@ -466,17 +561,6 @@ def test_manager_get_tax_rate_percentage_value(plugins, amount, product):
         product, country
     )
     assert tax_rate_value == Decimal(amount)
-
-
-def test_manager_get_plugin_configurations(plugin_configuration):
-    plugins = [
-        "saleor.plugins.tests.sample_plugins.PluginSample",
-        "saleor.plugins.tests.sample_plugins.PluginInactive",
-    ]
-    manager = PluginsManager(plugins=plugins)
-    plugin_configs = manager._plugin_configs.values()
-    assert len(plugin_configs) == 1
-    assert set(plugin_configs) == set(list(PluginConfiguration.objects.all()))
 
 
 def test_manager_get_plugin_configuration(plugin_configuration):
@@ -495,7 +579,7 @@ def test_manager_get_plugin_configuration(plugin_configuration):
 def test_manager_save_plugin_configuration(plugin_configuration):
     plugins = ["saleor.plugins.tests.sample_plugins.PluginSample"]
     manager = PluginsManager(plugins=plugins)
-    manager.save_plugin_configuration(PluginSample.PLUGIN_ID, {"active": False})
+    manager.save_plugin_configuration(PluginSample.PLUGIN_ID, None, {"active": False})
     plugin_configuration.refresh_from_db()
     assert not plugin_configuration.active
 
@@ -547,7 +631,7 @@ def test_plugin_add_new_configuration(
     assert plugin.configuration[0] == {**new_config, **new_config_structure}
 
 
-def test_manager_serve_list_of_payment_gateways():
+def test_manager_serve_list_of_payment_gateways(channel_USD):
     expected_gateway = PaymentGateway(
         id=ActivePaymentGateway.PLUGIN_ID,
         name=ActivePaymentGateway.PLUGIN_NAME,
@@ -563,7 +647,7 @@ def test_manager_serve_list_of_payment_gateways():
     assert manager.list_payment_gateways() == [expected_gateway]
 
 
-def test_manager_serve_list_all_payment_gateways():
+def test_manager_serve_list_all_payment_gateways(channel_USD):
     expected_gateways = [
         PaymentGateway(
             id=ActivePaymentGateway.PLUGIN_ID,
@@ -587,7 +671,7 @@ def test_manager_serve_list_all_payment_gateways():
     assert manager.list_payment_gateways(active_only=False) == expected_gateways
 
 
-def test_manager_serve_list_all_payment_gateways_specified_currency():
+def test_manager_serve_list_all_payment_gateways_specified_currency(channel_USD):
     expected_gateways = [
         PaymentGateway(
             id=ActiveDummyPaymentGateway.PLUGIN_ID,
@@ -609,7 +693,9 @@ def test_manager_serve_list_all_payment_gateways_specified_currency():
     )
 
 
-def test_manager_serve_list_all_payment_gateways_specified_currency_two_gateways():
+def test_manager_serve_list_all_payment_gateways_specified_currency_two_gateways(
+    channel_USD,
+):
     expected_gateways = [
         PaymentGateway(
             id=ActivePaymentGateway.PLUGIN_ID,
@@ -756,7 +842,7 @@ def test_manager_external_verify(rf, admin_user):
     assert response_data == {"some_data": "data"}
 
 
-def test_list_external_authentications():
+def test_list_external_authentications(channel_USD):
     plugins = [
         "saleor.plugins.tests.sample_plugins.PluginInactive",
         "saleor.plugins.tests.sample_plugins.ActivePaymentGateway",
@@ -775,7 +861,7 @@ def test_list_external_authentications():
     } in external_auths
 
 
-def test_list_external_authentications_active_only():
+def test_list_external_authentications_active_only(channel_USD):
     plugins = [
         "saleor.plugins.tests.sample_plugins.PluginInactive",
         "saleor.plugins.tests.sample_plugins.ActivePaymentGateway",

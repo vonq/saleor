@@ -1,20 +1,22 @@
 import json
 import logging
 from decimal import Decimal
-from typing import Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional
 
 import graphene
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db import transaction
 
 from ..account.models import User
 from ..checkout.models import Checkout
+from ..core.tracing import traced_atomic_transaction
 from ..order.models import Order
-from ..plugins.manager import get_plugins_manager
 from . import ChargeStatus, GatewayError, PaymentError, TransactionKind
 from .error_codes import PaymentErrorCode
 from .interface import AddressData, GatewayResponse, PaymentData
 from .models import Payment, Transaction
+
+if TYPE_CHECKING:
+    from ..plugins.manager import PluginsManager
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +80,7 @@ def create_payment(
     checkout: Checkout = None,
     order: Order = None,
     return_url: str = None,
+    external_reference: Optional[str] = None,
 ) -> Payment:
     """Create a payment instance.
 
@@ -125,6 +128,7 @@ def create_payment(
         "gateway": gateway,
         "total": total,
         "return_url": return_url,
+        "psp_reference": external_reference or "",
     }
 
     payment, _ = Payment.objects.get_or_create(defaults=defaults, **data)
@@ -181,7 +185,6 @@ def create_transaction(
         customer_id=gateway_response.customer_id,
         gateway_response=gateway_response.raw_response or {},
         action_required_data=gateway_response.action_required_data or {},
-        searchable_key=gateway_response.searchable_key or "",
     )
     return txn
 
@@ -242,17 +245,25 @@ def validate_gateway_response(response: GatewayResponse):
         raise GatewayError("Gateway response needs to be json serializable")
 
 
-@transaction.atomic
+@traced_atomic_transaction()
 def gateway_postprocess(transaction, payment):
-    if not transaction.is_success:
+    changed_fields = []
+    psp_reference = transaction.gateway_response.get("pspReference")
+    if psp_reference:
+        payment.psp_reference = psp_reference
+        changed_fields.append("psp_reference")
+
+    if not transaction.is_success or transaction.already_processed:
+        if changed_fields:
+            payment.save(update_fields=changed_fields)
         return
+
     if transaction.action_required:
         payment.to_confirm = True
-        payment.save(update_fields=["to_confirm"])
+        changed_fields.append("to_confirm")
+        payment.save(update_fields=changed_fields)
         return
-    if transaction.already_processed:
-        return
-    changed_fields = []
+
     # to_confirm is defined by the transaction.action_required. Payment doesn't
     # require confirmation when we got action_required == False
     if payment.to_confirm:
@@ -306,6 +317,8 @@ def gateway_postprocess(transaction, payment):
         payment.save(update_fields=changed_fields)
     transaction.already_processed = True
     transaction.save(update_fields=["already_processed"])
+    if "captured_amount" in changed_fields and payment.order:
+        payment.order.update_total_paid()
 
 
 def fetch_customer_id(user: User, gateway: str):
@@ -359,7 +372,7 @@ def get_payment_token(payment: Payment):
     return auth_transaction.token
 
 
-def is_currency_supported(currency: str, gateway_id: str):
+def is_currency_supported(currency: str, gateway_id: str, manager: "PluginsManager"):
     """Return true if the given gateway supports given currency."""
-    available_gateways = get_plugins_manager().list_payment_gateways(currency=currency)
+    available_gateways = manager.list_payment_gateways(currency=currency)
     return any([gateway.id == gateway_id for gateway in available_gateways])

@@ -47,7 +47,6 @@ class Checkout(ModelWithMetadata):
     )
     email = models.EmailField()
     token = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    quantity = models.PositiveIntegerField(default=0)
     channel = models.ForeignKey(
         Channel,
         related_name="checkouts",
@@ -88,14 +87,15 @@ class Checkout(ModelWithMetadata):
     redirect_url = models.URLField(blank=True, null=True)
     tracking_code = models.CharField(max_length=255, blank=True, null=True)
 
+    language_code = models.CharField(
+        max_length=35, choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE
+    )
+
     class Meta(ModelWithMetadata.Meta):
         ordering = ("-last_change", "pk")
         permissions = (
             (CheckoutPermissions.MANAGE_CHECKOUTS.codename, "Manage checkouts"),
         )
-
-    def __repr__(self):
-        return "Checkout(quantity=%s)" % (self.quantity,)
 
     def __iter__(self):
         return iter(self.lines.all())
@@ -116,19 +116,11 @@ class Checkout(ModelWithMetadata):
             return zero_money(currency=self.currency)
         return Money(balance, self.currency)
 
-    def get_total_weight(
-        self, lines: Optional[Iterable["CheckoutLineInfo"]] = None
-    ) -> "Weight":
-        # Cannot use `sum` as it parses an empty Weight to an int
+    def get_total_weight(self, lines: Iterable["CheckoutLineInfo"]) -> "Weight":
         weights = zero_weight()
-        # TODO: we should use new data structure for lines in order like in checkout
-        if lines is None:
-            for line in self:
-                weights += line.variant.get_weight() * line.quantity
-        else:
-            for checkout_line_info in lines:
-                line = checkout_line_info.line
-                weights += line.variant.get_weight() * line.quantity
+        for checkout_line_info in lines:
+            line = checkout_line_info.line
+            weights += line.variant.get_weight() * line.quantity
         return weights
 
     def get_line(self, variant: "ProductVariant") -> Optional["CheckoutLine"]:

@@ -1,8 +1,10 @@
 """Checkout-related utility functions."""
 from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple
 
+import graphene
 from django.core.exceptions import ValidationError
-from django.db.models import Sum
+from django.db.models import Count, F, OuterRef, Subquery, Sum
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 from prices import Money
 
@@ -24,7 +26,7 @@ from ..giftcard.utils import (
     add_gift_card_code_to_checkout,
     remove_gift_card_code_from_checkout,
 )
-from ..plugins.manager import PluginsManager, get_plugins_manager
+from ..plugins.manager import PluginsManager
 from ..product import models as product_models
 from ..shipping.models import ShippingMethod
 from ..warehouse.availability import check_stock_quantity, check_stock_quantity_bulk
@@ -51,7 +53,12 @@ def get_user_checkout(
 
 
 def check_variant_in_stock(
-    checkout, variant, quantity=1, replace=False, check_quantity=True
+    checkout: Checkout,
+    variant: product_models.ProductVariant,
+    channel_slug: str,
+    quantity: int = 1,
+    replace: bool = False,
+    check_quantity: bool = True,
 ) -> Tuple[int, Optional[CheckoutLine]]:
     """Check if a given variant is in stock and return the new quantity + line."""
     line = checkout.lines.filter(variant=variant).first()
@@ -65,19 +72,26 @@ def check_variant_in_stock(
         )
 
     if new_quantity > 0 and check_quantity:
-        check_stock_quantity(variant, checkout.get_country(), new_quantity)
+        check_stock_quantity(
+            variant, checkout.get_country(), channel_slug, new_quantity
+        )
 
     return new_quantity, line
 
 
 def add_variant_to_checkout(
-    checkout, variant, quantity=1, replace=False, check_quantity=True
+    checkout_info: "CheckoutInfo",
+    variant: product_models.ProductVariant,
+    quantity: int = 1,
+    replace: bool = False,
+    check_quantity: bool = True,
 ):
     """Add a product variant to checkout.
 
     If `replace` is truthy then any previous quantity is discarded instead
     of added to.
     """
+    checkout = checkout_info.checkout
     product_channel_listing = variant.product.channel_listings.filter(
         channel_id=checkout.channel_id
     ).first()
@@ -87,6 +101,7 @@ def add_variant_to_checkout(
     new_quantity, line = check_variant_in_stock(
         checkout,
         variant,
+        checkout_info.channel.slug,
         quantity=quantity,
         replace=replace,
         check_quantity=check_quantity,
@@ -104,11 +119,14 @@ def add_variant_to_checkout(
         line.quantity = new_quantity
         line.save(update_fields=["quantity"])
 
-    checkout = update_checkout_quantity(checkout)
     return checkout
 
 
-def add_variants_to_checkout(checkout, variants, quantities):
+def calculate_checkout_quantity(lines: Iterable["CheckoutLineInfo"]):
+    return sum([line_info.line.quantity for line_info in lines])
+
+
+def add_variants_to_checkout(checkout, variants, quantities, channel_slug):
     """Add variants to checkout.
 
     Suitable for new checkouts as it always creates new checkout lines without checking
@@ -117,7 +135,7 @@ def add_variants_to_checkout(checkout, variants, quantities):
 
     # check quantities
     country_code = checkout.get_country()
-    check_stock_quantity_bulk(variants, country_code, quantities)
+    check_stock_quantity_bulk(variants, country_code, quantities, channel_slug)
 
     channel_listings = product_models.ProductChannelListing.objects.filter(
         channel_id=checkout.channel.id,
@@ -138,19 +156,6 @@ def add_variants_to_checkout(checkout, variants, quantities):
             CheckoutLine(checkout=checkout, variant=variant, quantity=quantity)
         )
     checkout.lines.bulk_create(lines)
-    checkout = update_checkout_quantity(checkout)
-    return checkout
-
-
-def update_checkout_quantity(checkout):
-    """Update the total quantity in checkout."""
-    total_lines = checkout.lines.aggregate(total_quantity=Sum("quantity"))[
-        "total_quantity"
-    ]
-    if not total_lines:
-        total_lines = 0
-    checkout.quantity = total_lines
-    checkout.save(update_fields=["quantity"])
     return checkout
 
 
@@ -193,7 +198,13 @@ def change_billing_address_in_checkout(checkout, address):
         checkout.save(update_fields=["billing_address", "last_change"])
 
 
-def change_shipping_address_in_checkout(checkout_info, address, lines, discounts):
+def change_shipping_address_in_checkout(
+    checkout_info: "CheckoutInfo",
+    address: "Address",
+    lines: Iterable["CheckoutLineInfo"],
+    discounts: Iterable[DiscountInfo],
+    manager: "PluginsManager",
+):
     """Save shipping address in checkout if changed.
 
     Remove previously saved address if not connected to any user.
@@ -204,9 +215,11 @@ def change_shipping_address_in_checkout(checkout_info, address, lines, discounts
     )
     if changed:
         if remove:
-            checkout.shipping_address.delete()
+            checkout.shipping_address.delete()  # type: ignore
         checkout.shipping_address = address
-        update_checkout_info_shipping_address(checkout_info, address, lines, discounts)
+        update_checkout_info_shipping_address(
+            checkout_info, address, lines, discounts, manager
+        )
         checkout.save(update_fields=["shipping_address", "last_change"])
 
 
@@ -313,6 +326,7 @@ def get_prices_of_discounted_specific_product(
         line_total = calculations.checkout_line_total(
             manager=manager,
             checkout_info=checkout_info,
+            lines=lines,
             checkout_line_info=line_info,
             discounts=discounts,
         ).gross
@@ -320,6 +334,7 @@ def get_prices_of_discounted_specific_product(
             line_total,
             line.quantity,
             checkout_info,
+            lines,
             line_info,
             address,
             discounts,
@@ -552,26 +567,18 @@ def remove_voucher_from_checkout(checkout: Checkout):
 def get_valid_shipping_methods_for_checkout(
     checkout_info: "CheckoutInfo",
     lines: Iterable["CheckoutLineInfo"],
-    discounts: Iterable[DiscountInfo],
+    subtotal: "TaxedMoney",
     country_code: Optional[str] = None,
-    subtotal: Optional["TaxedMoney"] = None,
 ):
     if not is_shipping_required(lines):
         return None
     if not checkout_info.shipping_address:
         return None
-    # TODO: subtotal should comes from arg instead of calculate it in this function
-    # use info.context.plugins from resolver
-    if subtotal is None:
-        manager = get_plugins_manager()
-        subtotal = manager.calculate_checkout_subtotal(
-            checkout_info, lines, checkout_info.shipping_address, discounts
-        )
     return ShippingMethod.objects.applicable_shipping_methods_for_instance(
         checkout_info.checkout,
         channel_id=checkout_info.checkout.channel_id,
         price=subtotal.gross,
-        country_code=country_code,
+        country_code=country_code,  # type: ignore
         lines=lines,
     )
 
@@ -636,3 +643,28 @@ def is_shipping_required(lines: Iterable["CheckoutLineInfo"]):
     return any(
         line_info.product.product_type.is_shipping_required for line_info in lines
     )
+
+
+def validate_variants_in_checkout_lines(lines: Iterable["CheckoutLineInfo"]):
+    variants_listings_map = {line.variant.id: line.channel_listing for line in lines}
+
+    not_available_variants = [
+        variant_id
+        for variant_id, channel_listing in variants_listings_map.items()
+        if channel_listing is None or channel_listing.price is None
+    ]
+    if not_available_variants:
+        not_available_variants_ids = {
+            graphene.Node.to_global_id("ProductVariant", pk)
+            for pk in not_available_variants
+        }
+        error_code = CheckoutErrorCode.UNAVAILABLE_VARIANT_IN_CHANNEL
+        raise ValidationError(
+            {
+                "lines": ValidationError(
+                    "Cannot add lines with unavailable variants.",
+                    code=error_code,  # type: ignore
+                    params={"variants": not_available_variants_ids},
+                )
+            }
+        )

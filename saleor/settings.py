@@ -13,10 +13,13 @@ import sentry_sdk
 import sentry_sdk.utils
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.utils import get_random_secret_key
+from graphql.utils import schema_printer
 from pytimeparse import parse
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
+
+from . import patched_print_object
 
 
 def get_list(text):
@@ -69,6 +72,7 @@ DATABASES = {
     )
 }
 
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 TIME_ZONE = "UTC"
 LANGUAGE_CODE = "en"
@@ -188,10 +192,11 @@ loaders = [
     "django.template.loaders.app_directories.Loader",
 ]
 
+TEMPLATES_DIR = os.path.join(PROJECT_ROOT, "templates")
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(PROJECT_ROOT, "templates")],
+        "DIRS": [TEMPLATES_DIR],
         "OPTIONS": {
             "debug": DEBUG,
             "context_processors": context_processors,
@@ -267,7 +272,6 @@ INSTALLED_APPS = [
     "django_filters",
     "phonenumber_field",
 ]
-
 
 ENABLE_DJANGO_EXTENSIONS = get_bool_from_env("ENABLE_DJANGO_EXTENSIONS", False)
 if ENABLE_DJANGO_EXTENSIONS:
@@ -515,7 +519,6 @@ GRAPHENE = {
     "RELAY_CONNECTION_ENFORCE_FIRST_OR_LAST": True,
     "RELAY_CONNECTION_MAX_LIMIT": 100,
     "MIDDLEWARE": [
-        "saleor.graphql.middleware.OpentracingGrapheneMiddleware",
         "saleor.graphql.middleware.JWTMiddleware",
         "saleor.graphql.middleware.app_middleware",
     ],
@@ -533,6 +536,9 @@ PLUGINS = [
     "saleor.payment.gateways.adyen.plugin.AdyenGatewayPlugin",
     "saleor.payment.gateways.authorize_net.plugin.AuthorizeNetGatewayPlugin",
     "saleor.plugins.invoicing.plugin.InvoicingPlugin",
+    "saleor.plugins.user_email.plugin.UserEmailPlugin",
+    "saleor.plugins.admin_email.plugin.AdminEmailPlugin",
+    "saleor.plugins.sendgrid.plugin.SendgridEmailPlugin",
 ]
 
 # Plugin discovery
@@ -597,6 +603,16 @@ JWT_TTL_REFRESH = timedelta(seconds=parse(os.environ.get("JWT_TTL_REFRESH", "30 
 JWT_TTL_REQUEST_EMAIL_CHANGE = timedelta(
     seconds=parse(os.environ.get("JWT_TTL_REQUEST_EMAIL_CHANGE", "1 hour")),
 )
+
+# Support multiple interface notation in schema for Apollo tooling.
+
+# In `graphql-core` V2 separator for interaces is `,`.
+# Apollo tooling to generate TypeScript types using `&` as interfaces separator.
+# https://github.com/graphql-python/graphql-core-legacy/pull/258
+# https://github.com/graphql-python/graphql-core-legacy/issues/176
+
+assert hasattr(schema_printer, "_print_object")
+schema_printer._print_object = patched_print_object
 
 CORS_ALLOWED_ORIGINS = [
     "https://dashboard.vonq.beweis.co.uk",

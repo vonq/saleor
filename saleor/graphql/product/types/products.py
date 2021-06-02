@@ -11,13 +11,11 @@ from graphql.error import GraphQLError
 from ....account.utils import requestor_is_staff_member_or_app
 from ....attribute import models as attribute_models
 from ....core.permissions import OrderPermissions, ProductPermissions
+from ....core.tracing import traced_resolver
 from ....core.utils import get_currency_for_country
 from ....core.weight import convert_weight_to_default_weight_unit
 from ....product import models
-from ....product.templatetags.product_images import (
-    get_product_image_thumbnail,
-    get_thumbnail,
-)
+from ....product.product_images import get_product_image_thumbnail, get_thumbnail
 from ....product.utils import calculate_revenue_for_variant
 from ....product.utils.availability import (
     get_product_availability,
@@ -42,6 +40,7 @@ from ...core.fields import (
     PrefetchingConnectionField,
 )
 from ...core.types import Image, Money, TaxedMoney, TaxedMoneyRange, TaxType
+from ...core.utils import from_global_id_or_error
 from ...decorators import (
     one_of_permissions_required,
     permission_required,
@@ -53,6 +52,10 @@ from ...order.dataloaders import (
     OrderByIdLoader,
     OrderLinesByVariantIdAndChannelIdLoader,
 )
+from ...product.dataloaders.products import (
+    AvailableProductVariantsByProductIdAndChannel,
+    ProductVariantsByProductIdAndChannel,
+)
 from ...translations.fields import TranslationField
 from ...translations.types import (
     CategoryTranslation,
@@ -60,19 +63,16 @@ from ...translations.types import (
     ProductTranslation,
     ProductVariantTranslation,
 )
-from ...utils import (
-    get_database_id,
-    get_user_country_context,
-    get_user_or_app_from_context,
-)
+from ...utils import get_user_country_context, get_user_or_app_from_context
 from ...utils.filters import reporting_period_to_date
 from ...warehouse.dataloaders import (
-    AvailableQuantityByProductVariantIdAndCountryCodeLoader,
-    StocksWithAvailableQuantityByProductVariantIdAndCountryCodeLoader,
+    AvailableQuantityByProductVariantIdCountryCodeAndChannelSlugLoader,
+    StocksWithAvailableQuantityByProductVariantIdCountryCodeAndChanneLoader,
 )
 from ...warehouse.types import Stock
 from ..dataloaders import (
     CategoryByIdLoader,
+    CategoryChildrenByCategoryIdLoader,
     CollectionChannelListingByCollectionIdAndChannelSlugLoader,
     CollectionChannelListingByCollectionIdLoader,
     CollectionsByProductIdLoader,
@@ -92,7 +92,7 @@ from ..dataloaders import (
     VariantAttributesByProductTypeIdLoader,
     VariantChannelListingByVariantIdAndChannelSlugLoader,
     VariantChannelListingByVariantIdLoader,
-    VariantsChannelListingByProductIdAndChanneSlugLoader,
+    VariantsChannelListingByProductIdAndChannelSlugLoader,
 )
 from ..enums import VariantAttributeScope
 from ..filters import ProductFilterInput
@@ -263,6 +263,7 @@ class ProductVariant(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
     @one_of_permissions_required(
         [ProductPermissions.MANAGE_PRODUCTS, OrderPermissions.MANAGE_ORDERS]
     )
+    @traced_resolver
     def resolve_stocks(
         root: ChannelContext[models.ProductVariant],
         info,
@@ -274,11 +275,12 @@ class ProductVariant(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
                 address, info.context.site.settings.company_address
             )
 
-        return StocksWithAvailableQuantityByProductVariantIdAndCountryCodeLoader(
+        return StocksWithAvailableQuantityByProductVariantIdCountryCodeAndChanneLoader(
             info.context
-        ).load((root.node.id, country_code))
+        ).load((root.node.id, country_code, root.channel_slug))
 
     @staticmethod
+    @traced_resolver
     def resolve_quantity_available(
         root: ChannelContext[models.ProductVariant],
         info,
@@ -293,16 +295,18 @@ class ProductVariant(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
         if not root.node.track_inventory:
             return settings.MAX_CHECKOUT_LINE_QUANTITY
 
-        return AvailableQuantityByProductVariantIdAndCountryCodeLoader(
+        return AvailableQuantityByProductVariantIdCountryCodeAndChannelSlugLoader(
             info.context
-        ).load((root.node.id, country_code))
+        ).load((root.node.id, country_code, str(root.channel_slug)))
 
     @staticmethod
     @permission_required(ProductPermissions.MANAGE_PRODUCTS)
+    @traced_resolver
     def resolve_digital_content(root: ChannelContext[models.ProductVariant], *_args):
         return getattr(root.node, "digital_content", None)
 
     @staticmethod
+    @traced_resolver
     def resolve_attributes(
         root: ChannelContext[models.ProductVariant],
         info,
@@ -336,12 +340,14 @@ class ProductVariant(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
 
     @staticmethod
     @staff_member_or_app_required
+    @traced_resolver
     def resolve_channel_listings(
         root: ChannelContext[models.ProductVariant], info, **_kwargs
     ):
         return VariantChannelListingByVariantIdLoader(info.context).load(root.node.id)
 
     @staticmethod
+    @traced_resolver
     def resolve_pricing(
         root: ChannelContext[models.ProductVariant], info, address=None
     ):
@@ -417,6 +423,7 @@ class ProductVariant(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
         )
 
     @staticmethod
+    @traced_resolver
     def resolve_product(root: ChannelContext[models.ProductVariant], info):
         product = ProductByIdLoader(info.context).load(root.node.product_id)
         return product.then(
@@ -425,6 +432,7 @@ class ProductVariant(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
 
     @staticmethod
     @permission_required(ProductPermissions.MANAGE_PRODUCTS)
+    @traced_resolver
     def resolve_quantity_ordered(root: ChannelContext[models.ProductVariant], *_args):
         # This field is added through annotation when using the
         # `resolve_report_product_sales` resolver.
@@ -432,6 +440,7 @@ class ProductVariant(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
 
     @staticmethod
     @permission_required(ProductPermissions.MANAGE_PRODUCTS)
+    @traced_resolver
     def resolve_revenue(root: ChannelContext[models.ProductVariant], info, period):
         start_date = reporting_period_to_date(period)
         variant = root.node
@@ -472,10 +481,12 @@ class ProductVariant(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
         )
 
     @staticmethod
+    @traced_resolver
     def resolve_media(root: ChannelContext[models.ProductVariant], info, *_args):
         return MediaByProductVariantIdLoader(info.context).load(root.node.id)
 
     @staticmethod
+    @traced_resolver
     def resolve_images(root: ChannelContext[models.ProductVariant], info, *_args):
         return ImagesByProductVariantIdLoader(info.context).load(root.node.id)
 
@@ -486,6 +497,7 @@ class ProductVariant(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
         return graphene.Node.get_node_from_global_id(_info, root.node.id)
 
     @staticmethod
+    @traced_resolver
     def resolve_weight(root: ChannelContext[models.ProductVariant], _info, **_kwargs):
         return convert_weight_to_default_weight_unit(root.node.weight)
 
@@ -497,11 +509,6 @@ class Product(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
         deprecation_reason=(
             "Will be removed in Saleor 4.0. Use the `description` field instead."
         ),
-    )
-    url = graphene.String(
-        description="The storefront URL for the product.",
-        required=True,
-        deprecation_reason="This field will be removed after 2020-07-31.",
     )
     thumbnail = graphene.Field(
         Image,
@@ -596,6 +603,7 @@ class Product(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
         ]
 
     @staticmethod
+    @traced_resolver
     def resolve_default_variant(root: ChannelContext[models.Product], info):
         default_variant_id = root.node.default_variant_id
         if default_variant_id is None:
@@ -611,6 +619,7 @@ class Product(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
         )
 
     @staticmethod
+    @traced_resolver
     def resolve_category(root: ChannelContext[models.Product], info):
         category_id = root.node.category_id
         if category_id is None:
@@ -618,16 +627,19 @@ class Product(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
         return CategoryByIdLoader(info.context).load(category_id)
 
     @staticmethod
+    @traced_resolver
     def resolve_description_json(root: ChannelContext[models.Product], info):
         description = root.node.description
         return description if description is not None else {}
 
     @staticmethod
+    @traced_resolver
     def resolve_tax_type(root: ChannelContext[models.Product], info):
         tax_data = info.context.plugins.get_tax_code_from_object_meta(root.node)
         return TaxType(tax_code=tax_data.code, description=tax_data.description)
 
     @staticmethod
+    @traced_resolver
     def resolve_thumbnail(root: ChannelContext[models.Product], info, *, size=255):
         def return_first_thumbnail(product_media):
             if product_media:
@@ -655,6 +667,7 @@ class Product(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
         return ""
 
     @staticmethod
+    @traced_resolver
     def resolve_pricing(root: ChannelContext[models.Product], info, address=None):
         if not root.channel_slug:
             return None
@@ -668,9 +681,11 @@ class Product(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
             context
         ).load((root.node.id, channel_slug))
         variants = ProductVariantsByProductIdLoader(context).load(root.node.id)
-        variants_channel_listing = VariantsChannelListingByProductIdAndChanneSlugLoader(
-            context
-        ).load((root.node.id, channel_slug))
+        variants_channel_listing = (
+            VariantsChannelListingByProductIdAndChannelSlugLoader(context).load(
+                (root.node.id, channel_slug)
+            )
+        )
         collections = CollectionsByProductIdLoader(context).load(root.node.id)
         channel = ChannelBySlugLoader(context).load(channel_slug)
 
@@ -694,11 +709,11 @@ class Product(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
                                     collections=collections,
                                     discounts=discounts,
                                     channel=channel,
+                                    manager=context.plugins,
                                     country=Country(country_code),
                                     local_currency=get_currency_for_country(
                                         country_code
                                     ),
-                                    plugins=context.plugins,
                                 )
                                 return ProductPricingInfo(**asdict(availability))
 
@@ -723,6 +738,7 @@ class Product(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
         )
 
     @staticmethod
+    @traced_resolver
     def resolve_is_available(root: ChannelContext[models.Product], info, address=None):
         if not root.channel_slug:
             return None
@@ -733,7 +749,7 @@ class Product(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
         )
 
         def calculate_is_available(product_channel_listing):
-            in_stock = is_product_in_stock(root.node, country_code)
+            in_stock = is_product_in_stock(root.node, country_code, channel_slug)
             is_visible = False
             if product_channel_listing:
                 is_visible = product_channel_listing.is_available_for_purchase()
@@ -746,52 +762,70 @@ class Product(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
         )
 
     @staticmethod
+    @traced_resolver
     def resolve_attributes(root: ChannelContext[models.Product], info):
         return SelectedAttributesByProductIdLoader(info.context).load(root.node.id)
 
     @staticmethod
+    @traced_resolver
     def resolve_media_by_id(root: ChannelContext[models.Product], info, id):
-        pk = get_database_id(info, id, ProductMedia)
+        _type, pk = from_global_id_or_error(id, only_type="ProductMedia")
         try:
             return root.node.media.get(pk=pk)
         except models.ProductMedia.DoesNotExist:
             raise GraphQLError("Product media not found.")
 
     @staticmethod
+    @traced_resolver
     def resolve_image_by_id(root: ChannelContext[models.Product], info, id):
-        pk = get_database_id(info, id, ProductMedia)
+        _type, pk = from_global_id_or_error(id, only_type="ProductMedia")
         try:
             return root.node.media.get(pk=pk)
         except models.ProductMedia.DoesNotExist:
             raise GraphQLError("Product image not found.")
 
     @staticmethod
+    @traced_resolver
     def resolve_media(root: ChannelContext[models.Product], info, **_kwargs):
         return MediaByProductIdLoader(info.context).load(root.node.id)
 
     @staticmethod
+    @traced_resolver
     def resolve_images(root: ChannelContext[models.Product], info, **_kwargs):
         return ImagesByProductIdLoader(info.context).load(root.node.id)
 
     @staticmethod
+    @traced_resolver
     def resolve_variants(root: ChannelContext[models.Product], info, **_kwargs):
-        return (
-            ProductVariantsByProductIdLoader(info.context)
-            .load(root.node.id)
-            .then(
-                lambda variants: [
-                    ChannelContext(node=variant, channel_slug=root.channel_slug)
-                    for variant in variants
-                ]
+        requestor = get_user_or_app_from_context(info.context)
+        is_staff = requestor_is_staff_member_or_app(requestor)
+        if is_staff and not root.channel_slug:
+            variants = ProductVariantsByProductIdLoader(info.context).load(root.node.id)
+        elif is_staff and root.channel_slug:
+            variants = ProductVariantsByProductIdAndChannel(info.context).load(
+                (root.node.id, root.channel_slug)
             )
-        )
+        else:
+            variants = AvailableProductVariantsByProductIdAndChannel(info.context).load(
+                (root.node.id, root.channel_slug)
+            )
+
+        def map_channel_context(variants):
+            return [
+                ChannelContext(node=variant, channel_slug=root.channel_slug)
+                for variant in variants
+            ]
+
+        return variants.then(map_channel_context)
 
     @staticmethod
     @permission_required(ProductPermissions.MANAGE_PRODUCTS)
+    @traced_resolver
     def resolve_channel_listings(root: ChannelContext[models.Product], info, **_kwargs):
         return ProductChannelListingByProductIdLoader(info.context).load(root.node.id)
 
     @staticmethod
+    @traced_resolver
     def resolve_collections(root: ChannelContext[models.Product], info, **_kwargs):
         requestor = get_user_or_app_from_context(info.context)
         is_staff = requestor_is_staff_member_or_app(requestor)
@@ -844,10 +878,12 @@ class Product(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
         return graphene.Node.get_node_from_global_id(_info, root.node.id)
 
     @staticmethod
+    @traced_resolver
     def resolve_weight(root: ChannelContext[models.Product], _info, **_kwargs):
         return convert_weight_to_default_weight_unit(root.node.weight)
 
     @staticmethod
+    @traced_resolver
     def resolve_is_available_for_purchase(root: ChannelContext[models.Product], info):
         if not root.channel_slug:
             return None
@@ -865,6 +901,7 @@ class Product(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
         )
 
     @staticmethod
+    @traced_resolver
     def resolve_available_for_purchase(root: ChannelContext[models.Product], info):
         if not root.channel_slug:
             return None
@@ -882,6 +919,7 @@ class Product(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
         )
 
     @staticmethod
+    @traced_resolver
     def resolve_product_type(root: ChannelContext[models.Product], info):
         return ProductTypeByIdLoader(info.context).load(root.node.product_type_id)
 
@@ -895,6 +933,7 @@ class ProductType(CountableDjangoObjectType):
         ),
         description="List of products of this type.",
         deprecation_reason=(
+            "Will be removed in Saleor 4.0. "
             "Use the top-level `products` query with the `productTypes` filter."
         ),
     )
@@ -935,15 +974,18 @@ class ProductType(CountableDjangoObjectType):
         ]
 
     @staticmethod
+    @traced_resolver
     def resolve_tax_type(root: models.ProductType, info):
         tax_data = info.context.plugins.get_tax_code_from_object_meta(root)
         return TaxType(tax_code=tax_data.code, description=tax_data.description)
 
     @staticmethod
+    @traced_resolver
     def resolve_product_attributes(root: models.ProductType, info):
         return ProductAttributesByProductTypeIdLoader(info.context).load(root.pk)
 
     @staticmethod
+    @traced_resolver
     def resolve_variant_attributes(
         root: models.ProductType,
         info,
@@ -964,6 +1006,7 @@ class ProductType(CountableDjangoObjectType):
         )
 
     @staticmethod
+    @traced_resolver
     def resolve_products(root: models.ProductType, info, channel=None, **_kwargs):
         requestor = get_user_or_app_from_context(info.context)
         if channel is None:
@@ -973,6 +1016,7 @@ class ProductType(CountableDjangoObjectType):
 
     @staticmethod
     @permission_required(ProductPermissions.MANAGE_PRODUCTS)
+    @traced_resolver
     def resolve_available_attributes(root: models.ProductType, info, **kwargs):
         qs = attribute_models.Attribute.objects.get_unassigned_product_type_attributes(
             root.pk
@@ -984,6 +1028,7 @@ class ProductType(CountableDjangoObjectType):
         return graphene.Node.get_node_from_global_id(_info, root.id)
 
     @staticmethod
+    @traced_resolver
     def resolve_weight(root: models.ProductType, _info, **_kwargs):
         return convert_weight_to_default_weight_unit(root.weight)
 
@@ -1030,6 +1075,7 @@ class Collection(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
         model = models.Collection
 
     @staticmethod
+    @traced_resolver
     def resolve_background_image(
         root: ChannelContext[models.Collection], info, size=None, **_kwargs
     ):
@@ -1044,6 +1090,7 @@ class Collection(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
             )
 
     @staticmethod
+    @traced_resolver
     def resolve_products(root: ChannelContext[models.Collection], info, **kwargs):
         requestor = get_user_or_app_from_context(info.context)
         qs = root.node.products.visible_to_user(requestor, root.channel_slug)
@@ -1051,6 +1098,7 @@ class Collection(ChannelContextTypeWithMetadata, CountableDjangoObjectType):
 
     @staticmethod
     @permission_required(ProductPermissions.MANAGE_PRODUCTS)
+    @traced_resolver
     def resolve_channel_listings(root: ChannelContext[models.Collection], info):
         return CollectionChannelListingByCollectionIdLoader(info.context).load(
             root.node.id
@@ -1084,10 +1132,6 @@ class Category(CountableDjangoObjectType):
         ),
         description="List of products in the category.",
     )
-    url = graphene.String(
-        description="The storefront's URL for the category.",
-        deprecation_reason="This field will be removed after 2020-07-31.",
-    )
     children = PrefetchingConnectionField(
         lambda: Category, description="List of children of the category."
     )
@@ -1116,6 +1160,7 @@ class Category(CountableDjangoObjectType):
         model = models.Category
 
     @staticmethod
+    @traced_resolver
     def resolve_ancestors(root: models.Category, info, **_kwargs):
         return root.get_ancestors()
 
@@ -1125,6 +1170,7 @@ class Category(CountableDjangoObjectType):
         return description if description is not None else {}
 
     @staticmethod
+    @traced_resolver
     def resolve_background_image(root: models.Category, info, size=None, **_kwargs):
         if root.background_image:
             return Image.get_adjusted(
@@ -1136,14 +1182,16 @@ class Category(CountableDjangoObjectType):
             )
 
     @staticmethod
+    @traced_resolver
     def resolve_children(root: models.Category, info, **_kwargs):
-        return root.children.all()
+        return CategoryChildrenByCategoryIdLoader(info.context).load(root.pk)
 
     @staticmethod
     def resolve_url(root: models.Category, _info):
         return ""
 
     @staticmethod
+    @traced_resolver
     def resolve_products(root: models.Category, info, channel=None, **_kwargs):
         requestor = get_user_or_app_from_context(info.context)
         is_staff = requestor_is_staff_member_or_app(requestor)
@@ -1184,6 +1232,7 @@ class ProductMedia(CountableDjangoObjectType):
         model = models.ProductMedia
 
     @staticmethod
+    @traced_resolver
     def resolve_url(root: models.ProductMedia, info, *, size=None):
         if root.external_url:
             return root.external_url
@@ -1225,6 +1274,7 @@ class ProductImage(graphene.ObjectType):
         return graphene.Node.to_global_id("ProductMedia", root.id)
 
     @staticmethod
+    @traced_resolver
     def resolve_url(root: models.ProductMedia, info, *, size=None):
         if size:
             url = get_thumbnail(root.image, size, method="thumbnail")

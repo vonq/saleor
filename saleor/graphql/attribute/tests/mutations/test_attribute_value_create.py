@@ -27,10 +27,10 @@ def test_validate_value_is_unique(color_attribute):
 
 CREATE_ATTRIBUTE_VALUE_MUTATION = """
     mutation createAttributeValue(
-        $attributeId: ID!, $name: String!) {
+        $attributeId: ID!, $name: String!, $value: String) {
     attributeValueCreate(
-        attribute: $attributeId, input: {name: $name}) {
-        attributeErrors {
+        attribute: $attributeId, input: {name: $name, value: $value}) {
+        errors {
             field
             message
             code
@@ -38,6 +38,7 @@ CREATE_ATTRIBUTE_VALUE_MUTATION = """
         attribute {
             values {
                 name
+                value
             }
         }
         attributeValue {
@@ -57,7 +58,8 @@ def test_create_attribute_value(
     query = CREATE_ATTRIBUTE_VALUE_MUTATION
     attribute_id = graphene.Node.to_global_id("Attribute", attribute.id)
     name = "test name"
-    variables = {"name": name, "attributeId": attribute_id}
+    value = "test value"
+    variables = {"name": name, "value": value, "attributeId": attribute_id}
 
     # when
     response = staff_api_client.post_graphql(
@@ -67,12 +69,13 @@ def test_create_attribute_value(
     # then
     content = get_graphql_content(response)
     data = content["data"]["attributeValueCreate"]
-    assert not data["attributeErrors"]
+    assert not data["errors"]
 
     attr_data = data["attributeValue"]
     assert attr_data["name"] == name
     assert attr_data["slug"] == slugify(name)
     assert name in [value["name"] for value in data["attribute"]["values"]]
+    assert value in [value["value"] for value in data["attribute"]["values"]]
 
 
 def test_create_attribute_value_not_unique_name(
@@ -93,9 +96,9 @@ def test_create_attribute_value_not_unique_name(
     # then
     content = get_graphql_content(response)
     data = content["data"]["attributeValueCreate"]
-    assert data["attributeErrors"]
-    assert data["attributeErrors"][0]["code"] == AttributeErrorCode.ALREADY_EXISTS.name
-    assert data["attributeErrors"][0]["field"] == "name"
+    assert data["errors"]
+    assert data["errors"][0]["code"] == AttributeErrorCode.ALREADY_EXISTS.name
+    assert data["errors"][0]["field"] == "name"
 
 
 def test_create_attribute_value_capitalized_name(
@@ -116,6 +119,6 @@ def test_create_attribute_value_capitalized_name(
     # then
     content = get_graphql_content(response)
     data = content["data"]["attributeValueCreate"]
-    assert data["attributeErrors"]
-    assert data["attributeErrors"][0]["code"] == AttributeErrorCode.ALREADY_EXISTS.name
-    assert data["attributeErrors"][0]["field"] == "name"
+    assert data["errors"]
+    assert data["errors"][0]["code"] == AttributeErrorCode.ALREADY_EXISTS.name
+    assert data["errors"][0]["field"] == "name"

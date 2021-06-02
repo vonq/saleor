@@ -4,6 +4,7 @@ import graphene
 from django_countries.fields import Country
 
 from ....core.permissions import ProductPermissions
+from ....core.tracing import traced_resolver
 from ....core.utils import get_currency_for_country
 from ....graphql.core.types import Money, MoneyRange
 from ....product import models
@@ -23,7 +24,7 @@ from ..dataloaders import (
     ProductByIdLoader,
     ProductVariantsByProductIdLoader,
     VariantChannelListingByVariantIdAndChannelSlugLoader,
-    VariantsChannelListingByProductIdAndChanneSlugLoader,
+    VariantsChannelListingByProductIdAndChannelSlugLoader,
 )
 
 
@@ -72,6 +73,7 @@ class ProductChannelListing(CountableDjangoObjectType):
         ]
 
     @staticmethod
+    @traced_resolver
     def resolve_channel(root: models.ProductChannelListing, info, **_kwargs):
         return ChannelByIdLoader(info.context).load(root.channel_id)
 
@@ -178,11 +180,11 @@ class ProductChannelListing(CountableDjangoObjectType):
                                     collections=collections,
                                     discounts=discounts,
                                     channel=channel,
+                                    manager=context.plugins,
                                     country=Country(country_code),
                                     local_currency=get_currency_for_country(
                                         country_code
                                     ),
-                                    plugins=context.plugins,
                                 )
                                 from .products import ProductPricingInfo
 
@@ -195,7 +197,7 @@ class ProductChannelListing(CountableDjangoObjectType):
                             )
 
                         return (
-                            VariantsChannelListingByProductIdAndChanneSlugLoader(
+                            VariantsChannelListingByProductIdAndChannelSlugLoader(
                                 context
                             )
                             .load((root.product_id, channel.slug))

@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 import graphene
 from django.contrib.auth.models import AnonymousUser
@@ -19,7 +19,7 @@ mutation fulfillOrder(
         order: $order,
         input: $input
     ) {
-        orderErrors {
+        errors {
             field
             code
             message
@@ -68,7 +68,7 @@ def test_order_fulfill(
     )
     content = get_graphql_content(response)
     data = content["data"]["orderFulfill"]
-    assert not data["orderErrors"]
+    assert not data["errors"]
 
     fulfillment_lines_for_warehouses = {
         str(warehouse.pk): [
@@ -77,7 +77,7 @@ def test_order_fulfill(
         ]
     }
     mock_create_fulfillments.assert_called_once_with(
-        staff_user, order, fulfillment_lines_for_warehouses, True
+        staff_user, order, fulfillment_lines_for_warehouses, ANY, True
     )
 
 
@@ -118,7 +118,7 @@ def test_order_fulfill_as_app(
     )
     content = get_graphql_content(response)
     data = content["data"]["orderFulfill"]
-    assert not data["orderErrors"]
+    assert not data["errors"]
 
     fulfillment_lines_for_warehouses = {
         str(warehouse.pk): [
@@ -127,7 +127,7 @@ def test_order_fulfill_as_app(
         ]
     }
     mock_create_fulfillments.assert_called_once_with(
-        AnonymousUser(), order, fulfillment_lines_for_warehouses, True
+        AnonymousUser(), order, fulfillment_lines_for_warehouses, ANY, True
     )
 
 
@@ -175,7 +175,7 @@ def test_order_fulfill_many_warehouses(
     )
     content = get_graphql_content(response)
     data = content["data"]["orderFulfill"]
-    assert not data["orderErrors"]
+    assert not data["errors"]
 
     fulfillment_lines_for_warehouses = {
         str(warehouse1.pk): [
@@ -186,7 +186,7 @@ def test_order_fulfill_many_warehouses(
     }
 
     mock_create_fulfillments.assert_called_once_with(
-        staff_user, order, fulfillment_lines_for_warehouses, True
+        staff_user, order, fulfillment_lines_for_warehouses, ANY, True
     )
 
 
@@ -222,13 +222,13 @@ def test_order_fulfill_without_notification(
     )
     content = get_graphql_content(response)
     data = content["data"]["orderFulfill"]
-    assert not data["orderErrors"]
+    assert not data["errors"]
 
     fulfillment_lines_for_warehouses = {
         str(warehouse.pk): [{"order_line": order_line, "quantity": 1}]
     }
     mock_create_fulfillments.assert_called_once_with(
-        staff_user, order, fulfillment_lines_for_warehouses, False
+        staff_user, order, fulfillment_lines_for_warehouses, ANY, False
     )
 
 
@@ -280,13 +280,13 @@ def test_order_fulfill_lines_with_empty_quantity(
     )
     content = get_graphql_content(response)
     data = content["data"]["orderFulfill"]
-    assert not data["orderErrors"]
+    assert not data["errors"]
 
     fulfillment_lines_for_warehouses = {
         str(warehouse.pk): [{"order_line": order_line2, "quantity": 2}]
     }
     mock_create_fulfillments.assert_called_once_with(
-        staff_user, order, fulfillment_lines_for_warehouses, True
+        staff_user, order, fulfillment_lines_for_warehouses, ANY, True
     )
 
 
@@ -320,14 +320,50 @@ def test_order_fulfill_zero_quantity(
     )
     content = get_graphql_content(response)
     data = content["data"]["orderFulfill"]
-    assert data["orderErrors"]
-    error = data["orderErrors"][0]
+    assert data["errors"]
+    error = data["errors"][0]
     assert error["field"] == "lines"
     assert error["code"] == OrderErrorCode.ZERO_QUANTITY.name
     assert not error["orderLine"]
     assert not error["warehouse"]
 
     mock_create_fulfillments.assert_not_called()
+
+
+def test_order_fulfill_channel_without_shipping_zones(
+    staff_api_client,
+    order_with_lines,
+    permission_manage_orders,
+    warehouse,
+):
+    order = order_with_lines
+    order.channel.shipping_zones.clear()
+    query = ORDER_FULFILL_QUERY
+    order_id = graphene.Node.to_global_id("Order", order.id)
+    order_line = order.lines.first()
+    order_line_id = graphene.Node.to_global_id("OrderLine", order_line.id)
+    warehouse_id = graphene.Node.to_global_id("Warehouse", warehouse.pk)
+    variables = {
+        "order": order_id,
+        "input": {
+            "notifyCustomer": True,
+            "lines": [
+                {
+                    "orderLineId": order_line_id,
+                    "stocks": [{"quantity": 3, "warehouse": warehouse_id}],
+                },
+            ],
+        },
+    }
+    response = staff_api_client.post_graphql(
+        query, variables, permissions=[permission_manage_orders]
+    )
+    content = get_graphql_content(response)
+    data = content["data"]["orderFulfill"]
+    assert len(data["errors"]) == 1
+    error = data["errors"][0]
+    assert error["field"] == "stocks"
+    assert error["code"] == OrderErrorCode.INSUFFICIENT_STOCK.name
 
 
 @patch("saleor.graphql.order.mutations.fulfillments.create_fulfillments")
@@ -360,8 +396,8 @@ def test_order_fulfill_fulfilled_order(
     )
     content = get_graphql_content(response)
     data = content["data"]["orderFulfill"]
-    assert data["orderErrors"]
-    error = data["orderErrors"][0]
+    assert data["errors"]
+    error = data["errors"][0]
     assert error["field"] == "orderLineId"
     assert error["code"] == OrderErrorCode.FULFILL_ORDER_LINE.name
     assert error["orderLine"] == order_line_id
@@ -413,8 +449,8 @@ def test_order_fulfill_warehouse_with_insufficient_stock_exception(
     )
     content = get_graphql_content(response)
     data = content["data"]["orderFulfill"]
-    assert data["orderErrors"]
-    error = data["orderErrors"][0]
+    assert data["errors"]
+    error = data["errors"][0]
     assert error["field"] == "stocks"
     assert error["code"] == OrderErrorCode.INSUFFICIENT_STOCK.name
     assert error["orderLine"] == order_line_id
@@ -454,8 +490,8 @@ def test_order_fulfill_warehouse_duplicated_warehouse_id(
     )
     content = get_graphql_content(response)
     data = content["data"]["orderFulfill"]
-    assert data["orderErrors"]
-    error = data["orderErrors"][0]
+    assert data["errors"]
+    error = data["errors"][0]
     assert error["field"] == "warehouse"
     assert error["code"] == OrderErrorCode.DUPLICATED_INPUT_ITEM.name
     assert not error["orderLine"]
@@ -497,8 +533,8 @@ def test_order_fulfill_warehouse_duplicated_order_line_id(
     )
     content = get_graphql_content(response)
     data = content["data"]["orderFulfill"]
-    assert data["orderErrors"]
-    error = data["orderErrors"][0]
+    assert data["errors"]
+    error = data["errors"][0]
     assert error["field"] == "orderLineId"
     assert error["code"] == OrderErrorCode.DUPLICATED_INPUT_ITEM.name
     assert error["orderLine"] == order_line_id
@@ -506,7 +542,7 @@ def test_order_fulfill_warehouse_duplicated_order_line_id(
     mock_create_fulfillments.assert_not_called()
 
 
-@patch("saleor.order.emails.send_fulfillment_update.delay")
+@patch("saleor.plugins.manager.PluginsManager.notify")
 def test_fulfillment_update_tracking(
     send_fulfillment_update_mock,
     staff_api_client,
@@ -548,7 +584,7 @@ FULFILLMENT_UPDATE_TRACKING_WITH_SEND_NOTIFICATION_QUERY = """
     """
 
 
-@patch("saleor.order.emails.send_fulfillment_update.delay")
+@patch("saleor.graphql.order.mutations.fulfillments.send_fulfillment_update")
 def test_fulfillment_update_tracking_send_notification_true(
     send_fulfillment_update_mock,
     staff_api_client,
@@ -567,11 +603,11 @@ def test_fulfillment_update_tracking_send_notification_true(
     data = content["data"]["orderFulfillmentUpdateTracking"]["fulfillment"]
     assert data["trackingNumber"] == tracking
     send_fulfillment_update_mock.assert_called_once_with(
-        fulfillment.order.pk, fulfillment.pk
+        fulfillment.order, fulfillment, ANY
     )
 
 
-@patch("saleor.order.emails.send_fulfillment_update.delay")
+@patch("saleor.order.notifications.send_fulfillment_update")
 def test_fulfillment_update_tracking_send_notification_false(
     send_fulfillment_update_mock,
     staff_api_client,
