@@ -1,17 +1,43 @@
 import json
-from typing import List, Optional, Any
+from dataclasses import dataclass
 
-from saleor.payment.interface import GatewayResponse, PaymentData, CustomerSource, \
-    PaymentGateway
-from saleor.plugins.base_plugin import BasePlugin, PluginConfigurationType
+from saleor.payment.interface import GatewayResponse, PaymentData
+from saleor.plugins.base_plugin import BasePlugin
 
+
+
+@dataclass
+class Contract:
+    customer_id: str
+    balance: int
+
+    def can_charge(self, amount):
+        return self.balance >= amount
+
+
+class InsufficientFunds(Exception):
+    pass
 
 class ContractsRepository:
-    def get_contract_by_id(self):
-        pass
 
-    def charge_contract(self):
-        pass
+    contracts = {
+        'customer_1': Contract('customer_1', 100),
+        'customer_2': Contract('customer_1', 100)
+    }
+
+    @classmethod
+    def get_contract_by_customer_id(cls, customer_id):
+        return cls.contracts.get(customer_id)
+
+
+    @classmethod
+    def charge_contract(cls, customer_id, billed_amount):
+        contract = cls.get_contract_by_customer_id(customer_id)
+        if contract:
+            if contract.can_charge(billed_amount):
+                contract.balance -= billed_amount
+            else:
+                raise InsufficientFunds("Cannot charge contract because of insufficient funds")
 
 
 class ContractsPaymentPlugin(BasePlugin):
@@ -50,7 +76,16 @@ class ContractsPaymentPlugin(BasePlugin):
         # check the balance
         # adjust the balance
         # return status?
-        return previous_value
+        return GatewayResponse(
+            is_success=True,
+            action_required=False,
+            kind="capture",
+            error=None,
+            amount=payment_information.amount,
+            currency=payment_information.currency,
+            transaction_id='1234', # TODO
+            customer_id=payment_information.token,  # This is a workaround!
+        )
 
     def get_supported_currencies(self, previous_value):
         return ["EUR", "GBP", "USD"]
