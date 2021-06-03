@@ -15,7 +15,7 @@ class CheckoutDetailsPlugin(BasePlugin):
     PLUGIN_DESCRIPTION = ""
     CONFIG_STRUCTURE = None
     DEFAULT_CONFIGURATION = []
-    DEFAULT_ACTIVE = False
+    DEFAULT_ACTIVE = True
 
     def preprocess_order_creation(
             self,
@@ -24,6 +24,7 @@ class CheckoutDetailsPlugin(BasePlugin):
             lines: Optional[Iterable["CheckoutLineInfo"]],
             previous_value: Any,
     ):
+        return previous_value
         if not checkout_info.checkout.metadata:
             raise ValidationError("No metadata provided in the checkout object")
 
