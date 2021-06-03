@@ -71,6 +71,15 @@ class FinalMetadataSerializer(MetadataSerializer):
         ],
         allow_null=False,
     )
+
+    vacancy_minimumYearsOfExperience = serializers.IntegerField(
+        min_value=1, allow_null=False
+    )
+
+    vacancy_educationLevelId = serializers.IntegerField(
+        allow_null=False
+    )
+
     vacancy_workingHours_minimum = serializers.IntegerField(
         min_value=1, allow_null=False
     )
