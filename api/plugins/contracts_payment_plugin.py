@@ -8,6 +8,7 @@ from saleor.plugins.base_plugin import BasePlugin
 @dataclass
 class Contract:
     customer_id: str
+    contract_id: str
     balance: int
 
     def can_charge(self, amount):
@@ -25,8 +26,8 @@ class NonExistentContract(Exception):
 class ContractsRepository:
 
     contracts = {
-        "contract_1": Contract("customer_1", 100),
-        "contract_2": Contract("customer_1", 100),
+        "contract_1": Contract("customer_1", "contract_1",100),
+        "contract_2": Contract("customer_1", "contract_2", 100),
     }
 
     @classmethod
@@ -36,8 +37,6 @@ class ContractsRepository:
     @classmethod
     def charge_contract(cls, customer_id, billed_amount):
         contract = cls.get_contract_by_customer_id(customer_id)
-        print(contract)
-        print(contract.balance)
         if contract:
             if contract.can_charge(billed_amount):
                 contract.balance -= billed_amount
@@ -77,7 +76,7 @@ class ContractsPaymentPlugin(BasePlugin):
         return [
             {
                 "field": contract.customer_id,
-                "value": json.dumps({"balance": contract.balance}),
+                "value": json.dumps({"balance": float(contract.balance)}),
             }
             for contract in contracts.values()
         ]
