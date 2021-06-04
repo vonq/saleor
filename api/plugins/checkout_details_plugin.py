@@ -24,7 +24,6 @@ class CheckoutDetailsPlugin(BasePlugin):
             lines: Optional[Iterable["CheckoutLineInfo"]],
             previous_value: Any,
     ):
-        return previous_value
         if not checkout_info.checkout.metadata:
             raise ValidationError("No metadata provided in the checkout object")
 
