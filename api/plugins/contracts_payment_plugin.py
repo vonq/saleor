@@ -75,7 +75,7 @@ class ContractsPaymentPlugin(BasePlugin):
         contracts = ContractsRepository.get_all_contracts()
         return [
             {
-                "field": contract.customer_id,
+                "field": contract.contract_id,
                 "value": json.dumps({"balance": float(contract.balance)}),
             }
             for contract in contracts.values()
