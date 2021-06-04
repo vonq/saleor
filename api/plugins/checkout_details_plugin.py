@@ -37,3 +37,4 @@ class CheckoutDetailsPlugin(BasePlugin):
         checkout_metadata = MetadataSerializer(data=checkout.metadata)
         if not checkout_metadata.is_valid(raise_exception=False):
             raise ValidationError(checkout_metadata.errors)
+        return previous_value
