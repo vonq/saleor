@@ -374,6 +374,7 @@ class ProductJmpSerializer(ProductSerializer):
     channel_type = serializers.ChoiceField(
         source="salesforce_product_type", choices=Product.SalesforceProductType.choices
     )
+    customer_id = serializers.CharField(read_only=True)
 
 
 class ChannelSerializer(serializers.Serializer):

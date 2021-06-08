@@ -76,3 +76,14 @@ class MyOwnProductsTestCase(SearchTestCase):
         )
         self.assertTrue(resp.status_code == 200)
         self.assertEqual(len(resp.json()["results"]), 2)
+
+    def test_can_see_customer_id_in_response(self):
+        force_user_login(self.client, "jmp")
+        resp = self.client.get(
+            reverse(
+                "api.products:products-detail",
+                kwargs={"product_id": self.my_own_product.product_id},
+            )
+        )
+        self.assertTrue("customer_id" in resp.json())
+        self.assertEqual(self.my_own_product.customer_id, resp.json()["customer_id"])
