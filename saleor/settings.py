@@ -569,8 +569,8 @@ PLUGINS = [
     "saleor.plugins.user_email.plugin.UserEmailPlugin",
     "saleor.plugins.admin_email.plugin.AdminEmailPlugin",
     "saleor.plugins.sendgrid.plugin.SendgridEmailPlugin",
-    "api.plugins.checkout_details_plugin.CheckoutDetailsPlugin",
-    "api.plugins.contracts_payment_plugin.ContractsPaymentPlugin",
+    "plugins.checkout_details_plugin.CheckoutDetailsPlugin",
+    "plugins.contracts_payment_plugin.ContractsPaymentPlugin",
 ]
 
 # Plugin discovery

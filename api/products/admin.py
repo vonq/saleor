@@ -3,9 +3,10 @@ from django import forms
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin.models import LogEntry
+from django.contrib.admin.sites import NotRegistered
 from django.contrib.admin.widgets import FilteredSelectMultiple
+from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db.models import Count
 from django.http import Http404
@@ -18,6 +19,9 @@ from mptt.admin import MPTTModelAdmin
 from mptt.forms import TreeNodeChoiceField
 from rest_framework.utils import json
 from reversion_compare.admin import CompareVersionAdmin
+
+
+User = get_user_model()
 
 from api.field_permissions.admin import PermissionBasedFieldsMixin
 from api.products.models import (
@@ -67,8 +71,11 @@ class UserAdmin(BaseUserAdmin):
     inlines = (ProfileInline,)
 
 
-admin.site.unregister(User)
-admin.site.register(User, UserAdmin)
+try:
+    admin.site.unregister(User)
+    admin.site.register(User, UserAdmin)
+except NotRegistered:
+    pass
 
 
 class JobFunctionTreeModelInlineForm(forms.ModelForm):

@@ -3,6 +3,8 @@ import re
 import uuid
 import datetime
 from typing import List, Iterable
+
+from django.contrib.auth import get_user_model
 from storages.backends.s3boto3 import S3Boto3Storage
 from dateutil.tz import UTC
 from django.conf import settings
@@ -18,7 +20,6 @@ from PIL import Image
 from api.field_permissions.models import FieldPermissionModelMixin
 from api.arrayfield import PKBArrayField
 from api.products.geocoder import Geocoder, MAPBOX_INTERNATIONAL_PLACE_TYPE
-from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
 from api.settings import AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME
 import requests
@@ -28,6 +29,7 @@ from io import BytesIO
 from django.core.files import File
 
 SEPARATOR = "|"
+User = get_user_model()
 
 
 class CreatedUpdatedModelMixin(models.Model):
