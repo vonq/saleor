@@ -243,7 +243,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         )
 
         if self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]:
-            queryset = queryset.filter(available_in_jmp=True).exclude(MY_OWN_PRODUCTS)
+            queryset = queryset.filter(available_in_jmp=True)
 
         if self.is_recommendation:
             queryset = self.add_recommendation_filter(queryset)
@@ -503,6 +503,10 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             )
         elif search_serializer.is_sort_by_recent:
             queryset = queryset.order_by("-created")
+        else:
+            if self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]:
+                queryset = queryset.exclude(MY_OWN_PRODUCTS)
+
         page = self.paginate_queryset(queryset)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
