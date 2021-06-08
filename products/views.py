@@ -245,6 +245,14 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         if self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]:
             queryset = queryset.filter(available_in_jmp=True)
 
+        if self.request.user.profile.type == Profile.Type.MAPI:
+            # MAPI (or HAPI) is only required to show Job Boards, Social or Google products
+            queryset = queryset.filter(
+                Q(salesforce_product_type=Product.SalesforceProductType.JOB_BOARD)
+                | Q(salesforce_product_type=Product.SalesforceProductType.SOCIAL)
+                | Q(salesforce_product_type=Product.SalesforceProductType.GOOGLE)
+            )
+
         if self.is_recommendation:
             queryset = self.add_recommendation_filter(queryset)
 

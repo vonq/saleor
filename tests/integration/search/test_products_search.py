@@ -738,3 +738,39 @@ class ChannelTypeSearchTestCase(SearchTestCase):
         )
         self.assertEqual(len(resp.json()["results"]), 1)
         self.assertEqual(resp.json()["results"][0]["title"], "This is a job board")
+
+
+class ProductTypesTestCase(SearchTestCase):
+    model_index_class_pairs = [(Product, ProductIndex)]
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.job_board = Product.objects.create(
+            title="A Job Board",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            status=Product.Status.ACTIVE,
+        )
+        cls.social_board = Product.objects.create(
+            title="A Social Board",
+            salesforce_product_type=Product.SalesforceProductType.SOCIAL,
+            status=Product.Status.ACTIVE,
+        )
+
+        cls.google_board = Product.objects.create(
+            title="A Google Board",
+            salesforce_product_type=Product.SalesforceProductType.GOOGLE,
+            status=Product.Status.ACTIVE,
+        )
+
+        cls.other_board = Product.objects.create(
+            title="An 'Other' Board",
+            salesforce_product_type=Product.SalesforceProductType.OTHER,
+            status=Product.Status.ACTIVE,
+        )
+
+    def test_mapi_only_sees_specific_product_types(self):
+        force_user_login(self.client, "mapi")
+        resp = self.client.get(reverse("api.products:products-list"))
+        self.assertEqual(len(resp.json()["results"]), 3)
+        titles = [product["title"] for product in resp.json()["results"]]
+        self.assertFalse("An 'Other' Board" in titles)
