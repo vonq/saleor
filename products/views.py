@@ -512,7 +512,10 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         elif search_serializer.is_sort_by_recent:
             queryset = queryset.order_by("-created")
         else:
-            if self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]:
+            if (
+                self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]
+                and not self.is_recommendation
+            ):
                 queryset = queryset.exclude(MY_OWN_PRODUCTS)
 
         page = self.paginate_queryset(queryset)
