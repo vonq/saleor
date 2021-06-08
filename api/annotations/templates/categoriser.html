@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Categoriser</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+</head>
+<body>
+    <style>
+        [v-cloak] { display:none; }
+        [v-cloak]::before { content: "loading…" }
+
+        body {
+            background-color: lightslategrey;
+        }
+
+        h1 {
+            color: lightgray;
+        }
+        .board {
+            background-color: #fff;
+        }
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background-image: linear-gradient(180deg, lightslategrey 90%, transparent);
+        }
+    </style>
+    <div id="categoriser-app" class="container" v-cloak>
+        <div class="row top-bar pb-2">
+            <div class="col-12">
+                <h1>One-time Categoriser</h1>
+                <form v-on:submit.prevent="">
+                    <label></label>
+                    <input id="search-text" v-model="filterModel.text" placeholder="search in description" disabled="disabled">
+
+                    <b>Defaults</b>
+                    <label>Job function: </label>
+                    <select v-model="selectedJobFunction">
+                        <option v-for="jobFunction in jobFunctions" v-bind:value="jobFunction" v-html="jobFunction"></option>
+                    </select>
+                    <label>Industry: </label>
+                    <select v-model="selectedIndustry">
+                        <option v-for="industry in industries" v-bind:value="industry" v-html="industry"></option>
+                    </select>
+                    <label>Channel Type: </label>
+                    <select v-model="selectedChannelType">
+                        <option v-for="type in channelTypes" v-bind:value="type" v-html="type"></option>
+                    </select>
+                </form>
+            </div>
+        </div>
+        <div class="row board mb-1" v-for="board in filteredBoards">
+{#            [[ board ]]#}
+            <div class="col-8">
+                <h3>[[ board.title]]<br><small>[[ board.url ]]</small></h3>
+                <p class="small">[[ board.description ]]</p>
+                <div>Locations: [[ board.location.join(', ')  ]]</div>
+            </div>
+            <div class="col-4">
+                <div>Job functions: [[ board.jobfunctions.join(', ') ]]</div>
+                <div>Industries: [[ board.industries.join(', ')  ]]</div>
+                <div>Channel type: [[ board.channel_type  ]]</div>
+
+                <button v-if="selectedJobFunction && !board.jobfunctions.includes(selectedJobFunction)"
+                        @click="postCategorisation(board.id, 'job_functions', selectedJobFunction)"
+                        class="btn btn-block btn-outline-primary">
+                    Set as alias of <strong>[[selectedJobFunction]]</strong>
+                </button>
+                <button v-if="selectedIndustry && !board.industries.includes(selectedIndustry)"
+                        @click="postCategorisation(board.id, 'industries', selectedIndustry)"
+                        class="btn btn-block btn-outline-primary">Change to <strong>[[selectedIndustry]]</strong>function</button>
+
+            </div>
+        </div>
+    </div>
+    <script>
+        data = {'jobFunctions': {{ jobFunctions | safe}}, 'industries': {{ industries | safe}}, 'channelTypes': {{ channelTypes | safe}}}
+    </script>
+    <script src="/static/lodash.min.js"></script>
+    <script src="/static/vue.min.js"></script>
+    <script src="/static/d3.v5.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+
+    <script src="/static/categoriser_app.js"></script>
+</body>
+</html>

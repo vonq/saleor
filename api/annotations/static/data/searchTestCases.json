@@ -1,0 +1,7 @@
+[
+    {"jobFunction": {"id":6, "name":"Software Development"},"industry":{"id":1, "name":"Information Technology"}, "location": {"id":2378, "name":"United Kingdom"}},
+    {"jobFunction": {"id":27, "name":"Nursing"},"industry":{"id":12, "name":"Healthcare"}, "location": {"id": 2364, "name":"Netherlands"}},
+    {"jobFunction": {"id":12, "name":"Accounting"},"industry":{"id":12, "name":"Healthcare"}, "location": {"id": 2483, "name":"Europe"}},
+    {"jobFunction": {"id":21, "name":"Healthcare"},"industry":{"id":31, "name":"Pharmaceuticals"}, "location": {"id": 2364, "name":"Netherlands"}}
+
+]
