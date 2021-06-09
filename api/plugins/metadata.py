@@ -40,8 +40,8 @@ class MetadataSerializer(serializers.Serializer):
     vacancy_tracking_applicationUrl = serializers.URLField(
         allow_null=True, required=False
     )
-    vacancy_tracking_utm = serializers.ListSerializer(
-        child=serializers.CharField(), allow_empty=True, allow_null=True, required=False
+    vacancy_tracking_utm = serializers.CharField(
+        allow_null=True, required=False, allow_blank=True
     )
     contactInfo_name = serializers.CharField(
         max_length=64, allow_null=True, required=False
@@ -113,9 +113,7 @@ class FinalMetadataSerializer(MetadataSerializer):
     vacancy_tracking_applicationUrl = serializers.URLField(
         allow_null=False, required=True
     )
-    vacancy_tracking_utm = serializers.ListSerializer(
-        child=serializers.CharField(), allow_empty=False, allow_null=True, required=True
-    )
+    vacancy_tracking_utm = serializers.CharField(allow_null=True, required=True, allow_blank=True)
     contactInfo_name = serializers.CharField(
         max_length=64, allow_null=False, required=True
     )
