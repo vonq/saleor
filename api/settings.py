@@ -170,13 +170,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:9001",
-    "https://platform-acceptance.vonq.it",
-    "https://platform.vonq.com",
-    "http://localhost:3000",
-    "https://master.djaiqvf4qskm2.amplifyapp.com",
-]
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
