@@ -42,6 +42,8 @@ ALLOWED_HOSTS = (
         ".pkb.web-acceptance.vonq-aws.com",
         ".pkb.web-acceptance.vonq.int",
         ".pkb.web-production.vonq-aws.com",
+        "saleor-poc-storefront.herokuapp.com",
+        "saleor-poc-dashboard.herokuapp.com",
         ".vonq.int",  # This will cover nginx host renaming for health check
     ]
     + ["localhost"]
@@ -175,6 +177,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://platform-acceptance.vonq.it",
     "https://platform.vonq.com",
     "http://localhost:3000",
+    "https://master.djaiqvf4qskm2.amplifyapp.com",
     "https://master.djaiqvf4qskm2.amplifyapp.com",
 ]
 
