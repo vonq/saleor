@@ -33,8 +33,11 @@ class MetadataSerializer(serializers.Serializer):
     vacancy_taxonomy_jobCategoryId = serializers.IntegerField(
         allow_null=True, required=False
     )
-    vacancy_taxonomy_seniority = serializers.IntegerField(
+    vacancy_taxonomy_seniorityId = serializers.IntegerField(
         allow_null=True, required=False
+    )
+    vacancy_educationLevelId = serializers.IntegerField(
+        allow_null=False
     )
     vacancy_tracking_vacancy_url = serializers.URLField(allow_null=True, required=False)
     vacancy_tracking_applicationUrl = serializers.URLField(
@@ -43,6 +46,43 @@ class MetadataSerializer(serializers.Serializer):
     vacancy_tracking_utm = serializers.CharField(
         allow_null=True, required=False, allow_blank=True
     )
+    vacancy_minimumYearsOfExperience = serializers.IntegerField(
+        min_value=1, allow_null=False
+    )
+
+    vacancy_type = serializers.ChoiceField(
+        choices=[
+            "permanent",
+            "temporary",
+            "fixed_term",
+            "fixed_term_with_option_for_permanent",
+            "freelance",
+            "traineeship",
+            "internship",
+        ],
+        allow_null=False,
+    )
+
+    vacancy_workingHours_minimum = serializers.IntegerField(
+        min_value=1, allow_null=False
+    )
+    vacancy_workingHours_maximum = serializers.IntegerField(
+        min_value=1, allow_null=False
+    )
+
+    vacancy_salary_minimumAmount = serializers.IntegerField(
+        min_value=1, allow_null=False
+    )
+    vacancy_salary_maximumAmount = serializers.IntegerField(
+        min_value=1, allow_null=False
+    )
+    vacancy_salary_perPeriod = serializers.ChoiceField(
+        choices=["yearly", "monthly", "weekly", "daily", "hourly"]
+    )
+    vacancy_salary_currency = serializers.CharField(
+        max_length=3, min_length=3, allow_null=False
+    )
+
     contactInfo_name = serializers.CharField(
         max_length=64, allow_null=True, required=False
     )
@@ -113,7 +153,8 @@ class FinalMetadataSerializer(MetadataSerializer):
     vacancy_tracking_applicationUrl = serializers.URLField(
         allow_null=False, required=True
     )
-    vacancy_tracking_utm = serializers.CharField(allow_null=True, required=True, allow_blank=True)
+    vacancy_tracking_utm = serializers.CharField(
+        allow_null=True, required=True, allow_blank=True)
     contactInfo_name = serializers.CharField(
         max_length=64, allow_null=False, required=True
     )
@@ -121,7 +162,7 @@ class FinalMetadataSerializer(MetadataSerializer):
 
     def validate(self, attrs):
         if (
-            attrs["vacancy_salary_maximumAmount"]
+            attrs["vacancy_workingHours_maximum"]
             < attrs["vacancy_workingHours_minimum"]
         ):
             raise serializers.ValidationError(
