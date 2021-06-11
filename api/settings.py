@@ -37,19 +37,19 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True if is_development() else False
 
-ALLOWED_HOSTS = (
-    [
-        ".pkb.web-acceptance.vonq-aws.com",
-        ".pkb.web-acceptance.vonq.int",
-        ".pkb.web-production.vonq-aws.com",
-        "saleor-poc-storefront.herokuapp.com",
-        "saleor-poc-dashboard.herokuapp.com",
-        ".vonq.int",  # This will cover nginx host renaming for health check
-    ]
-    + ["localhost"]
-    if is_development
-    else []
-)
+# ALLOWED_HOSTS = (
+#     [
+#         ".pkb.web-acceptance.vonq-aws.com",
+#         ".pkb.web-acceptance.vonq.int",
+#         ".pkb.web-production.vonq-aws.com",
+#         "saleor-poc-storefront.herokuapp.com",
+#         "saleor-poc-dashboard.herokuapp.com",
+#         ".vonq.int",  # This will cover nginx host renaming for health check
+#     ]
+#     + ["localhost"]
+#     if is_development
+#     else []
+# )
 
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

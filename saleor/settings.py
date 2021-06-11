@@ -19,7 +19,7 @@ from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
 
-# from api.settings import *
+from api.settings import *
 
 from . import patched_print_object
 
@@ -55,7 +55,7 @@ MANAGERS = ADMINS
 
 _DEFAULT_CLIENT_HOSTS = "localhost,127.0.0.1"
 
-ALLOWED_CLIENT_HOSTS = "poc.vonq.beweis.co.uk,dashboard.vonq.beweis.co.uk, saleor-backend.vonq.beweis.co.uk,saleor-poc-storefront.herokuapp.com,saleor-poc-dashboard.herokuapp.com" #os.environ.get("ALLOWED_CLIENT_HOSTS")
+ALLOWED_CLIENT_HOSTS = os.environ.get("ALLOWED_CLIENT_HOSTS")
 if not ALLOWED_CLIENT_HOSTS:
     if DEBUG:
         ALLOWED_CLIENT_HOSTS = _DEFAULT_CLIENT_HOSTS
@@ -220,6 +220,7 @@ if not SECRET_KEY and DEBUG:
     SECRET_KEY = get_random_secret_key()
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -432,9 +433,9 @@ TEST_RUNNER = "saleor.tests.runner.PytestTestRunner"
 
 PLAYGROUND_ENABLED = get_bool_from_env("PLAYGROUND_ENABLED", True)
 
-ALLOWED_HOSTS = get_list("poc.vonq.beweis.co.uk,dashboard.vonq.beweis.co.uk, saleor-backend.vonq.beweis.co.uk,saleor-poc-storefront.herokuapp.com,saleor-poc-dashboard.herokuapp.com") #get_list(os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1"))
-ALLOWED_GRAPHQL_ORIGINS = get_list("poc.vonq.beweis.co.uk,dashboard.vonq.beweis.co.uk, saleor-backend.vonq.beweis.co.uk,saleor-poc-storefront.herokuapp.com,saleor-poc-dashboard.herokuapp.com") #get_list(os.environ.get("ALLOWED_GRAPHQL_ORIGINS", "*"))
-
+ALLOWED_HOSTS = get_list(os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,.herokuapp.com,.beweis.co.uk"))
+ALLOWED_GRAPHQL_ORIGINS = get_list(os.environ.get("ALLOWED_GRAPHQL_ORIGINS", "*"))
+CORS_ALLOW_ALL_ORIGINS = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Amazon S3 configuration
