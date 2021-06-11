@@ -14,7 +14,7 @@ class SFAccount:
         return self.pk
 
 
-@register("channel_account")
+@register("account")
 class TagsLookup(LookupChannel):
     def get_query(self, q, request):
         accounts = get_accounts(query=q)

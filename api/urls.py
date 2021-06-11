@@ -22,12 +22,14 @@ from rest_framework import permissions
 from django.conf import settings
 from ajax_select import urls as ajax_select_urls
 
+from api.products.admin import get_admin_from_sf_uuid
 from api.products.views import (
     LocationSearchViewSet,
     JobTitleSearchViewSet,
     JobFunctionsViewSet,
     ChannelsViewSet,
 )
+from api.settings import is_development
 
 schema_view = get_schema_view(
     openapi.Info(title="VONQ Product Knowledge Base API", default_version="v1"),
@@ -37,6 +39,7 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path(r"admin/", include("massadmin.urls")),
+    path(r"admin/edit/<str:uuid>/", get_admin_from_sf_uuid, name="saleforce-edit"),
     path("admin/", admin.site.urls),
     re_path(r"health/?", include("health_check.urls")),
     path(
@@ -74,4 +77,5 @@ urlpatterns = [
     ),
 ]
 
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+if not is_development():
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
