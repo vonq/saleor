@@ -67,10 +67,6 @@ class UserAdmin(BaseUserAdmin):
     inlines = (ProfileInline,)
 
 
-admin.site.unregister(User)
-admin.site.register(User, UserAdmin)
-
-
 class JobFunctionTreeModelInlineForm(forms.ModelForm):
     jobfunction = TreeNodeChoiceField(queryset=JobFunction.objects.all())
 
