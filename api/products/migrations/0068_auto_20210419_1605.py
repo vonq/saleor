@@ -11,11 +11,11 @@ def migrate_is_active_field(apps, schema_editor):
     Product = apps.get_model("products", "Product")
     active_products = Product.objects.filter(is_active=True, status__isnull=True)
     updated = active_products.update(status="Active")
-    print(f"Migrated {updated} products to 'Active' status")
+    logger.info(f"Migrated {updated} products to 'Active' status")
 
     disabled_products = Product.objects.filter(status__in=["Disabled", "Blacklisted"])
     updated = disabled_products.update(available_in_jmp=False, is_recommended=False)
-    print(
+    logger.info(
         f"Migrated {updated} products to 'Available in JMP = False' and 'Is Recommended = False'"
     )
 

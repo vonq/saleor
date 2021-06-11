@@ -16,6 +16,7 @@ from modeltranslation.fields import TranslationFieldDescriptor
 from mptt.models import MPTTModel
 from PIL import Image
 from api.field_permissions.models import FieldPermissionModelMixin
+from api.arrayfield import PKBArrayField
 from api.products.geocoder import Geocoder, MAPBOX_INTERNATIONAL_PLACE_TYPE
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
@@ -153,6 +154,23 @@ class JobFunction(MPTTModel):
     )
 
     objects = AcrossLanguagesQuerySet.as_manager()
+
+    @property
+    def all_job_titles(self) -> Iterable["JobTitle"]:
+
+        all_titles = JobTitle.objects.filter(
+            Q(alias_of__job_function=self) | Q(job_function=self)
+        )
+
+        titles_list = list(
+            itertools.chain(
+                all_titles.values_list("name_en", flat=True),
+                all_titles.values_list("name_de", flat=True),
+                all_titles.values_list("name_nl", flat=True),
+            )
+        )
+
+        return titles_list
 
     def __str__(self):
         return self.name
@@ -723,6 +741,12 @@ class IndexSearchableProductMixin:
         ) and len(job_functions) == 0
 
     @property
+    def audience_group(self):
+        if self.is_generic:
+            return "generic"
+        return "niche"
+
+    @property
     def is_international(self):
         # TODO add parent location for all locations in the database
         # [location.within is None for location in self.locations.all()]
@@ -895,7 +919,6 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
             ("can_view_product_job_functions", "Can view product job functions"),
             ("can_change_product_job_functions", "Can change product job functions"),
         )
-        db_table = "products_pkb_product"
         indexes = [
             models.Index(
                 fields=[
@@ -1013,7 +1036,14 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
 
         @classmethod
         def products(cls):
-            return [cls.JOB_BOARD, cls.SOCIAL, cls.GOOGLE]
+            return [
+                cls.JOB_BOARD,
+                cls.SOCIAL,
+                cls.GOOGLE,
+                cls.OTHER,
+                cls.WALLET,
+                cls.SUBSCRIPTION,
+            ]
 
     @property
     def external_product_name(self):
@@ -1058,8 +1088,9 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         if (
             self.salesforce_product_solution
             == self.SalesforceProductSolution.MY_OWN_CHANNEL
-            and self.salesforce_product_category
+            or self.salesforce_product_category
             == self.SalesforceProductCategory.CUSTOMER_SPECIFIC
+            or self.customer_id is not None
         ):
             return True
         return False
@@ -1218,7 +1249,7 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         base_field=models.CharField(max_length=80, blank=False), default=list
     )
 
-    cross_postings = ArrayField(
+    cross_postings = PKBArrayField(
         base_field=models.CharField(max_length=255, blank=False),
         default=list,
         null=True,
@@ -1269,7 +1300,7 @@ class Profile(CreatedUpdatedModelMixin):
         MAPI = "mapi", _("MAPI")
         INTERNAL = "internal", _("Internal")
 
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     type = models.TextField(
         max_length=15, blank=True, choices=Type.choices, default=Type.INTERNAL
     )

@@ -8,12 +8,16 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db.models import Count
+from django.http import Http404
+from django.shortcuts import redirect
+from django.urls import reverse
 from django_better_admin_arrayfield.admin.mixins import DynamicArrayMixin
 from image_cropping import ImageCroppingMixin
 from modeltranslation.admin import TranslationAdmin
 from mptt.admin import MPTTModelAdmin
 from mptt.forms import TreeNodeChoiceField
 from rest_framework.utils import json
+from reversion_compare.admin import CompareVersionAdmin
 
 from api.field_permissions.admin import PermissionBasedFieldsMixin
 from api.products.models import (
@@ -63,7 +67,7 @@ class UserAdmin(BaseUserAdmin):
     inlines = (ProfileInline,)
 
 
-#admin.site.unregister(User)
+admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 
 
@@ -85,6 +89,9 @@ class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = "__all__"
+        help_texts = {
+            "time_to_process": "This is auto-calculated by summing up the supplier time to process and vonq time to process.",
+        }
 
     @staticmethod
     def is_valid_cropping_area(cropping_string):
@@ -123,7 +130,11 @@ class ProductForm(forms.ModelForm):
 
 @admin.register(Product)
 class ProductAdmin(
-    ImageCroppingMixin, PermissionBasedFieldsMixin, TranslationAdmin, DynamicArrayMixin
+    CompareVersionAdmin,
+    ImageCroppingMixin,
+    PermissionBasedFieldsMixin,
+    TranslationAdmin,
+    DynamicArrayMixin,
 ):
     form = ProductForm
     list_display = [
@@ -145,8 +156,16 @@ class ProductAdmin(
         "salesforce_last_sync",
         "updated",
         "created",
+        "time_to_process",
     ]
     inlines = (JobFunctionModelInline,)
+
+    def time_to_process(self, product):
+        return (product.supplier_time_to_process or 0) + (
+            product.vonq_time_to_process or 0
+        )
+
+    time_to_process.short_description = "Time to process"
 
     fields = [
         "title",
@@ -175,6 +194,9 @@ class ProductAdmin(
         "cross_postings",
         "duration_days",
         "time_to_process",
+        "supplier_time_to_process",
+        "supplier_setup_time",
+        "vonq_time_to_process",
         "product_id",
         "unit_price",
         "rate_card_price",
@@ -217,7 +239,7 @@ class ChannelForm(forms.ModelForm):
         required=False,
     )
     salesforce_account_id = AutoCompleteSelectField(
-        "channel_account", required=True, help_text=None, label="Salesforce Account"
+        "account", required=True, help_text=None, label="Salesforce Account"
     )
 
     def __init__(self, *args, **kwargs):
@@ -236,7 +258,7 @@ class ChannelForm(forms.ModelForm):
 
 
 @admin.register(Channel)
-class ChannelAdmin(TranslationAdmin):
+class ChannelAdmin(CompareVersionAdmin, TranslationAdmin):
     form = ChannelForm
     list_display = ("name", "url", "type", "is_active")
     list_filter = ("type", "is_active")
@@ -394,3 +416,16 @@ class CategoryAdmin(TranslationAdmin):
 @admin.register(PostingRequirement)
 class PostingRequirementAdmin(TranslationAdmin):
     list_display = ("posting_requirement_type",)
+
+
+def get_admin_from_sf_uuid(request, uuid):
+    """
+    Small utility view to redirect an admin/edit/<salesforce_uuid>
+    request to the admin panel edit view for the product
+    """
+    try:
+        product = Product.objects.get(salesforce_id=uuid)
+    except Product.DoesNotExist:
+        raise Http404()
+
+    return redirect(reverse("admin:products_product_change", args=(product.id,)))

@@ -1,7 +1,7 @@
 from algoliasearch_django import AlgoliaIndex
 from algoliasearch_django.decorators import register
 
-from api.products.models import JobTitle, Product
+from api.products.models import JobTitle, Product, JobFunction
 
 from django.conf import settings as django_settings
 
@@ -169,3 +169,100 @@ class JobTitleIndex(AlgoliaIndex):
         "indexLanguages": ["en", "nl", "de"],
     }
     index_name = f"{django_settings.ENV}_JobTitle"
+
+
+@register(JobFunction)
+class JobFunctionIndex(AlgoliaIndex):
+    fields = ("id", "name", "all_job_titles")
+    settings = {
+        "minWordSizefor1Typo": 5,
+        "minWordSizefor2Typos": 8,
+        "hitsPerPage": 5,
+        "searchableAttributes": ["unordered(all_job_titles)"],
+        "attributesToRetrieve": None,
+        "ignorePlurals": ["en", "nl", "de"],
+        "decompoundedAttributes": {
+            "de": ["all_job_titles"],
+            "nl": ["all_job_titles"],
+        },
+        "advancedSyntax": True,
+        "unretrievableAttributes": None,
+        "optionalWords": [
+            "asia",
+            "adviseur",
+            "advisor",
+            "assistant",
+            "associate",
+            "consultant",
+            "executive",
+            "corporate",
+            "global",
+            "officer",
+            "de",
+            "e",
+            "m",
+            "f",
+            "x",
+            "person",
+            "operator",
+            "digital",
+            "online",
+            "ervaran",
+            "expert",
+            "interim",
+            "internship",
+            "junior",
+            "senior",
+            "leader",
+            "manager",
+            "medeworker",
+            "medior",
+            "regional",
+            "service",
+            "specialist",
+            "strategisch",
+            "supervisor",
+            "technisch",
+            "teamleider",
+            "teammanager",
+            "toezichthouder",
+            "trainee",
+            "jobs",
+            "of",
+            "werkvoorbereider",
+            "general",
+            "duties",
+            "duty",
+            "worker",
+            "fulltime",
+            "full time",
+            "parttime",
+            "part time",
+        ],
+        "queryLanguages": ["en", "nl", "de"],
+        "attributesForFaceting": ["all_job_titles"],
+        "attributesToSnippet": None,
+        "attributesToHighlight": None,
+        "paginationLimitedTo": 10,
+        "attributeForDistinct": None,
+        "exactOnSingleWordQuery": "word",
+        "ranking": [
+            "typo",
+            "exact",
+            "words",
+            "attribute",
+            "proximity",
+            "filters",
+            "custom",
+        ],
+        "customRanking": ["desc(frequency)"],
+        "separatorsToIndex": "",
+        "removeWordsIfNoResults": "allOptional",
+        "queryType": "prefixLast",
+        "highlightPreTag": "<em>",
+        "highlightPostTag": "</em>",
+        "snippetEllipsisText": "",
+        "alternativesAsExact": ["ignorePlurals", "singleWordSynonym"],
+        "indexLanguages": ["en", "nl", "de"],
+    }
+    index_name = f"{django_settings.ENV}_JobFunction"

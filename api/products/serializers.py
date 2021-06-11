@@ -1,16 +1,24 @@
-from typing import Optional, Dict
+from typing import Dict, Optional
+from uuid import UUID
 
+from drf_yasg2.utils import swagger_serializer_method
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework_recursive.fields import RecursiveField
 
 from api.currency.conversion import convert
 from api.currency.models import ExchangeRate
-from api.products.docs import CommonParameters
-from api.products.models import Location, JobFunction, JobTitle, Industry, Channel
 from api.products.area import bounding_box_area
-
-from uuid import UUID
+from api.products.docs import CommonOpenApiParameters
+from api.products.models import (
+    Channel,
+    JobFunction,
+    JobTitle,
+    Location,
+    Product,
+    Category,
+)
+from api.products.search.docs import ProductsOpenApiParameters
 
 
 class LocationSerializer(serializers.ModelSerializer):
@@ -57,13 +65,9 @@ class JobFunctionTreeSerializer(serializers.Serializer):
     children = serializers.ListField(child=RecursiveField())
 
 
-class IndustrySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Industry
-        fields = (
-            "id",
-            "name",
-        )
+class IndustrySerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
 
 
 class LimitedLocationSerializer(serializers.Serializer):
@@ -114,6 +118,28 @@ class LimitedChannelSerializer(serializers.Serializer):
     id = serializers.IntegerField()
 
 
+class ProductPriceSerializer(serializers.Serializer):
+    amount = serializers.FloatField(min_value=0)
+    currency = serializers.CharField(
+        min_length=3, max_length=3, label="ISO-4217 code for a currency"
+    )
+
+
+class ProductLogoSerializer(serializers.Serializer):
+    url = serializers.URLField()
+
+
+class ProductLogoWithSizeSerializer(ProductLogoSerializer):
+    size = serializers.CharField(
+        help_text="Size format: WIDTHxHEIGHT", min_length=3, allow_blank=True
+    )
+
+
+class DeliveryTimeSerializer(serializers.Serializer):
+    range = serializers.ChoiceField(choices=["hours", "days"])
+    period = serializers.IntegerField()
+
+
 class ProductSerializer(serializers.Serializer):
     _selected_currency: Optional[str] = None
     _exchange_rates: Dict[str, float] = {}
@@ -134,51 +160,42 @@ class ProductSerializer(serializers.Serializer):
             )
 
         self._selected_currency = request.query_params.get(
-            CommonParameters.CURRENCY.name
+            CommonOpenApiParameters.CURRENCY.name
         )
 
-    @staticmethod
-    def get_audience_group(product):
-        if product.is_generic:
-            return "generic"
-        return "niche"
-
-    @staticmethod
-    def get_homepage(product):
+    def get_homepage(self, product):
         if product.url:
             return product.url
         if product.channel:
             return product.channel.url
         return None
 
-    @staticmethod
-    def get_type(product):
+    def get_type(self, product):
         return getattr(product.channel, "type", None)
 
-    @staticmethod
-    def get_cross_postings(product):
-        return product.cross_postings
-
-    @staticmethod
-    def get_logo_url(product):
+    @swagger_serializer_method(serializer_or_field=ProductLogoSerializer(many=True))
+    def get_logo_url(self, product):
         if product.logo_rectangle_uncropped:
             return [{"url": product.logo_rectangle_uncropped_url}]
         return None
 
-    @staticmethod
-    def get_logo_square_url(product):
+    @swagger_serializer_method(
+        serializer_or_field=ProductLogoWithSizeSerializer(many=True)
+    )
+    def get_logo_square_url(self, product):
         if product.logo_square:
             return [{"size": "68x68", "url": product.logo_square_url}]
         return None
 
-    @staticmethod
-    def get_logo_rectangle_url(product):
+    @swagger_serializer_method(
+        serializer_or_field=ProductLogoWithSizeSerializer(many=True)
+    )
+    def get_logo_rectangle_url(self, product):
         if product.logo_rectangle:
             return [{"size": "270x90", "url": product.logo_rectangle_url}]
         return None
 
-    @staticmethod
-    def get_duration(product):
+    def get_duration(self, product):
         return {"range": "days", "period": product.duration_days}
 
     def get_prices(self, price):
@@ -193,25 +210,27 @@ class ProductSerializer(serializers.Serializer):
             return filter(lambda x: x["currency"] == self._selected_currency, prices)
         return prices
 
+    @swagger_serializer_method(serializer_or_field=ProductPriceSerializer)
     def get_vonq_price(self, product):
         prices = self.get_prices(product.unit_price)
         if self._selected_currency:
             return filter(lambda x: x["currency"] == self._selected_currency, prices)
         return prices
 
+    @swagger_serializer_method(serializer_or_field=ProductPriceSerializer)
     def get_ratecard_price(self, product):
         prices = self.get_prices(product.rate_card_price)
         if self._selected_currency:
             return filter(lambda x: x["currency"] == self._selected_currency, prices)
         return prices
 
-    @staticmethod
-    def get_time_to_process(product):
-        return {"range": "hours", "period": product.time_to_process}
-
-    @staticmethod
-    def get_title(product):
-        return product.external_product_name
+    @swagger_serializer_method(serializer_or_field=DeliveryTimeSerializer)
+    def get_time_to_process(self, product) -> dict:
+        return {
+            "range": "hours",
+            "period": (product.supplier_time_to_process or 0)
+            + (product.vonq_time_to_process or 0),
+        }
 
     locations = LimitedLocationSerializer(many=True, read_only=True)
     job_functions = LimitedJobFunctionSerializer(many=True, read_only=True)
@@ -220,17 +239,19 @@ class ProductSerializer(serializers.Serializer):
     time_to_process = serializers.SerializerMethodField()
     vonq_price = serializers.SerializerMethodField()
     ratecard_price = serializers.SerializerMethodField()
-    cross_postings = serializers.SerializerMethodField()
+    cross_postings = serializers.ListField(child=serializers.CharField())
     homepage = serializers.SerializerMethodField()
     type = serializers.SerializerMethodField()
     logo_url = serializers.SerializerMethodField()
     logo_square_url = serializers.SerializerMethodField()
     logo_rectangle_url = serializers.SerializerMethodField()
-    title = serializers.SerializerMethodField()
+    title = serializers.CharField(source="external_product_name", read_only=True)
     channel = LimitedChannelSerializer(read_only=True)
     product_id = serializers.CharField(read_only=True)
     description = serializers.CharField(read_only=True)
-    audience_group = serializers.SerializerMethodField()
+    audience_group = serializers.ChoiceField(
+        read_only=True, choices=["generic", "niche"]
+    )
 
 
 class ProductSearchSerializer(serializers.Serializer):
@@ -244,12 +265,22 @@ class ProductSearchSerializer(serializers.Serializer):
     currency = serializers.CharField(required=False, max_length=3)
     name = serializers.CharField(required=False)
     recommended = serializers.BooleanField(required=False, default=False)
+    excludeRecommended = serializers.BooleanField(required=False, default=False)
     channelType = serializers.CharField(required=False)
     customerId = serializers.CharField(required=False)
+    sortBy = serializers.ChoiceField(required=False, choices=["relevant", "recent"])
 
     @property
     def is_recommendation(self) -> bool:
-        return bool(self.validated_data.get("recommended"))
+        return bool(
+            self.validated_data.get(ProductsOpenApiParameters.ONLY_RECOMMENDED.name)
+        )
+
+    @property
+    def excludes_recommendations(self) -> bool:
+        return bool(
+            self.validated_data.get(ProductsOpenApiParameters.EXCLUDE_RECOMMENDED.name)
+        )
 
     @property
     def is_my_own_product_request(self) -> bool:
@@ -270,6 +301,12 @@ class ProductSearchSerializer(serializers.Serializer):
                 self.validated_data.get("channelType"),
                 self.validated_data.get("customerId"),
             )
+        )
+
+    @property
+    def is_sort_by_recent(self) -> bool:
+        return bool(
+            self.validated_data.get(ProductsOpenApiParameters.SORT_BY.name) == "recent"
         )
 
     @staticmethod
@@ -310,6 +347,34 @@ class ProductSearchSerializer(serializers.Serializer):
                 detail="Cannot search by both job title and job function. Please use either field."
             )
         return attrs
+
+
+class ProductCategorySerializer(serializers.Serializer):
+    name = serializers.CharField(read_only=True)
+    type = serializers.ChoiceField(read_only=True, choices=Category.Type.choices)
+
+
+class ProductJmpSerializer(ProductSerializer):
+    @swagger_serializer_method(serializer_or_field=DeliveryTimeSerializer)
+    def get_time_to_setup(self, product) -> dict:
+        return {
+            "range": "days",
+            "period": product.supplier_setup_time,
+        }
+
+    time_to_setup = serializers.SerializerMethodField()
+    categories = ProductCategorySerializer(many=True)
+    # JMP uses these fields to filter products and channels
+    # in the ordered campaign overview
+    # see CHEC-541
+    channel_category = serializers.ChoiceField(
+        source="salesforce_product_category",
+        choices=Product.SalesforceProductCategory.choices,
+    )
+    channel_type = serializers.ChoiceField(
+        source="salesforce_product_type", choices=Product.SalesforceProductType.choices
+    )
+    customer_id = serializers.CharField(read_only=True)
 
 
 class ChannelSerializer(serializers.Serializer):

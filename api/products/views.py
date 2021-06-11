@@ -1,73 +1,84 @@
 import itertools
 from collections import defaultdict
 from json import JSONDecodeError
-from typing import List, Iterable, Type, Tuple
+from typing import Iterable, List, Tuple, Type
 
-from django.db.models import Case, When
-from django.db.models import Q
+from django.db.models import Case, Q, When
 from django.http import JsonResponse
 from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
-from rest_framework import viewsets, mixins
+from rest_framework import mixins, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
-from rest_framework.permissions import IsAuthenticated, BasePermission
+from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK, HTTP_404_NOT_FOUND
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 from rest_framework.utils import json
 
 from api.products.apps import ProductsConfig
-from api.products.docs import CommonParameters
+from api.products.docs import CommonOpenApiParameters
+from api.products.geocoder import Geocoder
+from api.products.models import (
+    Channel,
+    Industry,
+    JobFunction,
+    JobTitle,
+    Location,
+    Product,
+    Profile,
+)
+from api.products.paginators import (
+    AutocompleteResultsSetPagination,
+    SearchResultsPagination,
+    StandardResultsSetPagination,
+)
+from api.products.search.docs import ProductsOpenApiParameters
+from api.products.search.filter_collection import FacetFilterCollection
 from api.products.search.filters.facet_filters import (
-    FacetFilter,
-    ExactLocationIdFacetFilter,
-    IsActiveFacetFilter,
-    StatusFacetFilter,
-    IsAvailableInJmpFacetFilter,
-    ProductsOnlyFacetFilter,
     AddonsOnlyFacetFilter,
-    DurationMoreThanFacetFilter,
-    DurationLessThanFacetFilter,
     ChannelTypeFilter,
     CustomerIdFilter,
+    DurationLessThanFacetFilter,
+    DurationMoreThanFacetFilter,
+    ExactLocationIdFacetFilter,
+    FacetFilter,
+    IsActiveFacetFilter,
+    IsAvailableInJmpFacetFilter,
     IsNotMyOwnProductFilter,
+    ProductsOnlyFacetFilter,
+    StatusFacetFilter,
 )
-from api.products.search.filter_collection import FacetFilterCollection
 from api.products.search.filters.facet_filters_groups import (
+    FacetFiltersGroup,
     GenericAndInternationalGroup,
     GenericAndLocationGroup,
-    FacetFiltersGroup,
     IndustryAndInternationalGroup,
     IndustryAndLocationGroup,
     InternationalAndFunctionGroup,
     JobFunctionAndLocationGroup,
     JobFunctionIndustryAndLocationGroup,
 )
-from api.products.geocoder import Geocoder
-from api.products.models import (
-    Location,
-    Product,
-    JobTitle,
-    JobFunction,
-    Industry,
-    Profile,
-    Channel,
+from api.products.search.search import (
+    get_results_ids,
+    query_search_index,
 )
-from api.products.paginators import (
-    StandardResultsSetPagination,
-    AutocompleteResultsSetPagination,
-    SearchResultsPagination,
-)
-from api.products.search.search import query_search_index, get_results_ids
-
 from api.products.serializers import (
-    ProductSerializer,
-    LocationSerializer,
-    JobTitleSerializer,
-    JobFunctionTreeSerializer,
-    IndustrySerializer,
-    ProductSearchSerializer,
     ChannelSerializer,
+    IndustrySerializer,
+    JobFunctionTreeSerializer,
+    LimitedJobFunctionSerializer,
+    JobTitleSerializer,
+    LocationSerializer,
+    ProductJmpSerializer,
+    ProductSearchSerializer,
+    ProductSerializer,
+    JobFunctionSerializer,
+)
+
+MY_OWN_PRODUCTS = (
+    Q(salesforce_product_category=Product.SalesforceProductCategory.CUSTOMER_SPECIFIC)
+    | Q(salesforce_product_solution=Product.SalesforceProductSolution.MY_OWN_CHANNEL)
+    | Q(customer_id__isnull=False)
 )
 
 
@@ -88,7 +99,7 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     http_method_names = ("get",)
     serializer_class = LocationSerializer
     search_parameters = (
-        CommonParameters.ACCEPT_LANGUAGE,
+        CommonOpenApiParameters.ACCEPT_LANGUAGE,
         openapi.Parameter(
             "text",
             in_=openapi.IN_QUERY,
@@ -165,10 +176,17 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 
 class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
-    serializer_class = ProductSerializer
+    serializers = {
+        "default": None,
+    }
     http_method_names = ("get", "post")
     queryset = Product.objects.all().prefetch_related(
-        "locations", "industries", "job_functions"
+        "locations",
+        "industries",
+        "job_functions",
+        "categories",
+        "posting_requirements",
+        "channel",
     )
     lookup_field = "product_id"
     recommendation_search_limit = (
@@ -178,6 +196,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     search_results_count: int = None
 
     is_recommendation: bool = False
+    excludes_recommendations: bool = False
     is_my_own_product_request: bool = False
 
     search_filters: Tuple[Type[FacetFilter]] = (
@@ -209,6 +228,14 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             )
         return self._paginator
 
+    def get_serializer_class(self):
+        return (
+            ProductJmpSerializer
+            if self.request.user.is_authenticated
+            and self.request.user.profile.type == Profile.Type.JMP
+            else ProductSerializer
+        )
+
     def get_queryset(self):
         queryset = self.queryset.filter(
             status=Product.Status.ACTIVE,
@@ -216,11 +243,15 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         )
 
         if self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]:
-            queryset = queryset.filter(available_in_jmp=True).exclude(
-                salesforce_product_category=Product.SalesforceProductCategory.CUSTOMER_SPECIFIC,
-                salesforce_product_solution=Product.SalesforceProductSolution.MY_OWN_CHANNEL,
-            )
             queryset = queryset.filter(available_in_jmp=True)
+
+        if self.request.user.profile.type == Profile.Type.MAPI:
+            # MAPI (or HAPI) is only required to show Job Boards, Social or Google products
+            queryset = queryset.filter(
+                Q(salesforce_product_type=Product.SalesforceProductType.JOB_BOARD)
+                | Q(salesforce_product_type=Product.SalesforceProductType.SOCIAL)
+                | Q(salesforce_product_type=Product.SalesforceProductType.GOOGLE)
+            )
 
         if self.is_recommendation:
             queryset = self.add_recommendation_filter(queryset)
@@ -277,7 +308,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             social_filter,
         )
 
-    def search_queryset(self, queryset):
+    def search_queryset(self, queryset, sort_by_recent):
         if self.is_recommendation:
             limit = self.recommendation_search_limit
             offset = 0
@@ -291,7 +322,9 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             limit=limit,
             offset=offset,
         )
-        product_name = self.request.query_params.get("name", "")
+        product_name = self.request.query_params.get(
+            ProductsOpenApiParameters.PRODUCT_NAME.name, ""
+        )
 
         self.search_results_count, results = query_search_index(
             Product, params=filter_collection.query(), query=product_name
@@ -302,10 +335,18 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(ids)])
         )
 
-        if self.is_recommendation:
-            queryset = self.add_recommendation_filter(queryset)
-            self.search_results_count = queryset.count()
+        recommendation_queryset = self.add_recommendation_filter(queryset)
+        if self.is_recommendation is True:
+            self.search_results_count = recommendation_queryset.count()
+            return recommendation_queryset
 
+        if self.excludes_recommendations is True:
+            exclude_ids = recommendation_queryset.values_list("pk", flat=True)
+            self.search_results_count -= len(exclude_ids)
+            queryset = queryset.exclude(pk__in=exclude_ids)
+
+        if sort_by_recent is True:
+            return queryset.order_by("-created")
         return queryset
 
     def filter_queryset(self, queryset):
@@ -346,21 +387,25 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         operation_id="Retrieve multiple Product details",
         operation_summary="This endpoint retrieves a list of Products, given a comma-separated list of their ids.",
         operation_description="Sometimes you already have access to the Identification code of any particular Product and you want to retrieve the most up-to-date information about it.",
-        manual_parameters=(CommonParameters.ACCEPT_LANGUAGE,),
+        manual_parameters=(CommonOpenApiParameters.ACCEPT_LANGUAGE,),
         tags=[ProductsConfig.verbose_name],
     )
     @action(
         detail=False,
         methods=["get"],
         permission_classes=[IsAuthenticated],
-        url_path="multiple/(?P<product_ids>(.+,?)+)",
+        url_path="multiple/(?P<product_ids>.+)",
     )
-    def multiple(self, request, **kwargs):
-        product_ids = kwargs.get("product_ids")
+    def multiple(self, request, product_ids=None):
         if not product_ids:
             raise NotFound
 
         product_ids = product_ids.split(",")
+        if len(product_ids) > 25:
+            return JsonResponse(
+                data={"error": "Cannot fetch more than 25 products at a time"},
+                status=HTTP_400_BAD_REQUEST,
+            )
         queryset = self.get_queryset().filter(product_id__in=product_ids)
         page = self.paginate_queryset(queryset)
         serializer = self.get_serializer(page, many=True)
@@ -378,15 +423,18 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         operation_summary="Search and filter for products by various criteria.",
         manual_parameters=[item.parameter for item in search_filters if item.parameter]
         + [
-            CommonParameters.ACCEPT_LANGUAGE,
-            CommonParameters.PRODUCT_NAME,
-            CommonParameters.CURRENCY,
+            CommonOpenApiParameters.ACCEPT_LANGUAGE,
+            ProductsOpenApiParameters.PRODUCT_NAME,
+            ProductsOpenApiParameters.ONLY_RECOMMENDED,
+            ProductsOpenApiParameters.EXCLUDE_RECOMMENDED,
+            CommonOpenApiParameters.CURRENCY,
+            ProductsOpenApiParameters.SORT_BY,
         ],
         tags=[ProductsConfig.verbose_name],
         responses={
             400: openapi.Response(description="In case of a bad request."),
             200: openapi.Response(
-                schema=serializer_class(many=True),
+                schema=ProductJmpSerializer(many=True),
                 description="In case of a successful search.",
                 examples={
                     "application/json": {
@@ -422,6 +470,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
                                 ],
                                 "duration": {"range": "days", "period": None},
                                 "time_to_process": {"range": "hours", "period": None},
+                                "time_to_setup": {"range": "hours", "period": None},
                                 "product_id": "ab379c3b-600d-5592-9f9d-3c4805086364",
                                 "vonq_price": [{"amount": 123, "currency": "EUR"}],
                                 "ratecard_price": [{"amount": 234, "currency": "EUR"}],
@@ -444,12 +493,31 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         search_serializer = ProductSearchSerializer(data=self.request.query_params)
         search_serializer.is_valid(raise_exception=True)
         self.is_recommendation = search_serializer.is_recommendation
+        self.excludes_recommendations = search_serializer.excludes_recommendations
         self.is_my_own_product_request = search_serializer.is_my_own_product_request
 
+        if self.is_recommendation is True and self.excludes_recommendations:
+            return JsonResponse(
+                data={
+                    "error": "Parameters 'recommended' and 'excludeRecommended' cannot both be set to true."
+                },
+                status=HTTP_400_BAD_REQUEST,
+            )
         queryset = self.get_queryset()
         if search_serializer.is_search_request:
             # a pure list view doesn't need to hit the search index
-            queryset = self.search_queryset(queryset)
+            queryset = self.search_queryset(
+                queryset, sort_by_recent=search_serializer.is_sort_by_recent
+            )
+        elif search_serializer.is_sort_by_recent:
+            queryset = queryset.order_by("-created")
+        else:
+            if (
+                self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]
+                and not self.is_recommendation
+            ):
+                queryset = queryset.exclude(MY_OWN_PRODUCTS)
+
         page = self.paginate_queryset(queryset)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
@@ -458,7 +526,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         operation_id="Retrieve Product details",
         operation_summary="This endpoint retrieves a Product by its id.",
         operation_description="Sometimes you already have access to the Identification code of any particular Product and you want to retrieve the most up-to-date information about it.",
-        manual_parameters=(CommonParameters.ACCEPT_LANGUAGE,),
+        manual_parameters=(CommonOpenApiParameters.ACCEPT_LANGUAGE,),
         tags=[ProductsConfig.verbose_name],
     )
     def retrieve(self, request, *args, **kwargs):
@@ -481,8 +549,117 @@ class AddonsViewSet(ProductsViewSet):
             salesforce_product_type__in=Product.SalesforceProductType.addons(),
         )
         if self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]:
-            return active_products.filter(available_in_jmp=True)
+            return active_products.filter(available_in_jmp=True).exclude(
+                MY_OWN_PRODUCTS
+            )
         return active_products
+
+    @swagger_auto_schema(
+        operation_description="""
+        This endpoint exposes a list of Products with the options to search by Location, Job Title, Job Function and Industry. as it is configured for every Partner individually.
+        Products are ranked by their relevancy to the search terms.
+        Optionally, products can filtered by Location.
+        Values for each parameter can be fetched by calling the other endpoints in this section.
+        Calling this endpoint will guarantee that the Products you see are configured for you as our Partner.
+        """,
+        operation_id="Addons Search",
+        operation_summary="Search and filter for addons by various criteria.",
+        manual_parameters=[item.parameter for item in search_filters if item.parameter]
+        + [
+            CommonOpenApiParameters.ACCEPT_LANGUAGE,
+            ProductsOpenApiParameters.PRODUCT_NAME,
+            ProductsOpenApiParameters.ONLY_RECOMMENDED,
+            ProductsOpenApiParameters.EXCLUDE_RECOMMENDED,
+            CommonOpenApiParameters.CURRENCY,
+            ProductsOpenApiParameters.SORT_BY,
+        ],
+        tags=[ProductsConfig.verbose_name],
+        responses={
+            400: openapi.Response(description="In case of a bad request."),
+            200: openapi.Response(
+                schema=ProductJmpSerializer(many=True),
+                description="In case of a successful search.",
+                examples={
+                    "application/json": {
+                        "count": 286,
+                        "next": "http://host/products/?includeLocationId=2384&limit=1&offset=1",
+                        "previous": None,
+                        "results": [
+                            {
+                                "title": "Job board name - Premium Job",
+                                "locations": [
+                                    {
+                                        "id": 2378,
+                                        "fully_qualified_place_name": "United Kingdom",
+                                        "canonical_name": "United Kingdom",
+                                        "place_type": ["country"],
+                                        "within": {
+                                            "id": 2483,
+                                            "fully_qualified_place_name": "Europe",
+                                            "canonical_name": "Europe",
+                                            "place_type": ["continent"],
+                                            "within": None,
+                                        },
+                                    },
+                                ],
+                                "job_functions": {"id": 36, "name": "Tax", "parent": 9},
+                                "industries": [],
+                                "description": "Description",
+                                "homepage": "https://www.example.com",
+                                "logo_url": [
+                                    {
+                                        "url": "https://example.com/logo.png",
+                                    }
+                                ],
+                                "duration": {"range": "days", "period": None},
+                                "time_to_process": {"range": "hours", "period": None},
+                                "time_to_setup": {"range": "hours", "period": None},
+                                "product_id": "ab379c3b-600d-5592-9f9d-3c4805086364",
+                                "vonq_price": [{"amount": 123, "currency": "EUR"}],
+                                "ratecard_price": [{"amount": 234, "currency": "EUR"}],
+                                "type": None,
+                                "cross_postings": [],
+                                "channel": {
+                                    "name": "Channel Name",
+                                    "url": "https://www.channel.jobs/",
+                                    "type": "job board",
+                                    "id": 12,
+                                },
+                            }
+                        ],
+                    }
+                },
+            ),
+        },
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_id="Retrieve Addon details",
+        operation_summary="This endpoint retrieves an Addon by its id.",
+        operation_description="Sometimes you already have access to the Identification code of any particular Addon and you want to retrieve the most up-to-date information about it.",
+        manual_parameters=(CommonOpenApiParameters.ACCEPT_LANGUAGE,),
+        tags=[ProductsConfig.verbose_name],
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_id="Retrieve multiple Addons details",
+        operation_summary="This endpoint retrieves a list of Addons, given a comma-separated list of their ids.",
+        operation_description="Sometimes you already have access to the Identification code of any particular Addon and you want to retrieve the most up-to-date information about it.",
+        manual_parameters=(CommonOpenApiParameters.ACCEPT_LANGUAGE,),
+        tags=[ProductsConfig.verbose_name],
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        permission_classes=[IsAuthenticated],
+        url_path="multiple/(?P<product_ids>.+)",
+    )
+    def multiple(self, request, product_ids=None):
+        return super().multiple(request, product_ids)
 
 
 class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
@@ -492,7 +669,7 @@ class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     serializer_class = JobTitleSerializer
     pagination_class = AutocompleteResultsSetPagination
     search_parameters = [
-        CommonParameters.ACCEPT_LANGUAGE,
+        CommonOpenApiParameters.ACCEPT_LANGUAGE,
         openapi.Parameter(
             "text",
             in_=openapi.IN_QUERY,
@@ -566,6 +743,7 @@ class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 class JobFunctionsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     permission_classes = [IsAuthenticated]
     serializer_class = JobFunctionTreeSerializer
+    flat_serializer_class = JobFunctionSerializer
     http_method_names = ("get",)
     queryset = JobFunction.objects.all()
 
@@ -601,7 +779,16 @@ class JobFunctionsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         operation_id="Job Functions",
         operation_summary="Search for a Job Function.",
         tags=[ProductsConfig.verbose_name],
-        manual_parameters=[CommonParameters.ACCEPT_LANGUAGE],
+        manual_parameters=[
+            CommonOpenApiParameters.ACCEPT_LANGUAGE,
+            openapi.Parameter(
+                "text",
+                in_=openapi.IN_QUERY,
+                description="Search for function based on job title headline",
+                type=openapi.TYPE_STRING,
+                required=False,
+            ),
+        ],
         responses={
             200: openapi.Response(
                 schema=serializer_class(many=True),
@@ -620,8 +807,28 @@ class JobFunctionsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     )
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
-        job_functions_tree = self.job_functions_tree_builder(queryset)
-        serializer = self.serializer_class(job_functions_tree, many=True)
+
+        if not self.request.query_params.get("text"):
+            job_functions_tree = self.job_functions_tree_builder(queryset)
+            serializer = self.serializer_class(job_functions_tree, many=True)
+
+        else:
+            _, results = query_search_index(
+                JobFunction,
+                query=self.request.query_params.get("text"),
+                params={
+                    "analytics": True,
+                    "attributesToRetrieve": "id",
+                    "hitsPerPage": 3,
+                },
+            )
+            ids = get_results_ids(results)
+
+            queryset = self.queryset.filter(pk__in=ids).order_by(
+                Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(ids)])
+            )
+            serializer = self.flat_serializer_class(queryset, many=True)
+
         return Response(serializer.data)
 
 
@@ -651,7 +858,7 @@ class IndustriesViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         operation_id="Industry names",
         operation_summary="List all industry names.",
         tags=[ProductsConfig.verbose_name],
-        manual_parameters=[CommonParameters.ACCEPT_LANGUAGE],
+        manual_parameters=[CommonOpenApiParameters.ACCEPT_LANGUAGE],
         responses={
             200: openapi.Response(
                 schema=serializer_class(many=True),
@@ -686,7 +893,7 @@ class ChannelsViewSet(viewsets.ModelViewSet):
         This endpoint exposes a list of channels with products associated.
         """,
         operation_id="Channels list",
-        manual_parameters=[CommonParameters.ACCEPT_LANGUAGE],
+        manual_parameters=[CommonOpenApiParameters.ACCEPT_LANGUAGE],
         tags=[ProductsConfig.verbose_name],
         responses={
             200: openapi.Response(
@@ -745,7 +952,7 @@ class ChannelsViewSet(viewsets.ModelViewSet):
     @swagger_auto_schema(
         operation_id="Retrieve Channel details",
         operation_summary="This endpoint retrieves a Channel by its id.",
-        manual_parameters=(CommonParameters.ACCEPT_LANGUAGE,),
+        manual_parameters=(CommonOpenApiParameters.ACCEPT_LANGUAGE,),
         tags=[ProductsConfig.verbose_name],
     )
     def retrieve(self, request, *args, **kwargs):
