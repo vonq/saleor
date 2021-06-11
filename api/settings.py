@@ -84,6 +84,8 @@ INSTALLED_APPS = [
     "django_better_admin_arrayfield",
 ]
 
+CORS_ALLOW_ALL_ORIGINS = True
+
 ALGOLIA = {
     "APPLICATION_ID": os.getenv("ALGOLIA_APPLICATION_ID"),
     "API_KEY": os.getenv("ALGOLIA_API_KEY"),
