@@ -59,7 +59,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 INSTALLED_APPS = [
     "algoliasearch_django",
-    "corsheaders",
     "modeltranslation",
     "massadmin",
     "django.contrib.admin",
@@ -91,7 +90,6 @@ ALGOLIA = {
 }
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.security.SecurityMiddleware",
@@ -170,16 +168,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
-]
-
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:9001",
-    "https://platform-acceptance.vonq.it",
-    "https://platform.vonq.com",
-    "http://localhost:3000",
-    "https://master.djaiqvf4qskm2.amplifyapp.com",
-    "https://saleor-poc-storefront.herokuapp.com",
-    "https://saleor-poc-dashboard.herokuapp.com",
 ]
 
 # Internationalization
