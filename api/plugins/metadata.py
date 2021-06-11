@@ -47,7 +47,7 @@ class MetadataSerializer(serializers.Serializer):
         allow_null=True, required=False, allow_blank=True
     )
     vacancy_minimumYearsOfExperience = serializers.IntegerField(
-        min_value=1, allow_null=False
+        min_value=1, allow_null=False, required=False
     )
 
     vacancy_type = serializers.ChoiceField(
@@ -61,26 +61,27 @@ class MetadataSerializer(serializers.Serializer):
             "internship",
         ],
         allow_null=False,
+        required=False
     )
 
     vacancy_workingHours_minimum = serializers.IntegerField(
-        min_value=1, allow_null=False
+        min_value=1, allow_null=False, required=False
     )
     vacancy_workingHours_maximum = serializers.IntegerField(
-        min_value=1, allow_null=False
+        min_value=1, allow_null=False, required=False
     )
 
     vacancy_salary_minimumAmount = serializers.IntegerField(
-        min_value=1, allow_null=False
+        min_value=1, allow_null=False, required=False
     )
     vacancy_salary_maximumAmount = serializers.IntegerField(
-        min_value=1, allow_null=False
+        min_value=1, allow_null=False, required=False
     )
     vacancy_salary_perPeriod = serializers.ChoiceField(
-        choices=["yearly", "monthly", "weekly", "daily", "hourly"]
+        choices=["yearly", "monthly", "weekly", "daily", "hourly"], required=False
     )
     vacancy_salary_currency = serializers.CharField(
-        max_length=3, min_length=3, allow_null=False
+        max_length=3, min_length=3, allow_null=False, required=False
     )
 
     contactInfo_name = serializers.CharField(
