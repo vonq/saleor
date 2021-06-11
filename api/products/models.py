@@ -1300,7 +1300,7 @@ class Profile(CreatedUpdatedModelMixin):
         MAPI = "mapi", _("MAPI")
         INTERNAL = "internal", _("Internal")
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     type = models.TextField(
         max_length=15, blank=True, choices=Type.choices, default=Type.INTERNAL
     )
