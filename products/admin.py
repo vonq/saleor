@@ -85,6 +85,9 @@ class ProductForm(forms.ModelForm):
     unit_price = forms.FloatField(required=True, label="List Price (€)")
     rate_card_price = forms.FloatField(required=True, label="Rate Card Price (€)")
     purchase_price = forms.FloatField(required=True, label="Purchase Price (€)")
+    customer_id = AutoCompleteSelectField(
+        "customer", required=False, help_text=None, label="Customer ID"
+    )
 
     class Meta:
         model = Product

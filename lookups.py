@@ -2,7 +2,12 @@ from dataclasses import dataclass
 
 from ajax_select import register, LookupChannel
 
-from api.salesforce.sync import get_accounts, get_accounts_by_ids
+from api.salesforce.sync import (
+    get_accounts,
+    get_accounts_by_ids,
+    get_qprofile_accounts,
+    get_accounts_by_qprofile_ids,
+)
 
 
 @dataclass
@@ -15,7 +20,7 @@ class SFAccount:
 
 
 @register("account")
-class TagsLookup(LookupChannel):
+class AccountsLookup(LookupChannel):
     def get_query(self, q, request):
         accounts = get_accounts(query=q)
 
@@ -33,3 +38,18 @@ class TagsLookup(LookupChannel):
 
     def format_item_display(self, item):
         return u"<span class='account'>%s</span>" % item.name
+
+
+@register("customer")
+class CustomerLookup(AccountsLookup):
+    def get_query(self, q, request):
+        accounts = get_qprofile_accounts(query=q)
+        return [
+            SFAccount(name=obj["Name"], pk=obj["Qprofile_ID__c"]) for obj in accounts
+        ]
+
+    def get_objects(self, ids):
+        accounts = get_accounts_by_qprofile_ids(tuple(ids))
+        return [
+            SFAccount(pk=obj["Qprofile_ID__c"], name=obj["Name"]) for obj in accounts
+        ]

@@ -33,6 +33,11 @@ def make_salesforce_product(product_instance):
         "Name": product_instance.title_en,
         "JMP_Product_Name__c": product_instance.title_en,
         "Channel__c": getattr(product_instance.channel, "salesforce_id", None),
+        "Customer__c": get_accounts_by_qprofile_ids(product_instance.customer_id)[0][
+            "Id"
+        ]
+        if product_instance.customer_id
+        else None,
         "Description": product_instance.description,
         "Product_Logo__c": product_instance.logo_url,
         "IsActive": product_instance.is_active,
@@ -102,6 +107,31 @@ def get_accounts_by_ids(ids):
     accounts = client.query(
         format_soql(
             "SELECT Id, Name, Type FROM Account WHERE Id IN {ids}",
+            ids=ids,
+        )
+    )
+    return accounts["records"]
+
+
+@lru_cache
+def get_qprofile_accounts(query):
+    client = login()
+
+    accounts = client.query(
+        format_soql(
+            "SELECT Id, Name, Type, Qprofile_ID__c FROM Account WHERE Type='Customer' AND Name LIKE '%{:like}%' AND Qprofile_ID__c != null",
+            query,
+        )
+    )
+    return accounts["records"]
+
+
+@lru_cache
+def get_accounts_by_qprofile_ids(ids):
+    client = login()
+    accounts = client.query(
+        format_soql(
+            "SELECT Id, Name, Type, Qprofile_ID__c FROM Account WHERE Qprofile_ID__c IN {ids}",
             ids=ids,
         )
     )
