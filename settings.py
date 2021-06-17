@@ -46,7 +46,7 @@ ALLOWED_HOSTS = (
         "saleor-poc-dashboard.herokuapp.com",
         ".vonq.int",  # This will cover nginx host renaming for health check
     ]
-    + ["localhost"]
+    + ["localhost", "127.0.0.1"]
     if is_development
     else []
 )

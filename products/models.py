@@ -514,6 +514,7 @@ class IndexSearchableProductMixin:
     similarweb_top_country_shares: dict
     status: str
     external_product_name: str
+    channel_name: str
 
     @property
     def all_industries(self) -> Iterable["Industry"]:
@@ -1052,6 +1053,11 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
                 return self.channel.name + " - " + self.title
             return self.channel.name
         return self.title
+
+    @property
+    def channel_name(self):
+        if self.channel and self.channel.name:
+            return self.channel.name
 
     @property
     def logo_square_uncropped_url(self):

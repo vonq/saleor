@@ -1,7 +1,7 @@
 from django.test import tag
 from django.urls import reverse
 
-from api.products.models import Location, Product
+from api.products.models import Location, Product, Channel
 from api.products.search.index import ProductIndex
 from api.tests.integration.search import SearchTestCase
 
@@ -94,3 +94,60 @@ class ProductSearchByTextTest(SearchTestCase):
         self.assertEqual(len(products), 2)
         self.assertEqual(products[0]["title"], "Linkedin - Job posting")
         self.assertEqual(products[1]["title"], "Linkfinance - basic posting")
+
+
+class MatchingChannelTitleNameTestCase(SearchTestCase):
+    model_index_class_pairs = [
+        (Product, ProductIndex),
+    ]
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.jobboost = Channel.objects.create(name="JobBoost.io")
+
+        cls.joblift = Channel.objects.create(name="Joblift | Germany")
+
+        cls.socialmedia = Channel.objects.create(name="Social Media")
+
+        cls.medienjobs = Channel.objects.create(name="Medien Jobs | Austria")
+
+        cls.boost_product = Product.objects.create(
+            # Joblift | Germany - Job boost
+            title="Job boost",
+            status=Product.Status.ACTIVE,
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            channel_id=cls.joblift.id,
+        )
+
+        cls.different_product = Product.objects.create(
+            # JobBoost.io - Sponsored Job
+            title="Sponsored Job",
+            status=Product.Status.ACTIVE,
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            channel_id=cls.jobboost.id,
+        )
+
+        cls.socialmedia_product = Product.objects.create(
+            # Social Media - Sponsored Job Ad
+            title="Sponsored Job Ad",
+            status=Product.Status.ACTIVE,
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            channel_id=cls.socialmedia.id,
+        )
+
+        cls.medien_product = Product.objects.create(
+            # Medien Jobs | Austria - Social Media Package
+            title="Social Media Package",
+            status=Product.Status.ACTIVE,
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            channel_id=cls.medienjobs.id,
+        )
+
+    def test_channel_name_is_higher_priority(self):
+        products = self.client.get(
+            reverse("api.products:products-list") + f"?name=jobboost"
+        ).json()["results"]
+
+        self.assertEqual(len(products), 2)
+        self.assertEqual(products[0]["title"], "JobBoost.io - Sponsored Job")
+        self.assertEqual(products[1]["title"], "Joblift | Germany - Job boost")

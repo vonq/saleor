@@ -12,6 +12,7 @@ class ProductIndex(AlgoliaIndex):
         "id",
         "title",
         "searchable_product_title",
+        "channel_name",
         "url",
         "channel",
         "is_active",
@@ -55,7 +56,8 @@ class ProductIndex(AlgoliaIndex):
         "hitsPerPage": 20,
         "maxValuesPerFacet": 100,
         "searchableAttributes": [
-            "unordered(searchable_product_title)",
+            "channel_name",
+            "title",
         ],
         "numericAttributesToIndex": [
             "maximum_locations_cardinality",
@@ -107,7 +109,10 @@ class ProductIndex(AlgoliaIndex):
             "desc(maximum_jobfunctions_depth)",
             "desc(order_frequency)",
         ],
-        "customRanking": [],
+        "customRanking": [
+            "desc(channel_name)",
+            "desc(title)",
+        ],
         "separatorsToIndex": "",
         "removeWordsIfNoResults": "lastWords",
         "queryType": "prefixLast",
