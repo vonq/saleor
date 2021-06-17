@@ -54,7 +54,7 @@ class Command(BaseCommand):
         )
 
         pkb_products = PkbProduct.objects.filter(status=PkbProduct.Status.ACTIVE)
-        for pkb_product in pkb_products[:50]:
+        for pkb_product in pkb_products:
             try:
                 saleor_product, _ = SaleorProduct.objects.get_or_create(
                     product_type=default_product_type,
