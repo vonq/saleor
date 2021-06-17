@@ -95,6 +95,12 @@ class Command(BaseCommand):
                     cost_price_amount=pkb_product.purchase_price or 0,
                 )
             except Exception as e:
-                print(f"Error importing {pkb_product.external_product_name}")
+                self.stdout.write(
+                    self.style.ERROR(
+                        f"Error importing {pkb_product.external_product_name}"
+                    )
+                )
             else:
-                print(f"Imported {pkb_product.external_product_name}")
+                self.stdout.write(
+                    self.style.SUCCESS(f"Imported {pkb_product.external_product_name}")
+                )
