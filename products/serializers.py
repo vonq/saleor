@@ -358,7 +358,7 @@ class ProductJmpSerializer(ProductSerializer):
     @swagger_serializer_method(serializer_or_field=DeliveryTimeSerializer)
     def get_time_to_setup(self, product) -> dict:
         return {
-            "range": "days",
+            "range": "hours",
             "period": product.supplier_setup_time,
         }
 

@@ -221,8 +221,10 @@ class ProductsTimeToProcessTestCase(AuthenticatedTestCase):
         )
 
     def test_total_time_to_process_should_sum_supplier_and_vonq_time_to_process(self):
+        force_user_login(self.client, "jmp")
         products = self.client.get(reverse("api.products:products-list")).json()[
             "results"
         ]
-
+        self.assertEqual(products[0]["time_to_setup"]["range"], "hours")
         self.assertEqual(products[0]["time_to_process"]["period"], 48)
+        self.assertEqual(products[0]["time_to_process"]["range"], "hours")
