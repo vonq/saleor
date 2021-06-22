@@ -34,7 +34,7 @@ from django.db.models import Q
 
 
 def index(request):
-    return HttpResponse("left intentionally blank")
+    return render(request, "index.html")
 
 
 def product_annotation(request):
@@ -670,8 +670,10 @@ def parse_title_testbench(request):
     return render(request, "parse_title_testbench.html")
 
 
-@login_required
-@require_http_methods(["POST"])
+def parse_headline_checker(request):
+    return render(request, "headline-parser.html")
+
+
 def parse_title(request):
     exclusion_list = ["&", "/", "senior", "specialist", "expert"]
     try:
@@ -765,7 +767,7 @@ def parse_title(request):
         "X-Algolia-UserToken": "testbench",
     }
     r = requests.post(
-        "https://OWF766BMHV-dsn.algolia.net/1/indexes/dev_JobFunction/query",
+        "https://OWF766BMHV-dsn.algolia.net/1/indexes/prod_JobFunction/query",
         '{ "params": "query='
         + urllib.parse.quote(title)
         + '&hitsPerPage=2&getRankingInfo=1" }',

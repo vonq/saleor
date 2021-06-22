@@ -61,6 +61,7 @@ from api.products.search.filters.facet_filters_groups import (
 from api.products.search.search import (
     get_results_ids,
     query_search_index,
+    query_parser_index,
 )
 from api.products.serializers import (
     ChannelSerializer,
@@ -829,6 +830,44 @@ class JobFunctionsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
             )
             serializer = self.flat_serializer_class(queryset, many=True)
 
+        return Response(serializer.data)
+
+
+class FunctionFromTitleViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+    serializer_class = LimitedJobFunctionSerializer
+    permission_classes = [IsAuthenticated]
+    search_parameters = [
+        CommonOpenApiParameters.ACCEPT_LANGUAGE,
+        openapi.Parameter(
+            "headline",
+            in_=openapi.IN_QUERY,
+            description="Search for function based on job title headline",
+            type=openapi.TYPE_STRING,
+            required=True,
+        ),
+    ]
+    http_method_names = ("get",)
+
+    @swagger_auto_schema(
+        operation_description="""
+                   This endpoint takes a job title headline and returns a list of job functions, ordered by relevancy.
+                    """,
+        operation_id="Parse job titles",
+        operation_summary="Parse job title and map to job function",
+        tags=["Title Parser"],
+        manual_parameters=[CommonOpenApiParameters.ACCEPT_LANGUAGE],
+    )
+    def list(self, request, *args, **kwargs):
+        headline = self.request.query_params.get("text")
+
+        self.search_results_count, results = query_parser_index(title=headline)
+        ids = get_results_ids(results)
+
+        queryset = self.queryset.filter(pk__in=ids).order_by(
+            Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(ids)])
+        )
+
+        serializer = self.serializer_class(queryset, many=True)
         return Response(serializer.data)
 
 

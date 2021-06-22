@@ -28,6 +28,7 @@ from api.products.views import (
     JobTitleSearchViewSet,
     JobFunctionsViewSet,
     ChannelsViewSet,
+    FunctionFromTitleViewSet,
 )
 from api.settings import is_development
 
@@ -49,6 +50,11 @@ urlpatterns = [
     path("exchange/", include("api.currency.urls", namespace="exchange")),
     path("annotations/", include("api.annotations.urls", namespace="annotations")),
     path("vonqtaxonomy/", include("api.vonqtaxonomy.urls", namespace="vonqtaxonomy")),
+    path(
+        "parse-title-to-function/",
+        FunctionFromTitleViewSet.as_view({"get": "list"}),
+        name="parse-title-to-function",
+    ),
     path(
         r"job-functions/",
         JobFunctionsViewSet.as_view({"get": "list"}),

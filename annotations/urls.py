@@ -62,4 +62,9 @@ urlpatterns = [
         views.parse_title_testbench,
         name="parse_title_testbench",
     ),
+    path(
+        "headline-parsing-checker",
+        views.parse_headline_checker,
+        name="parse_headline_checker",
+    ),
 ]
