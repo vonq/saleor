@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
                     ),
                     ("None", "--None--"),
                 ],
-                default="None",
+                default=None,
                 max_length=64,
                 null=True,
             ),

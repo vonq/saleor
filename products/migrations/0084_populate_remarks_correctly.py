@@ -12,7 +12,6 @@ class Migration(migrations.Migration):
             os.path.join(os.path.dirname(__file__), "data/Salesforce_data.csv")
         ) as f:
             reader = csv.DictReader(f)
-            next(reader)
             for row in reader:
                 try:
                     with transaction.atomic():
