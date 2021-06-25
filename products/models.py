@@ -1241,7 +1241,7 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
     )
     remarks = models.CharField(
         null=True,
-        max_length=300,
+        max_length=600,
     )
 
     locations = models.ManyToManyField(Location, related_name="products", blank=True)
