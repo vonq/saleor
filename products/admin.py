@@ -88,6 +88,12 @@ class ProductForm(forms.ModelForm):
     customer_id = AutoCompleteSelectField(
         "customer", required=False, help_text=None, label="Customer ID"
     )
+    reason = forms.ChoiceField(
+        required=True,
+        label="Reason",
+        choices=Product.SalesforceProductReasonDisabled.choices,
+    )
+    remarks = forms.CharField(required=False, label="Remarks")
 
     class Meta:
         model = Product
@@ -182,6 +188,8 @@ class ProductAdmin(
         "status",
         "available_in_jmp",
         "is_recommended",
+        "remarks",
+        "reason",
         "customer_id",
         "salesforce_product_category",
         "locations",

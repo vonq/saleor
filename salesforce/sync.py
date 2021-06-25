@@ -61,6 +61,7 @@ def make_salesforce_product(product_instance):
         "Pricing_Method__c": cast_none(product_instance.pricing_method),
         "PurchasePriceMethod__c": cast_none(product_instance.purchase_price_method),
         "Product_Solution__c": cast_none(product_instance.salesforce_product_solution),
+        "Remarks__c": str(product_instance.remarks),
     }
 
 

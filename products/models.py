@@ -1046,6 +1046,26 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
                 cls.SUBSCRIPTION,
             ]
 
+    class SalesforceProductReasonDisabled(models.TextChoices):
+        NO_LONGER_EXISTS = ("Product no longer exists", _("Product no longer exists"))
+        TEMPORARY_OFFLINE = (
+            "Product is temporarily offline due to a contract negotiation",
+            _("Product is temporarily offline due to a contract negotiation"),
+        )
+        POSTING_UNDER_EMPLOYER_NAME = (
+            "Product doesn’t allow posting under your employer name",
+            _("Product doesn’t allow posting under your employer name"),
+        )
+        DELIVERY_TIME = (
+            "Product doesn’t meet delivery time criteria",
+            _("Product doesn’t meet delivery time criteria"),
+        )
+        NOT_PART_OF_MARKET_PLACE = (
+            "Product doesn’t want to be part of the market place",
+            _("Product doesn’t want to be part of the market place"),
+        )
+        NONE = None, _("--None--")
+
     @property
     def external_product_name(self):
         if self.channel and self.channel.name:
@@ -1212,6 +1232,16 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         default=PricingMethodType.NONE,
         null=True,
         max_length=40,
+    )
+    reason = models.CharField(
+        choices=SalesforceProductReasonDisabled.choices,
+        default=SalesforceProductReasonDisabled.NONE,
+        null=True,
+        max_length=64,
+    )
+    remarks = models.CharField(
+        null=True,
+        max_length=300,
     )
 
     locations = models.ManyToManyField(Location, related_name="products", blank=True)
