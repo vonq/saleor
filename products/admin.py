@@ -88,11 +88,6 @@ class ProductForm(forms.ModelForm):
     customer_id = AutoCompleteSelectField(
         "customer", required=False, help_text=None, label="Customer ID"
     )
-    reason = forms.ChoiceField(
-        required=True,
-        label="Reason",
-        choices=Product.SalesforceProductReasonDisabled.choices,
-    )
     remarks = forms.CharField(required=False, label="Remarks")
 
     class Meta:
