@@ -88,7 +88,7 @@ class ProductForm(forms.ModelForm):
     customer_id = AutoCompleteSelectField(
         "customer", required=False, help_text=None, label="Customer ID"
     )
-    remarks = forms.CharField(required=False, label="Remarks")
+    remarks = forms.CharField(required=False, label="Remarks", widget=forms.Textarea)
 
     class Meta:
         model = Product
