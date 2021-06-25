@@ -18,7 +18,9 @@ class Migration(migrations.Migration):
                         product = Product.objects.get(salesforce_id=row["Uuid__c"])
                         product.remarks = row["Remarks__c"]
                         product.save(update_fields=["remarks"])
-                except Exception as e:
+                except Product.DoesNotExist as e:
+                    continue
+                except Exception:
                     print(f"Failed to save product due to {e}")
 
     dependencies = [
