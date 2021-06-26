@@ -1,8 +1,18 @@
 import json
 from dataclasses import dataclass
+from typing import List, Dict, Optional
 
-from saleor.payment.interface import GatewayResponse, PaymentData
+from django.contrib.auth import get_user_model
+from django.db.models import Model
+from simple_salesforce import SalesforceResourceNotFound
+
+from saleor.checkout.models import Checkout
+from saleor.payment.interface import GatewayResponse, PaymentData, PaymentGateway
 from saleor.plugins.base_plugin import BasePlugin
+
+from api.salesforce.sync import login
+
+User = get_user_model()  # type: Model
 
 
 @dataclass
@@ -24,19 +34,36 @@ class NonExistentContract(Exception):
 
 
 class ContractsRepository:
+    client = login()
+    contracts_endpoint = "contracts/account/{customer_id}/"
 
-    contracts = {
-        "contract_1": Contract("customer_1", "contract_1",100),
-        "contract_2": Contract("customer_1", "contract_2", 100),
-    }
+    def get_contracts_by_customer_id(self, customer_id: str) -> Dict[str, Contract]:
+        contracts = self.client.apexecute(
+            self.contracts_endpoint.format(customer_id=customer_id), method="GET"
+        )
+        return {
+            contract["id"]: Contract(
+                customer_id=customer_id,
+                balance=contract["remainingbudget__c"],
+                contract_id=contract["id"],
+            )
+            for contract in contracts
+        }
 
-    @classmethod
-    def get_contract_by_customer_id(cls, customer_id):
-        return cls.contracts.get(customer_id)
+    def get_contract_by_id(self, contract_id: str) -> Optional[Contract]:
+        try:
+            resp = self.client.Contract.get(contract_id)
+        except SalesforceResourceNotFound:
+            return None
+        return Contract(
+            customer_id=resp["AccountId"],
+            contract_id=resp["Id"],
+            balance=resp["RemainingBudget__c"],
+        )
 
-    @classmethod
-    def charge_contract(cls, customer_id, billed_amount):
-        contract = cls.get_contract_by_customer_id(customer_id)
+    def charge_contract(self, customer_id: str, contract_id: str, billed_amount: float):
+        contracts = self.get_contracts_by_customer_id(customer_id)
+        contract = contracts.get(contract_id)
         if contract:
             if contract.can_charge(billed_amount):
                 contract.balance -= billed_amount
@@ -46,10 +73,6 @@ class ContractsRepository:
                 )
         else:
             raise NonExistentContract
-
-    @classmethod
-    def get_all_contracts(cls):
-        return cls.contracts
 
 
 class ContractsPaymentPlugin(BasePlugin):
@@ -65,14 +88,34 @@ class ContractsPaymentPlugin(BasePlugin):
         {"name": "Supported currencies", "value": "EUR,USD,GBP"},
     ]
     DEFAULT_ACTIVE = True
+    CONTRACTS_REPOSITORY = ContractsRepository()
 
     def get_client_token(self, token_config, previous_value):
         return previous_value
 
-    def get_payment_config(self, previous_value):
+    def get_payment_gateways(
+        self, currency: Optional[str], checkout: Optional["Checkout"], previous_value
+    ) -> List["PaymentGateway"]:
+        if checkout:
+            previous_value = checkout.email
+        # pass the customer email here to understand who is that
+        return super().get_payment_gateways(currency, checkout, previous_value)
+
+    @staticmethod
+    def get_customer_id_from_email(customer_email: str) -> Optional[str]:
+        try:
+            user = User.objects.get(email=customer_email)
+        except User.DoesNotExist:
+            return None
+        return user.metadata.get("customer_id")
+
+    def get_payment_config(self, customer_email):
         # this one returns a list of configuration after
         # you call the createCheckout mutation
-        contracts = ContractsRepository.get_all_contracts()
+        customer_id = self.get_customer_id_from_email(customer_email)
+        if not customer_id:
+            return []
+        contracts = self.CONTRACTS_REPOSITORY.get_contracts_by_customer_id(customer_id)
         return [
             {
                 "field": contract.contract_id,
@@ -93,21 +136,8 @@ class ContractsPaymentPlugin(BasePlugin):
         # adjust the balance
         # return status?
         token = payment_information.token
-        try:
-            ContractsRepository.charge_contract(
-                token, billed_amount=payment_information.amount
-            )
-        except InsufficientFunds as e:
-            return GatewayResponse(
-                is_success=False,
-                action_required=False,
-                kind="capture",
-                error="Insufficient funds!",
-                amount=payment_information.amount,
-                currency=payment_information.currency,
-                transaction_id="1234",
-            )
-        except NonExistentContract:
+        contract = self.CONTRACTS_REPOSITORY.get_contract_by_id(token)
+        if not contract:
             return GatewayResponse(
                 is_success=False,
                 action_required=False,
@@ -117,7 +147,16 @@ class ContractsPaymentPlugin(BasePlugin):
                 currency=payment_information.currency,
                 transaction_id="1234",
             )
-
+        if not contract.can_charge(payment_information.amount):
+            return GatewayResponse(
+                is_success=False,
+                action_required=False,
+                kind="capture",
+                error="Insufficient funds!",
+                amount=payment_information.amount,
+                currency=payment_information.currency,
+                transaction_id="1234",
+            )
         return GatewayResponse(
             is_success=True,
             action_required=False,
