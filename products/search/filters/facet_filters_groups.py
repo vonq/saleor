@@ -51,6 +51,7 @@ class FacetFiltersGroup:
     def can_be_included(cls, user_request: Request) -> bool:
         """
         Helper function to conditionally allow including a group filter in the index query.
+        By default, all facet filters should be disabled when user searches by name
         @rtype: bool
         """
         return "name" not in cls.get_qp_keys(user_request)
@@ -185,11 +186,14 @@ class GenericAndInternationalGroup(FacetFiltersGroup):
             "exactLocationId",
             "includeLocationId",
         }
+        is_search_for_my_own_contracts = "customerId" in qp_keys
+
         return (
             super().can_be_included(user_request)
             and not is_search_by_exact_location
             and not is_search_by_name_and_exact_location
             and not is_search_by_inclusive_and_exact_location
+            and not is_search_for_my_own_contracts
         )
 
 

@@ -6,7 +6,7 @@ from rest_framework.reverse import reverse
 from api.tests.integration import force_user_login
 from api.tests.integration.search import SearchTestCase
 
-from api.products.models import Product
+from api.products.models import Location, Product
 from api.products.search.index import ProductIndex
 
 
@@ -17,6 +17,14 @@ class MyOwnProductsTestCase(SearchTestCase):
 
     @classmethod
     def setUpTestData(cls) -> None:
+
+        # populate product locations
+        united_kingdom = Location(
+            mapbox_id="country.12405201072814600",
+            canonical_name="UK",
+        )
+        united_kingdom.save()
+
         cls.my_own_product = Product.objects.create(
             status=Product.Status.ACTIVE,
             available_in_jmp=True,
@@ -26,6 +34,9 @@ class MyOwnProductsTestCase(SearchTestCase):
             duration_days=90,
             customer_id="f17d9484-b9ba-5262-8f8e-b986e4b8c79d",
         )
+
+        cls.my_own_product.locations.add(united_kingdom)
+        cls.my_own_product.save()
 
         cls.not_my_own_product = Product.objects.create(
             status=Product.Status.ACTIVE,
