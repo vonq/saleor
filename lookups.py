@@ -6,7 +6,7 @@ from api.salesforce.sync import (
     get_accounts,
     get_accounts_by_ids,
     get_qprofile_accounts,
-    get_accounts_by_qprofile_ids,
+    get_accounts_by_qprofile_id,
 )
 
 
@@ -49,7 +49,7 @@ class CustomerLookup(AccountsLookup):
         ]
 
     def get_objects(self, ids):
-        accounts = get_accounts_by_qprofile_ids(tuple(ids))
+        accounts = get_accounts_by_qprofile_id(tuple(ids)[0])
         return [
             SFAccount(pk=obj["Qprofile_ID__c"], name=obj["Name"]) for obj in accounts
         ]

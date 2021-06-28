@@ -33,7 +33,7 @@ def make_salesforce_product(product_instance):
         "Name": product_instance.title_en,
         "JMP_Product_Name__c": product_instance.title_en,
         "Channel__c": getattr(product_instance.channel, "salesforce_id", None),
-        "Customer__c": get_accounts_by_qprofile_ids(product_instance.customer_id)[0][
+        "Customer__c": get_accounts_by_qprofile_id(product_instance.customer_id)[0][
             "Id"
         ]
         if product_instance.customer_id
@@ -128,12 +128,12 @@ def get_qprofile_accounts(query):
 
 
 @lru_cache
-def get_accounts_by_qprofile_ids(ids):
+def get_accounts_by_qprofile_id(qprofile_id):
     client = login()
     accounts = client.query(
         format_soql(
-            "SELECT Id, Name, Type, Qprofile_ID__c FROM Account WHERE Qprofile_ID__c IN {ids}",
-            ids=ids,
+            "SELECT Id, Name, Type, Qprofile_ID__c FROM Account WHERE Qprofile_ID__c = '%s'"
+            % qprofile_id,
         )
     )
     return accounts["records"]
