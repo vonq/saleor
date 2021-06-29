@@ -74,6 +74,7 @@ from api.products.serializers import (
     ProductSearchSerializer,
     ProductSerializer,
     JobFunctionSerializer,
+    InternalUserSerializer,
 )
 
 MY_OWN_PRODUCTS = (
@@ -230,12 +231,12 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         return self._paginator
 
     def get_serializer_class(self):
-        return (
-            ProductJmpSerializer
-            if self.request.user.is_authenticated
-            and self.request.user.profile.type == Profile.Type.JMP
-            else ProductSerializer
-        )
+        if self.request.user.is_authenticated:
+            if self.request.user.profile.type == Profile.Type.JMP:
+                return ProductJmpSerializer
+            elif self.request.user.profile.type == Profile.Type.INTERNAL:
+                return InternalUserSerializer
+        return ProductSerializer
 
     def get_queryset(self):
         queryset = self.queryset.filter(

@@ -377,6 +377,10 @@ class ProductJmpSerializer(ProductSerializer):
     customer_id = serializers.CharField(read_only=True)
 
 
+class InternalUserSerializer(ProductJmpSerializer):
+    salesforce_id = serializers.CharField(read_only=True)
+
+
 class ChannelSerializer(serializers.Serializer):
     class Meta:
         ref_name = "ChannelWithProducts"

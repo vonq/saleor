@@ -1,9 +1,13 @@
 from algoliasearch_django.decorators import disable_auto_indexing
 from django.test import tag
+from rest_framework.reverse import reverse
+
 from api.products.models import Product
 from api.tests import AuthenticatedTestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest.mock import patch
+
+from api.tests.integration import force_user_login
 
 
 @tag("unit")
@@ -75,3 +79,49 @@ class ProductTestCase(AuthenticatedTestCase):
         p1.save()
 
         self.assertEquals(p1.logo_url, sf_logo_url)
+
+
+class ProductSchemaSerializerTestCase(AuthenticatedTestCase):
+    def setUp(self) -> None:
+        self.test_product = Product.objects.create(
+            title="Test Product",
+            salesforce_id="12345",
+            status=Product.Status.ACTIVE,
+            available_in_jmp=True,
+            available_in_ats=True,
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            customer_id="12345",
+        )
+
+    def test_internal_user_sees_salesforce_id(self):
+        force_user_login(self.client, "internal")
+        resp = self.client.get(
+            reverse(
+                "api.products:products-detail",
+                kwargs={"product_id": self.test_product.product_id},
+            )
+        )
+
+        self.assertTrue("salesforce_id" in resp.json().keys())
+
+    def test_jmp_user_sees_customer_id(self):
+        force_user_login(self.client, "jmp")
+        resp = self.client.get(
+            reverse(
+                "api.products:products-detail",
+                kwargs={"product_id": self.test_product.product_id},
+            )
+        )
+        self.assertTrue("customer_id" in resp.json().keys())
+        self.assertFalse("salesforce_id" in resp.json().keys())
+
+    def test_mapi_doesnt_see_additional_fields(self):
+        force_user_login(self.client, "mapi")
+        resp = self.client.get(
+            reverse(
+                "api.products:products-detail",
+                kwargs={"product_id": self.test_product.product_id},
+            )
+        )
+        self.assertFalse("customer_id" in resp.json().keys())
+        self.assertFalse("salesforce_id" in resp.json().keys())
