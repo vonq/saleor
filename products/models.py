@@ -453,7 +453,7 @@ class Channel(SFSyncable):
 
     salesforce_id = models.CharField(max_length=20, null=True)
     name = models.CharField(
-        max_length=200,
+        max_length=80,
         help_text="""
 Channel with one product: Stepstone
 <br/>
