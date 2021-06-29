@@ -91,6 +91,7 @@ class ProductSchemaSerializerTestCase(AuthenticatedTestCase):
             available_in_ats=True,
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
             customer_id="12345",
+            supplier_setup_time=20,
         )
 
     def test_internal_user_sees_salesforce_id(self):
@@ -125,3 +126,14 @@ class ProductSchemaSerializerTestCase(AuthenticatedTestCase):
         )
         self.assertFalse("customer_id" in resp.json().keys())
         self.assertFalse("salesforce_id" in resp.json().keys())
+
+    def test_mapi_sees_setup_time(self):
+        force_user_login(self.client, "mapi")
+        resp = self.client.get(
+            reverse(
+                "api.products:products-detail",
+                kwargs={"product_id": self.test_product.product_id},
+            )
+        )
+        self.assertTrue("time_to_setup" in resp.json().keys())
+        self.assertEqual({"range": "hours", "period": 20}, resp.json()["time_to_setup"])

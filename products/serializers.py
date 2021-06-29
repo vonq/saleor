@@ -232,11 +232,19 @@ class ProductSerializer(serializers.Serializer):
             + (product.vonq_time_to_process or 0),
         }
 
+    @swagger_serializer_method(serializer_or_field=DeliveryTimeSerializer)
+    def get_time_to_setup(self, product) -> dict:
+        return {
+            "range": "hours",
+            "period": product.supplier_setup_time,
+        }
+
     locations = LimitedLocationSerializer(many=True, read_only=True)
     job_functions = LimitedJobFunctionSerializer(many=True, read_only=True)
     industries = IndustrySerializer(many=True, read_only=True)
     duration = serializers.SerializerMethodField()
     time_to_process = serializers.SerializerMethodField()
+    time_to_setup = serializers.SerializerMethodField()
     vonq_price = serializers.SerializerMethodField()
     ratecard_price = serializers.SerializerMethodField()
     cross_postings = serializers.ListField(child=serializers.CharField())
@@ -355,14 +363,6 @@ class ProductCategorySerializer(serializers.Serializer):
 
 
 class ProductJmpSerializer(ProductSerializer):
-    @swagger_serializer_method(serializer_or_field=DeliveryTimeSerializer)
-    def get_time_to_setup(self, product) -> dict:
-        return {
-            "range": "hours",
-            "period": product.supplier_setup_time,
-        }
-
-    time_to_setup = serializers.SerializerMethodField()
     categories = ProductCategorySerializer(many=True)
     # JMP uses these fields to filter products and channels
     # in the ordered campaign overview
