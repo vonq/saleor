@@ -61,6 +61,20 @@ class ContractsRepository:
             balance=resp["RemainingBudget__c"],
         )
 
+    @staticmethod
+    def get_customer_id_from_email(customer_email: str) -> Optional[str]:
+        try:
+            user = User.objects.get(email=customer_email)
+        except User.DoesNotExist:
+            return None
+        return user.metadata.get("customer_id")
+
+    def user_has_contract(self, email: str, contract_id: str) -> bool:
+        if user := self.get_customer_id_from_email(email):
+            if contract := self.get_contract_by_id(contract_id):
+                return True
+        return False
+
     def charge_contract(self, customer_id: str, contract_id: str, billed_amount: float):
         contracts = self.get_contracts_by_customer_id(customer_id)
         contract = contracts.get(contract_id)
@@ -101,18 +115,12 @@ class ContractsPaymentPlugin(BasePlugin):
         # pass the customer email here to understand who is that
         return super().get_payment_gateways(currency, checkout, previous_value)
 
-    @staticmethod
-    def get_customer_id_from_email(customer_email: str) -> Optional[str]:
-        try:
-            user = User.objects.get(email=customer_email)
-        except User.DoesNotExist:
-            return None
-        return user.metadata.get("customer_id")
-
     def get_payment_config(self, customer_email):
         # this one returns a list of configuration after
         # you call the createCheckout mutation
-        customer_id = self.get_customer_id_from_email(customer_email)
+        customer_id = self.CONTRACTS_REPOSITORY.get_customer_id_from_email(
+            customer_email
+        )
         if not customer_id:
             return []
         contracts = self.CONTRACTS_REPOSITORY.get_contracts_by_customer_id(customer_id)
@@ -137,6 +145,18 @@ class ContractsPaymentPlugin(BasePlugin):
         # return status?
         token = payment_information.token
         contract = self.CONTRACTS_REPOSITORY.get_contract_by_id(token)
+        if not self.CONTRACTS_REPOSITORY.user_has_contract(
+            payment_information.customer_email, token
+        ):
+            return GatewayResponse(
+                is_success=False,
+                action_required=False,
+                kind="capture",
+                error=f"User doesn't have conract",
+                amount=payment_information.amount,
+                currency=payment_information.currency,
+                transaction_id="",
+            )
         if not contract:
             return GatewayResponse(
                 is_success=False,

@@ -2,7 +2,7 @@ from typing import List, Optional, Iterable, Any
 
 from django.core.exceptions import ValidationError
 
-from api.plugins.metadata import MetadataSerializer, FinalMetadataSerializer
+from addons.plugins.metadata import MetadataSerializer, FinalMetadataSerializer
 from saleor.checkout.fetch import CheckoutInfo, CheckoutLineInfo
 from saleor.checkout.models import Checkout
 from saleor.discount import DiscountInfo
