@@ -20,5 +20,5 @@ class TruncateChannelNameAndAlterTable(TestMigrations):
         channel = Channel.objects.get(pk=self.unmigrated_channel.id)
         self.assertEqual(
             channel.name,
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas hendrerit, er…",
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas hendrerit, e…",
         )
