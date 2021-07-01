@@ -40,26 +40,26 @@ class MapboxLocationsTestCase(AuthenticatedTestCase):
                 "Reading, England, United Kingdom",
                 "Reading, Pennsylvania, United States",
                 "Reading, Massachusetts, United States",
-                "Readington, New Jersey, United States",
+                "Readington Township, New Jersey, United States",
             ],
         )
 
         self.assertEqual(
             list(Location.objects.all().values_list("canonical_name", flat=True)),
-            ["Reading", "Reading", "Reading", "Reading", "Readington"],
+            ["Reading", "Reading", "Reading", "Reading", "Readington Township"],
         )
 
     def test_autocomplete_returns_mapbox_order(self):
         self.client.get(reverse("locations") + "?text=london")
 
         self.assertListEqual(
-            list(Location.objects.all().values_list("mapbox_placename", flat=True))[:5],
+            list(Location.objects.all().values_list("mapbox_placename", flat=True)),
             [
                 "London, Greater London, England, United Kingdom",
                 "London, Ontario, Canada",
-                "Enfield, Greater London, England, United Kingdom",
+                "London Borough of Enfield, Greater London, England, United Kingdom",
                 "Londonderry, Derry, Northern Ireland, United Kingdom",
-                "Barnet, Greater London, England, United Kingdom",
+                "London Borough of Barnet, Greater London, England, United Kingdom",
             ],
         )
 
@@ -76,6 +76,9 @@ class ExtendedLocationResultsTestCase(AuthenticatedTestCase):
         # of the database
         Location.objects.create(
             mapbox_placename="Europe",
+            mapbox_placename_en="Europe",
+            mapbox_placename_nl="Europe",
+            mapbox_placename_de="Europe",
             mapbox_place_type=["continent"],
             mapbox_context=["world"],
         )
@@ -115,3 +118,56 @@ class ExtendedLocationResultsTestCase(AuthenticatedTestCase):
         cont = Geocoder.get_continents("eur")
         self.assertEqual(len(cont), 1)
         self.assertEqual(cont[0].fully_qualified_place_name, "Europe")
+
+    def test_can_fetch_locations_in_multiple_languages(self):
+        english_response = self.client.get(reverse("locations") + "?text=rome")
+        german_response = self.client.get(
+            reverse("locations") + "?text=rom", HTTP_ACCEPT_LANGUAGE="de-CH"
+        )
+
+        # The first two results are supposed to be Rome (the city), Rome (the region), Rome (a city in Georgia, US)
+        self.assertEqual(
+            [loc["id"] for loc in english_response.json()[0:2]],
+            [loc["id"] for loc in german_response.json()[0:2]],
+        )
+
+    def test_can_resolve_basic_locations(self):
+        english_response = self.client.get(
+            reverse("locations") + "?text=germany", HTTP_ACCEPT_LANGUAGE="en"
+        )
+        german_response = self.client.get(
+            reverse("locations") + "?text=deutschland", HTTP_ACCEPT_LANGUAGE="de-CH"
+        )
+
+        self.assertEqual(
+            english_response.json()[0]["id"], german_response.json()[0]["id"]
+        )
+
+        germany_id = english_response.json()[0]["id"]
+        germany = Location.objects.get(pk=germany_id)
+
+        self.assertEqual(germany.canonical_name_en, "Germany")
+        self.assertEqual(germany.canonical_name_de, "Deutschland")
+        self.assertEqual(germany.canonical_name_nl, "Duitsland")
+
+
+@tag("integration")
+class ExistingLocationsTestCase(AuthenticatedTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.germany = Location.objects.create(
+            mapbox_placename="Germany",
+            mapbox_placename_en=None,
+            mapbox_placename_nl=None,
+            mapbox_placename_de=None,
+            mapbox_id="country.11437281100480410",
+            mapbox_place_type=["country"],
+        )
+
+    def test_search_for_deutschland_yields_germany(self):
+        german_response = self.client.get(
+            reverse("locations") + "?text=deutschland", HTTP_ACCEPT_LANGUAGE="de-CH"
+        )
+        germany_id = german_response.json()[0]["id"]
+
+        self.assertEqual(self.germany.id, germany_id)

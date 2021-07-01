@@ -340,9 +340,22 @@ class Location(CreatedUpdatedModelMixin):
     def from_mapbox_result(cls, mapbox_response: dict):
         location = cls()
         location.mapbox_id = mapbox_response["id"]
-        location.mapbox_placename = mapbox_response["place_name"]
-        location.canonical_name = mapbox_response["text"]
-        location.mapbox_text = mapbox_response["text"]
+
+        location.mapbox_placename = mapbox_response["place_name_en"]
+        location.mapbox_placename_en = mapbox_response["place_name_en"]
+        location.mapbox_placename_nl = mapbox_response["place_name_nl"]
+        location.mapbox_placename_de = mapbox_response["place_name_de"]
+
+        location.canonical_name = mapbox_response["text_en"]
+        location.canonical_name_en = mapbox_response["text_en"]
+        location.canonical_name_nl = mapbox_response["text_nl"]
+        location.canonical_name_de = mapbox_response["text_de"]
+
+        location.mapbox_text = mapbox_response["text_en"]
+        location.mapbox_text_en = mapbox_response["text_en"]
+        location.mapbox_text_de = mapbox_response["text_de"]
+        location.mapbox_text_nl = mapbox_response["text_nl"]
+
         location.mapbox_place_type = []
         location.country_code = cls.get_country_short_code(mapbox_response)
         location.mapbox_bounding_box = mapbox_response.get("bbox", [])
@@ -351,7 +364,7 @@ class Location(CreatedUpdatedModelMixin):
         if "short_code" in mapbox_response["properties"]:
             location.mapbox_shortcode = mapbox_response["properties"]["short_code"]
         if "context" in mapbox_response:
-            country = mapbox_response["place_name"].split(",")[-1].strip()
+            country = mapbox_response["place_name_en"].split(",")[-1].strip()
             continent = Geocoder.get_continent_for_country(country)
             location.mapbox_context = [
                 place["id"] for place in mapbox_response["context"]

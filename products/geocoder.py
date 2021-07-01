@@ -22,6 +22,7 @@ from django.apps import apps
 
 CONTINENTS = list(CONTINENT_CODE_TO_CONTINENT_NAME.values())
 MAPBOX_INTERNATIONAL_PLACE_TYPE = "world"
+SUPPORTED_LANGUAGES = ("en", "de", "nl")
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +30,17 @@ logger = logging.getLogger(__name__)
 class Geocoder:
     @staticmethod
     @lru_cache
-    def geocode(text: str) -> List[Dict]:
+    def geocode(text: str, primary_language: str = "en") -> List[Dict]:
+        # in Mapbox, the languages parameter controls the language of the text supplied in responses,
+        # and also **affects result scoring**, with results matching the user’s query
+        # in the requested language being preferred over results that match in another language.
+        ordered_languages = [primary_language] + [
+            x for x in SUPPORTED_LANGUAGES if x != primary_language
+        ]
         response = MapboxGeocoder().forward(
-            address=text, types=["country", "region", "place", "district"]
+            address=text,
+            types=["country", "region", "place", "district"],
+            languages=ordered_languages,
         )
         return response.geojson().get("features", [])
 

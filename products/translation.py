@@ -33,7 +33,7 @@ class JobTitleTranslationOptions(TranslationOptions):
 
 @register(Location)
 class LocationTranslationOptions(TranslationOptions):
-    fields = ("canonical_name",)
+    fields = ("canonical_name", "mapbox_text", "mapbox_placename")
 
 
 @register(Channel)

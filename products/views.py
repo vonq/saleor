@@ -164,10 +164,11 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
                 data={"text": ["This field is required"]}, status=HTTP_400_BAD_REQUEST
             )
 
+        accept_language = self.request.LANGUAGE_CODE
+
         # first attempt to match on continents
         continents = Geocoder.get_continents(text)
-
-        geocoder_response = Geocoder.geocode(text)
+        geocoder_response = Geocoder.geocode(text, primary_language=accept_language)
         locations = Location.from_mapbox_autocomplete_response(geocoder_response)
 
         serializer = self.get_serializer(
