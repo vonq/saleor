@@ -34,11 +34,11 @@ class NonExistentContract(Exception):
 
 
 class ContractsRepository:
-    client = login()
     contracts_endpoint = "contracts/account/{customer_id}/"
 
     def get_contracts_by_customer_id(self, customer_id: str) -> Dict[str, Contract]:
-        contracts = self.client.apexecute(
+        client = login()
+        contracts = client.apexecute(
             self.contracts_endpoint.format(customer_id=customer_id), method="GET"
         )
         return {
@@ -51,8 +51,9 @@ class ContractsRepository:
         }
 
     def get_contract_by_id(self, contract_id: str) -> Optional[Contract]:
+        client = login()
         try:
-            resp = self.client.Contract.get(contract_id)
+            resp = client.Contract.get(contract_id)
         except SalesforceResourceNotFound:
             return None
         return Contract(
