@@ -1,5 +1,3 @@
-from unittest import skip
-
 from django.test import tag
 from rest_framework.reverse import reverse
 
@@ -98,3 +96,12 @@ class MyOwnProductsTestCase(SearchTestCase):
         )
         self.assertTrue("customer_id" in resp.json())
         self.assertEqual(self.my_own_product.customer_id, resp.json()["customer_id"])
+
+    def test_my_own_product_is_not_recommended(self):
+        force_user_login(self.client, "jmp")
+        resp = self.client.get(
+            reverse("api.products:products-list") + f"?recommended=true"
+        )
+        results = resp.json()["results"]
+        self.assertEqual(1, len(results))
+        self.assertEqual("Product available in JMP", results[0]["title"])

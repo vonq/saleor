@@ -299,7 +299,9 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         def is_not_social():
             return ~Q(channel__type=Channel.Type.SOCIAL_MEDIA)
 
-        queryset = queryset.filter(is_not_free_except_for_my_own_products())
+        queryset = queryset.exclude(MY_OWN_PRODUCTS).filter(
+            is_not_free_except_for_my_own_products()
+        )
         generic_filter = queryset.filter(is_generic()).filter(is_not_social())[:2]
         niche_filter = queryset.filter(is_not_social()).exclude(is_generic())[:2]
         social_filter = queryset.exclude(is_not_social()).order_by("-order_frequency")[
