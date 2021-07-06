@@ -406,9 +406,9 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             raise NotFound
 
         product_ids = product_ids.split(",")
-        if len(product_ids) > 25:
+        if len(product_ids) > 50:
             return JsonResponse(
-                data={"error": "Cannot fetch more than 25 products at a time"},
+                data={"error": "Cannot fetch more than 50 products at a time"},
                 status=HTTP_400_BAD_REQUEST,
             )
         queryset = self.get_queryset().filter(product_id__in=product_ids)
