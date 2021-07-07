@@ -3,6 +3,8 @@ import re
 import uuid
 import datetime
 from typing import List, Iterable
+
+from django.contrib.auth import get_user_model
 from storages.backends.s3boto3 import S3Boto3Storage
 from dateutil.tz import UTC
 from django.conf import settings
@@ -18,7 +20,6 @@ from PIL import Image
 from api.field_permissions.models import FieldPermissionModelMixin
 from api.arrayfield import PKBArrayField
 from api.products.geocoder import Geocoder, MAPBOX_INTERNATIONAL_PLACE_TYPE
-from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
 from api.settings import AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME
 import requests
@@ -28,6 +29,8 @@ from io import BytesIO
 from django.core.files import File
 
 SEPARATOR = "|"
+
+User = get_user_model()
 
 
 class CreatedUpdatedModelMixin(models.Model):
@@ -157,7 +160,6 @@ class JobFunction(MPTTModel):
 
     @property
     def all_job_titles(self) -> Iterable["JobTitle"]:
-
         all_titles = JobTitle.objects.filter(
             Q(alias_of__job_function=self) | Q(job_function=self)
         )
@@ -211,10 +213,10 @@ class JobTitle(models.Model):
         )
         if self.job_function:
             keywords += [
-                self.job_function.name_en,
-                self.job_function.name_de,
-                self.job_function.name_nl,
-            ] + list(
+                            self.job_function.name_en,
+                            self.job_function.name_de,
+                            self.job_function.name_nl,
+                        ] + list(
                 itertools.chain(
                     self.job_function.get_descendants().values_list(
                         "name_en", flat=True
@@ -423,7 +425,7 @@ class Location(CreatedUpdatedModelMixin):
 
     @classmethod
     def list_child_locations(
-        cls, location_ids: Iterable[str], only_associated_to_products=False
+            cls, location_ids: Iterable[str], only_associated_to_products=False
     ) -> List[str]:
         # max depth a locataion (continents) can have is 3: country, district, place
         qs = cls.objects.filter(
@@ -749,10 +751,10 @@ class IndexSearchableProductMixin:
         industries = list(self.industries.all())
         job_functions = list(self.job_functions.all())
         return (
-            len(industries) == 0
-            # TODO migrate industry values instead, use "all" root job function
-            or any([x.name_en == "Generic" for x in industries])
-        ) and len(job_functions) == 0
+                       len(industries) == 0
+                       # TODO migrate industry values instead, use "all" root job function
+                       or any([x.name_en == "Generic" for x in industries])
+               ) and len(job_functions) == 0
 
     @property
     def audience_group(self):
@@ -834,9 +836,9 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
             product_id = self.salesforce_id
         else:
             if re.match(
-                r"[0-9a-f]{8}-[0-9a-f]{4}-[45][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}",
-                str(self.product_id),
-                re.I,
+                    r"[0-9a-f]{8}-[0-9a-f]{4}-[45][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}",
+                    str(self.product_id),
+                    re.I,
             ):
                 product_id = self.product_id
             else:
@@ -870,9 +872,9 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
                 return getattr(self, "cropping_" + format)
 
             return (
-                getattr(self, f"logo_{format}_uncropped")
-                and selection_exists()
-                and (is_newly_uploaded_logo() or selections_changed())
+                    getattr(self, f"logo_{format}_uncropped")
+                    and selection_exists()
+                    and (is_newly_uploaded_logo() or selections_changed())
             )
 
         def load_image(temporary_file_path, content):
@@ -883,7 +885,7 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         def load_and_crop_logo(format="rectangle"):
             if should_crop_logo(format=format):
                 if not current_obj or getattr(
-                    self, f"logo_{format}_uncropped"
+                        self, f"logo_{format}_uncropped"
                 ) != getattr(current_obj, f"logo_{format}_uncropped"):
                     # Saves to upload the new logo
                     super(Product, self).save()
@@ -1125,11 +1127,11 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
     @property
     def is_my_own_product(self):
         if (
-            self.salesforce_product_solution
-            == self.SalesforceProductSolution.MY_OWN_CHANNEL
-            or self.salesforce_product_category
-            == self.SalesforceProductCategory.CUSTOMER_SPECIFIC
-            or self.customer_id is not None
+                self.salesforce_product_solution
+                == self.SalesforceProductSolution.MY_OWN_CHANNEL
+                or self.salesforce_product_category
+                == self.SalesforceProductCategory.CUSTOMER_SPECIFIC
+                or self.customer_id is not None
         ):
             return True
         return False
