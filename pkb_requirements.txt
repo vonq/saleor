@@ -1,9 +1,7 @@
 djangorestframework==3.12.4
 django-health-check==3.16.4
-psycopg2-binary==2.8.6
 drf-yasg2==1.19.4
 mapbox==0.18.0
-packaging==20.9
 dj-static==0.0.6
 simple-salesforce==1.10.1
 django-modeltranslation==0.17.1
