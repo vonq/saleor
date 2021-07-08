@@ -293,6 +293,8 @@ INSTALLED_APPS = [
     "easy_thumbnails",
     "image_cropping",
     "django_better_admin_arrayfield",
+    "reversion",
+    "reversion_compare",
     # External apps
     "versatileimagefield",
     "django_measurement",
