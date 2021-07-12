@@ -615,6 +615,7 @@ PLUGINS = [
     "saleor.plugins.sendgrid.plugin.SendgridEmailPlugin",
     "addons.plugins.checkout_details_plugin.CheckoutDetailsPlugin",
     "addons.plugins.contracts_payment_plugin.ContractsPaymentPlugin",
+    "addons.plugins.auth0_plugin.Auth0Plugin",
 ]
 
 # Plugin discovery
@@ -691,5 +692,14 @@ assert hasattr(schema_printer, "_print_object")
 schema_printer._print_object = patched_print_object
 
 AJAX_LOOKUP_CHANNELS = {
-    'channel_account'  : {'model': 'products.Channel', 'search_field': 'salesforce_account_id'},
+    "channel_account": {
+        "model": "products.Channel",
+        "search_field": "salesforce_account_id",
+    },
 }
+
+# Auth0 related settings
+
+AUTH0_DOMAIN = os.getenv('AUTH0_DOMAIN')
+AUTH0_CLIENT_ID = os.getenv('AUTH0_CLIENT_ID')
+AUTH0_CLIENT_SECRET = os.getenv('AUTH0_CLIENT_SECRET')
