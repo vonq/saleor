@@ -67,12 +67,13 @@ class Auth0Plugin(BasePlugin):
     def external_authentication_url(
         self, data: dict, request: WSGIRequest, previous_value
     ) -> dict:
+        redirect_uri = data['redirect_uri']
 
         return {
             "authorizeUrl": f"https://{settings.AUTH0_DOMAIN}/authorize?"
             f"response_type=code&"
             f"client_id={settings.AUTH0_CLIENT_ID}&"
-            f"redirect_uri=https://localhost:9000/callback&"
+            f"redirect_uri={redirect_uri}&"
             f"scope=openid+profile+email+offline_access&"
             f"state={data.get('state')}"
         }
@@ -86,7 +87,7 @@ class Auth0Plugin(BasePlugin):
                 "grant_type": "authorization_code",
                 "client_id": settings.AUTH0_CLIENT_ID,
                 "client_secret": settings.AUTH0_CLIENT_SECRET,
-                "redirect_uri": "http://localhost:9000/callback",
+                "redirect_uri": data["redirect_uri"],
                 "code": data["code"],
             },
         )
@@ -111,13 +112,14 @@ class Auth0Plugin(BasePlugin):
         self, data: dict, request: WSGIRequest, previous_value
     ) -> ExternalAccessTokens:
         refresh_token = data["refreshToken"]
+        redirect_uri = data['redirect_uri']
         resp = requests.post(
             url=f"https://{settings.AUTH0_DOMAIN}/oauth/token",
             data={
                 "grant_type": "authorization_code",
                 "client_id": settings.AUTH0_CLIENT_ID,
                 "client_secret": settings.AUTH0_CLIENT_SECRET,
-                "redirect_uri": "http://localhost:9000/callback",
+                "redirect_uri": redirect_uri,
                 "code": refresh_token,
             },
         )
