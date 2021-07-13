@@ -102,10 +102,36 @@ class Auth0Plugin(BasePlugin):
     def external_refresh(
         self, data: dict, request: WSGIRequest, previous_value
     ) -> ExternalAccessTokens:
-        pass
+        refresh_token = data["refreshToken"]
+        resp = requests.post(
+            url=f"https://{settings.AUTH0_DOMAIN}/oauth/token",
+            data={
+                "grant_type": "authorization_code",
+                "client_id": settings.AUTH0_CLIENT_ID,
+                "client_secret": settings.AUTH0_CLIENT_SECRET,
+                "redirect_uri": "http://localhost:9000/callback",
+                "code": refresh_token,
+            },
+        )
+        if not resp.ok:
+            raise ValidationError(f"Auth invalid! {resp.content}")
+
+        payload = resp.json()
+        verify_token(payload["id_token"])
+        user = get_user_from_token(payload["id_token"])
+
+        return ExternalAccessTokens(
+            token=payload["access_token"],
+            refresh_token=payload["refresh_token"],
+            csrf_token=data["state"],
+            user=user,
+        )
 
     def external_logout(self, data: dict, request: WSGIRequest, previous_value):
-        pass
+        return_to = data["returnTo"]
+        return {
+            "logoutUrl": f"https://{settings.AUTH0_DOMAIN}/v2/logout?client_id={settings.AUTH0_CLIENT_ID}&returnTo={return_to}"
+        }
 
     def external_verify(
         self, data: dict, request: WSGIRequest, previous_value
