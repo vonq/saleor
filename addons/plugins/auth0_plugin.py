@@ -50,6 +50,13 @@ def get_user_from_token(token) -> Optional[User]:
     return user
 
 
+def create_user_from_token(token) -> User:
+    # TODO: check more details!
+    user = User.objects.create(email=token['email'])
+    # TODO: Organization metadata?
+    return user
+
+
 class Auth0Plugin(BasePlugin):
     PLUGIN_NAME = "Authenticate with Auth0"
     PLUGIN_ID = "vonq.authentication.auth0"
@@ -83,6 +90,7 @@ class Auth0Plugin(BasePlugin):
                 "code": data["code"],
             },
         )
+
         if not resp.ok:
             raise ValidationError(f"Auth invalid! {resp.content}")
 
@@ -140,14 +148,16 @@ class Auth0Plugin(BasePlugin):
 
         verify_token(token)
         user = get_user_from_token(token)
+        user_payload = jwt.decode(token, options={"verify_signature": False})
 
-        return user, {}
+        return user, user_payload
 
     def authenticate_user(
         self, request: WSGIRequest, previous_value
     ) -> Optional["User"]:
         token = request.META.get("HTTP_AUTHORIZATION", " ").split(" ")[1]
 
-        user = get_user_from_token(token)
+        verify_token(token)
+        user = get_user_from_token(token) or create_user_from_token(token)
 
         return user
