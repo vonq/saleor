@@ -15,6 +15,7 @@ import os
 import sys
 
 import sentry_sdk
+from corsheaders.defaults import default_headers
 from sentry_sdk.integrations.django import DjangoIntegration
 
 ENV = os.getenv("ENV", "dev")
@@ -185,6 +186,10 @@ CORS_ALLOWED_ORIGINS = [
     "https://master.djaiqvf4qskm2.amplifyapp.com",
     "https://saleor-poc-storefront.herokuapp.com",
     "https://saleor-poc-dashboard.herokuapp.com",
+]
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'authorization-bearer',
 ]
 
 # Internationalization
