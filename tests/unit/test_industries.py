@@ -1,13 +1,14 @@
+from django.test import TestCase
+
 from django.test import tag
 from rest_framework.reverse import reverse
 
 from api.products.models import Industry
 from api.vonqtaxonomy.models import Industry as VonqIndustry
-from api.tests import AuthenticatedTestCase
 
 
 @tag("unit")
-class JobFunctionViewTestCase(AuthenticatedTestCase):
+class JobFunctionViewTestCase(TestCase):
     def setUp(self) -> None:
         super().setUp()
 

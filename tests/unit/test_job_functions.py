@@ -1,15 +1,16 @@
+from django.test import TestCase
+
 from algoliasearch_django.decorators import disable_auto_indexing
 from django.test import tag
 from rest_framework.reverse import reverse
 
 from api.products.models import JobFunction
 from api.vonqtaxonomy.models import JobCategory as VonqJobCategory
-from api.tests import AuthenticatedTestCase
 
 
 @tag("unit")
 @disable_auto_indexing
-class JobFunctionViewTestCase(AuthenticatedTestCase):
+class JobFunctionViewTestCase(TestCase):
     def setUp(self) -> None:
         super().setUp()
 
@@ -52,10 +53,9 @@ class JobFunctionViewTestCase(AuthenticatedTestCase):
 
 @tag("unit")
 @disable_auto_indexing
-class JobFunctionTreeStructureTestCase(AuthenticatedTestCase):
+class JobFunctionTreeStructureTestCase(TestCase):
     @classmethod
     def setUpTestData(cls):
-
         vonq_job_category = VonqJobCategory.objects.create(mapi_id=1, name="Whatever")
 
         cls.engineering = JobFunction.objects.create(

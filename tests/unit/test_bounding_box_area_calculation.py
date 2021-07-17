@@ -1,4 +1,4 @@
-from unittest import TestCase
+from django.test import TestCase
 
 from api.products.area import bounding_box_area
 from api.products.models import Location
