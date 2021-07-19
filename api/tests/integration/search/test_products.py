@@ -1,4 +1,5 @@
 import random
+from django.test import TestCase
 
 from algoliasearch_django.decorators import disable_auto_indexing
 from django.test import tag
@@ -6,12 +7,11 @@ from rest_framework.reverse import reverse
 
 from api.products.models import Product
 from api.products.serializers import ProductJmpSerializer, ProductSerializer
-from api.tests import AuthenticatedTestCase
 from api.tests.integration import force_user_login
 
 
 @tag("integration")
-class ProductsTestCase(AuthenticatedTestCase):
+class ProductsTestCase(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
         with disable_auto_indexing():
@@ -57,6 +57,7 @@ class ProductsTestCase(AuthenticatedTestCase):
             cls.unwanted_status_product.save()
 
     def test_products_can_offset_and_limit(self):
+        force_user_login(self.client, "internal")
         resp_one = self.client.get(reverse("api.products:products-list"))
 
         resp_two = self.client.get(reverse("api.products:products-list") + "?limit=1")
@@ -139,6 +140,18 @@ class ProductsTestCase(AuthenticatedTestCase):
 
         self.assertEquals(resp.status_code, 200)
 
+    def test_it_returns_jmp_products_to_unauthenticated_user(self):
+        force_user_login(self.client, "jmp")
+        jmp_resp = self.client.get(
+            reverse(
+                "api.products:products-list",
+            )
+        )
+
+        self.client.logout()
+        public_resp = self.client.get(reverse("api.products:products-list"))
+        self.assertEqual(jmp_resp.json(), public_resp.json())
+
     def test_it_hides_unavailable_products_in_jmp(self):
         force_user_login(self.client, "jmp")
         resp = self.client.get(
@@ -178,7 +191,7 @@ class ProductsTestCase(AuthenticatedTestCase):
             content_type="application/json",
         )
 
-        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(resp.status_code, 404)
 
         force_user_login(self.client, "mapi")
 
@@ -209,7 +222,7 @@ class ProductsTestCase(AuthenticatedTestCase):
 
 
 @tag("integration")
-class ProductsTimeToProcessTestCase(AuthenticatedTestCase):
+class ProductsTimeToProcessTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -221,7 +234,6 @@ class ProductsTimeToProcessTestCase(AuthenticatedTestCase):
         )
 
     def test_total_time_to_process_should_sum_supplier_and_vonq_time_to_process(self):
-        force_user_login(self.client, "jmp")
         products = self.client.get(reverse("api.products:products-list")).json()[
             "results"
         ]

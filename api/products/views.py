@@ -3,6 +3,7 @@ from collections import defaultdict
 from json import JSONDecodeError
 from typing import Iterable, List, Tuple, Type
 
+from django.contrib.auth import get_user_model
 from django.db.models import Case, Q, When
 from django.http import JsonResponse
 from drf_yasg2 import openapi
@@ -10,7 +11,7 @@ from drf_yasg2.utils import swagger_auto_schema
 from rest_framework import mixins, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
-from rest_framework.permissions import BasePermission, IsAuthenticated
+from rest_framework.permissions import BasePermission, AllowAny
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 from rest_framework.utils import json
@@ -83,6 +84,8 @@ MY_OWN_PRODUCTS = (
     | Q(customer_id__isnull=False)
 )
 
+User = get_user_model()
+
 
 class IsMapiOrJmpUser(BasePermission):
     def has_permission(self, request, view):
@@ -95,9 +98,31 @@ class IsMapiOrJmpUser(BasePermission):
         )
 
 
+class UserStrategy:
+    def __init__(self, request_user: User):
+        self._request_user = request_user
+
+    def is_mapi(self) -> bool:
+        return (
+            self._request_user.is_authenticated
+            and self._request_user.profile.type == Profile.Type.MAPI
+        )
+
+    def is_jmp(self) -> bool:
+        return not self._request_user.is_authenticated or (
+            self._request_user.profile.type == Profile.Type.JMP
+        )
+
+    def is_internal(self) -> bool:
+        return (
+            self._request_user.is_authenticated
+            and self._request_user.profile.type == Profile.Type.INTERNAL
+        )
+
+
 class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     queryset = Location.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     http_method_names = ("get",)
     serializer_class = LocationSerializer
     search_parameters = (
@@ -178,7 +203,7 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 
 
 class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     serializers = {
         "default": None,
     }
@@ -232,12 +257,18 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         return self._paginator
 
     def get_serializer_class(self):
+        user = UserStrategy(self.request.user)
         if self.request.user.is_authenticated:
-            if self.request.user.profile.type == Profile.Type.JMP:
+            if user.is_jmp():
                 return ProductJmpSerializer
-            elif self.request.user.profile.type == Profile.Type.INTERNAL:
+            if user.is_mapi():
+                return ProductSerializer
+            if user.is_internal():
                 return InternalUserSerializer
-        return ProductSerializer
+        # A non-authenticated user is assumed to be JMP
+        # See https://qandidate.atlassian.net/browse/CHEC-804 and linked
+        # for the rationale behind this
+        return ProductJmpSerializer
 
     def get_queryset(self):
         queryset = self.queryset.filter(
@@ -245,10 +276,11 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             salesforce_product_type__in=Product.SalesforceProductType.products(),
         )
 
-        if self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]:
+        user = UserStrategy(self.request.user)
+        if user.is_jmp() or user.is_mapi():
             queryset = queryset.filter(available_in_jmp=True)
 
-        if self.request.user.profile.type == Profile.Type.MAPI:
+        if user.is_mapi():
             # MAPI (or HAPI) is only required to show Job Boards, Social or Google products
             queryset = queryset.filter(
                 Q(salesforce_product_type=Product.SalesforceProductType.JOB_BOARD)
@@ -262,12 +294,13 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         return queryset.order_by("-order_frequency", "id")
 
     def get_all_filters(self):
-        if self.request.user.profile.type == Profile.Type.MAPI:
+        user = UserStrategy(self.request.user)
+        if user.is_mapi():
             return self.search_filters + (
                 IsAvailableInJmpFacetFilter,
                 IsNotMyOwnProductFilter,
             )
-        elif self.request.user.profile.type == Profile.Type.JMP:
+        elif user.is_jmp():
             if self.is_my_own_product_request:
                 return self.search_filters + (
                     IsAvailableInJmpFacetFilter,
@@ -360,10 +393,10 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
 
     def check_object_permissions(self, request, obj):
         super().check_object_permissions(request, obj)
-        if request.user.profile.type == Profile.Type.JMP and not obj.available_in_jmp:
+        if UserStrategy(request.user).is_jmp() and not obj.available_in_jmp:
             raise NotFound()
 
-    @action(detail=False, methods=["post"], permission_classes=[IsMapiOrJmpUser])
+    @action(detail=False, methods=["post"], permission_classes=[AllowAny])
     def validate(self, request, **kwargs):
         """
         A simple endpoint to quickly check whether a list of product ids is valid
@@ -398,7 +431,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     @action(
         detail=False,
         methods=["get"],
-        permission_classes=[IsAuthenticated],
+        permission_classes=[AllowAny],
         url_path="multiple/(?P<product_ids>.+)",
     )
     def multiple(self, request, product_ids=None):
@@ -517,10 +550,8 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         elif search_serializer.is_sort_by_recent:
             queryset = queryset.order_by("-created")
         else:
-            if (
-                self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]
-                and not self.is_recommendation
-            ):
+            user = UserStrategy(self.request.user)
+            if (user.is_jmp() or user.is_mapi()) and not self.is_recommendation:
                 queryset = queryset.exclude(MY_OWN_PRODUCTS)
 
         page = self.paginate_queryset(queryset)
@@ -553,7 +584,8 @@ class AddonsViewSet(ProductsViewSet):
             status=Product.Status.ACTIVE,
             salesforce_product_type__in=Product.SalesforceProductType.addons(),
         )
-        if self.request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI]:
+        user = UserStrategy(self.request.user)
+        if user.is_mapi() or user.is_jmp():
             return active_products.filter(available_in_jmp=True).exclude(
                 MY_OWN_PRODUCTS
             )
@@ -660,7 +692,7 @@ class AddonsViewSet(ProductsViewSet):
     @action(
         detail=False,
         methods=["get"],
-        permission_classes=[IsAuthenticated],
+        permission_classes=[AllowAny],
         url_path="multiple/(?P<product_ids>.+)",
     )
     def multiple(self, request, product_ids=None):
@@ -669,7 +701,7 @@ class AddonsViewSet(ProductsViewSet):
 
 class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     queryset = JobTitle.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     http_method_names = ("get",)
     serializer_class = JobTitleSerializer
     pagination_class = AutocompleteResultsSetPagination
@@ -746,7 +778,7 @@ class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 
 
 class JobFunctionsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     serializer_class = JobFunctionTreeSerializer
     flat_serializer_class = JobFunctionSerializer
     http_method_names = ("get",)
@@ -839,7 +871,7 @@ class JobFunctionsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 
 class FunctionFromTitleViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     serializer_class = LimitedJobFunctionSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     search_parameters = [
         CommonOpenApiParameters.ACCEPT_LANGUAGE,
         openapi.Parameter(
@@ -876,7 +908,7 @@ class FunctionFromTitleViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 
 
 class IndustriesViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     serializer_class = IndustrySerializer
     http_method_names = ("get",)
 
@@ -925,7 +957,7 @@ class IndustriesViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 
 
 class ChannelsViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     http_method_names = ("get",)
     pagination_class = StandardResultsSetPagination
     queryset = Channel.objects.filter(is_active=True)

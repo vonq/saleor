@@ -72,9 +72,7 @@ DATABASES = {
     "default": dj_database_url.config(
         default="postgres://saleor:saleor@localhost:5432/saleor", conn_max_age=600
     ),
-    "pkb": dj_database_url.parse(
-        os.getenv("PKB_DATABASE_URL")
-    )
+    "pkb": dj_database_url.parse(os.getenv("PKB_DATABASE_URL")),
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
@@ -136,7 +134,6 @@ LOCALE_PATHS = [os.path.join(PROJECT_ROOT, "locale")]
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
-
 
 
 EMAIL_URL = os.environ.get("EMAIL_URL")
@@ -473,7 +470,9 @@ TEST_RUNNER = "saleor.tests.runner.PytestTestRunner"
 
 PLAYGROUND_ENABLED = get_bool_from_env("PLAYGROUND_ENABLED", True)
 
-ALLOWED_HOSTS = get_list(os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,.herokuapp.com,.beweis.co.uk"))
+ALLOWED_HOSTS = get_list(
+    os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,.herokuapp.com,.beweis.co.uk")
+)
 ALLOWED_GRAPHQL_ORIGINS = get_list(os.environ.get("ALLOWED_GRAPHQL_ORIGINS", "*"))
 CORS_ALLOWED_ORIGIN_REGEXES = r".*"
 CORS_PREFLIGHT_MAX_AGE = 0
@@ -556,7 +555,7 @@ DEFAULT_PLACEHOLDER = "images/placeholder255x255.png"
 AUTHENTICATION_BACKENDS = [
     "saleor.core.auth_backend.JSONWebTokenBackend",
     "saleor.core.auth_backend.PluginBackend",
-    "django.contrib.auth.backends.ModelBackend"
+    "django.contrib.auth.backends.ModelBackend",
 ]
 
 # CELERY SETTINGS
@@ -616,6 +615,7 @@ PLUGINS = [
     "saleor.plugins.sendgrid.plugin.SendgridEmailPlugin",
     "addons.plugins.checkout_details_plugin.CheckoutDetailsPlugin",
     "addons.plugins.contracts_payment_plugin.ContractsPaymentPlugin",
+    "addons.plugins.auth0_plugin.Auth0Plugin",
 ]
 
 # Plugin discovery
@@ -692,5 +692,14 @@ assert hasattr(schema_printer, "_print_object")
 schema_printer._print_object = patched_print_object
 
 AJAX_LOOKUP_CHANNELS = {
-    'channel_account'  : {'model': 'products.Channel', 'search_field': 'salesforce_account_id'},
+    "channel_account": {
+        "model": "products.Channel",
+        "search_field": "salesforce_account_id",
+    },
 }
+
+# Auth0 related settings
+
+AUTH0_DOMAIN = os.getenv('AUTH0_DOMAIN')
+AUTH0_CLIENT_ID = os.getenv('AUTH0_CLIENT_ID')
+AUTH0_CLIENT_SECRET = os.getenv('AUTH0_CLIENT_SECRET')

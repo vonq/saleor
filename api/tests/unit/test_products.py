@@ -1,9 +1,9 @@
+from django.test import TestCase
 from algoliasearch_django.decorators import disable_auto_indexing
 from django.test import tag
 from rest_framework.reverse import reverse
 
 from api.products.models import Product
-from api.tests import AuthenticatedTestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest.mock import patch
 
@@ -12,7 +12,7 @@ from api.tests.integration import force_user_login
 
 @tag("unit")
 @disable_auto_indexing
-class ProductTestCase(AuthenticatedTestCase):
+class ProductTestCase(TestCase):
     @patch("storages.backends.s3boto3.S3Boto3Storage._save")
     @patch("api.products.models.Product.generate_cropped_images")
     def test_it_sets_logo_url(self, mock_generate_cropped_images, mock_storage):
@@ -81,7 +81,7 @@ class ProductTestCase(AuthenticatedTestCase):
         self.assertEquals(p1.logo_url, sf_logo_url)
 
 
-class ProductSchemaSerializerTestCase(AuthenticatedTestCase):
+class ProductSchemaSerializerTestCase(TestCase):
     def setUp(self) -> None:
         self.test_product = Product.objects.create(
             title="Test Product",
