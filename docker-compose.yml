@@ -65,7 +65,7 @@ services:
       - redis
       - mailhog
     volumes:
-      - ./saleor/saleor/:/app/saleor:Z,cached
+      - ./saleor/:/app/saleor:Z,cached
       - ./saleor/templates/:/app/templates:Z,cached
       # shared volume between worker and api for media
       - saleor-media:/app/media
