@@ -158,8 +158,10 @@ class Auth0Plugin(BasePlugin):
         self, request: WSGIRequest, previous_value
     ) -> Optional["User"]:
         token = request.META.get("HTTP_AUTHORIZATION", " ").split(" ")[1]
+        try:
+            verify_token(token)
+        except ValidationError:
+            return None
 
-        verify_token(token)
         user = get_user_from_token(token) or create_user_from_token(token)
-
         return user
