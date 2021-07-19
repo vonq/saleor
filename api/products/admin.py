@@ -272,6 +272,20 @@ class ChannelForm(forms.ModelForm):
         return super().save(commit)
 
 
+class JobTitleAdminForm(forms.ModelForm):
+    class Meta:
+        model = JobTitle
+        fields = ["name", "job_function", "canonical", "alias_of", "active"]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        is_canonical = cleaned_data.get("canonical")
+        alias = cleaned_data.get("alias_of")
+        if is_canonical and alias is not None:
+            raise ValidationError("A canonical job title can't also be an alias.")
+        return cleaned_data
+
+
 @admin.register(Channel)
 class ChannelAdmin(CompareVersionAdmin, TranslationAdmin):
     form = ChannelForm
@@ -287,7 +301,7 @@ class ChannelAdmin(CompareVersionAdmin, TranslationAdmin):
 
 @admin.register(JobTitle)
 class JobTitleAdmin(TranslationAdmin):
-    fields = ["name", "job_function", "canonical", "alias_of", "active"]
+    form = JobTitleAdminForm
     list_display = (
         "name",
         "job_function",

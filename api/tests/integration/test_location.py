@@ -1,14 +1,15 @@
+from django.test import TestCase
+
 from django.test import tag
 from rest_framework.reverse import reverse
 
 from api.products.geocoder import Geocoder
 from api.products.models import Location
 from api.products.serializers import LocationSerializer
-from api.tests import AuthenticatedTestCase
 
 
 @tag("integration")
-class LocationsTestCase(AuthenticatedTestCase):
+class LocationsTestCase(TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.response = self.client.get(reverse("locations") + "?text=georgia")
@@ -28,7 +29,7 @@ class LocationsTestCase(AuthenticatedTestCase):
 
 
 @tag("integration")
-class MapboxLocationsTestCase(AuthenticatedTestCase):
+class MapboxLocationsTestCase(TestCase):
     def test_autocomplete_saves_mapbox_locations(self):
         self.client.get(reverse("locations") + "?text=reading")
         self.assertEqual(Location.objects.count(), 5)
@@ -69,7 +70,7 @@ class MapboxLocationsTestCase(AuthenticatedTestCase):
 
 
 @tag("integration")
-class ExtendedLocationResultsTestCase(AuthenticatedTestCase):
+class ExtendedLocationResultsTestCase(TestCase):
     def setUp(self) -> None:
         super().setUp()
         # we now rely on continent objects to be part
@@ -152,7 +153,7 @@ class ExtendedLocationResultsTestCase(AuthenticatedTestCase):
 
 
 @tag("integration")
-class ExistingLocationsTestCase(AuthenticatedTestCase):
+class ExistingLocationsTestCase(TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.germany = Location.objects.create(
