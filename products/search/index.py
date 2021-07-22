@@ -143,10 +143,6 @@ class JobTitleIndex(AlgoliaIndex):
         "numericAttributesToIndex": ["maximum_locations_cardinality", "duration_days"],
         "attributesToRetrieve": None,
         "ignorePlurals": ["en", "nl", "de"],
-        "decompoundedAttributes": {
-            "de": ["searchable_keywords"],
-            "nl": ["searchable_keywords"],
-        },
         "advancedSyntax": True,
         "unretrievableAttributes": None,
         "optionalWords": None,

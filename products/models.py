@@ -200,45 +200,14 @@ class JobTitle(models.Model):
 
     @property
     def searchable_keywords(self) -> Iterable["JobTitle"]:
-        keywords = list(
-            itertools.chain(
-                [
-                    self.name_en,
-                    self.name_nl,
-                    self.name_de,
-                ],
-            )
-        )
-        if self.job_function:
-            keywords += [
-                self.job_function.name_en,
-                self.job_function.name_de,
-                self.job_function.name_nl,
-            ] + list(
-                itertools.chain(
-                    self.job_function.get_descendants().values_list(
-                        "name_en", flat=True
-                    ),
-                    self.job_function.get_descendants().values_list(
-                        "name_de", flat=True
-                    ),
-                    self.job_function.get_descendants().values_list(
-                        "name_nl", flat=True
-                    ),
-                )
-            )
-        aliases = self.aliases
-        if aliases:
-            keywords += list(
-                itertools.chain(
-                    aliases.values_list("name_en", flat=True),
-                    aliases.values_list("name_nl", flat=True),
-                    aliases.values_list("name_de", flat=True),
-                )
-            )
+        keywords = [
+            self.name_en,
+            self.name_nl,
+            self.name_de,
+        ]
 
         keywords = list(filter(None, set(keywords)))
-        return ", ".join(keywords)
+        return keywords
 
     def __str__(self):
         return self.name

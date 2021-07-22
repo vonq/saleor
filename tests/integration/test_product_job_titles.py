@@ -100,7 +100,7 @@ class JobTitleSearchTestCase(SearchTestCase):
         self.assertEqual(resp.json()["results"][0]["name"], "Java Developer")
 
     def test_can_search_across_languages(self):
-        resp1 = self.client.get(reverse("job-titles") + "?text=schlan")
+        resp1 = self.client.get(reverse("job-titles") + "?text=Python-ontwikkelaar")
         resp2 = self.client.get(reverse("job-titles") + "?text=arbeit")
         self.assertEqual(resp1.status_code, 200)
         self.assertEqual(len(resp1.json()["results"]), 1)
@@ -110,13 +110,6 @@ class JobTitleSearchTestCase(SearchTestCase):
         self.assertEqual(len(resp2.json()["results"]), 1)
         self.assertEqual(resp2.json()["results"][0]["name"], "Java Developer")
 
-    def test_matches_aliases_but_shows_canonical_only(self):
-        resp = self.client.get(reverse("job-titles") + "?text=snake")
-
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(resp.json()["results"]), 1)
-        self.assertEqual(resp.json()["results"][0]["name"], "Python Developer")
-
     def test_includes_job_function_where_available(self):
         resp = self.client.get(reverse("job-titles") + "?text=python")
 
@@ -125,17 +118,6 @@ class JobTitleSearchTestCase(SearchTestCase):
         self.assertEqual(
             resp.json()["results"][0]["job_function"]["id"],
             self.software_development_id,
-        )
-
-    def test_decompounds_german_words(self):
-        resp = self.client.get(reverse("job-titles") + "?text=entwickler")
-
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(resp.json()["results"]), 1)
-        # Python developer has been named Schlangenentwickler in German
-        self.assertEqual(
-            resp.json()["results"][0]["id"],
-            self.python_developer_id,
         )
 
     def test_ranks_exact_word_matches_first_regardless_of_frequency(self):
