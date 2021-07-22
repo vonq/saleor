@@ -37,7 +37,7 @@ class MetadataSerializer(serializers.Serializer):
         allow_null=True, required=False
     )
     vacancy_educationLevelId = serializers.IntegerField(
-        allow_null=False
+        allow_null=False, required=False
     )
     vacancy_tracking_vacancy_url = serializers.URLField(allow_null=True, required=False)
     vacancy_tracking_applicationUrl = serializers.URLField(
