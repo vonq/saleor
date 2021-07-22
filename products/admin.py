@@ -224,15 +224,7 @@ class ProductAdmin(
         "locations",
         "posting_requirements",
     )
-    search_fields = (
-        "channel__name",
-        "title_en",
-        "title_de",
-        "title_nl",
-        "description_en",
-        "description_nl",
-        "description_de",
-    )
+    search_fields = ("channel__name", "title_en", "title_de", "title_nl")
     autocomplete_fields = ("channel",)
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
