@@ -3,6 +3,7 @@ from collections import defaultdict
 from json import JSONDecodeError
 from typing import Iterable, List, Tuple, Type
 
+from algoliasearch.exceptions import RequestException
 from django.contrib.auth import get_user_model
 from django.db.models import Case, Q, When
 from django.http import JsonResponse
@@ -544,9 +545,14 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         queryset = self.get_queryset()
         if search_serializer.is_search_request:
             # a pure list view doesn't need to hit the search index
-            queryset = self.search_queryset(
-                queryset, sort_by_recent=search_serializer.is_sort_by_recent
-            )
+            try:
+                queryset = self.search_queryset(
+                    queryset, sort_by_recent=search_serializer.is_sort_by_recent
+                )
+            except RequestException:
+                return JsonResponse(
+                    data={"error": "Invalid request"}, status=HTTP_400_BAD_REQUEST
+                )
         elif search_serializer.is_sort_by_recent:
             queryset = queryset.order_by("-created")
         else:
