@@ -29,6 +29,8 @@ from api.products.views import (
     JobFunctionsViewSet,
     ChannelsViewSet,
     FunctionFromTitleViewSet,
+    IndexView,
+    CategoriesViewSet,
 )
 from api.settings import is_development
 
@@ -81,6 +83,7 @@ urlpatterns = [
         schema_view.with_ui("swagger", cache_timeout=0),
         name="schema-swagger-ui",
     ),
+    path(r"", IndexView.as_view(), name="index"),
 ]
 
 if not is_development():

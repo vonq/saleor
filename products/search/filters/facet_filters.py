@@ -230,6 +230,40 @@ class DurationLessThanFacetFilter(FacetFilter):
         self.filters = f"{self.filter_name}<={value}" if value else ""
 
 
+class PriceLessThanFacetFilter(FacetFilter):
+    filter_name = "list_price"
+    parameter_name = "priceTo"
+    parameter = openapi.Parameter(
+        parameter_name,
+        in_=openapi.IN_QUERY,
+        description="Match only products with a list price (in EUR) up to a certain figure",
+        type=openapi.TYPE_INTEGER,
+        required=False,
+        explode=False,
+    )
+    operator = "AND"
+
+    def __init__(self, value=None, **kwargs):
+        self.filters = f"{self.filter_name}<={value}" if value else ""
+
+
+class PriceMoreThanFacetFilter(FacetFilter):
+    filter_name = "list_price"
+    parameter_name = "priceFrom"
+    parameter = openapi.Parameter(
+        parameter_name,
+        in_=openapi.IN_QUERY,
+        description="Match only products with a list price (in EUR) more than a certain figure",
+        type=openapi.TYPE_INTEGER,
+        required=False,
+        explode=False,
+    )
+    operator = "AND"
+
+    def __init__(self, value=None, **kwargs):
+        self.filters = f"{self.filter_name}>={value}" if value else ""
+
+
 class AddonsOnlyFacetFilter(FacetFilter):
     filter_name = "is_addon"
     parameter_name = "is_addon"
@@ -356,3 +390,19 @@ class IsNotMyOwnProductFilter(FacetFilter):
 
     def __init__(self, **kwargs):
         self.filters = f"{self.filter_name}:false"
+
+
+class CategoryIdFilter(FacetFilter):
+    filter_name = "category_ids"
+    parameter_name = "categoryId"
+    parameter = openapi.Parameter(
+        parameter_name,
+        in_=openapi.IN_QUERY,
+        description="Category id",
+        type=openapi.TYPE_ARRAY,
+        items=openapi.Items(type=openapi.TYPE_INTEGER),
+        required=False,
+        explode=False,
+    )
+    operator = "AND"
+    score = 0

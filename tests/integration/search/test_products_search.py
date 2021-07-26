@@ -11,6 +11,7 @@ from api.products.models import (
     JobFunction,
     JobTitle,
     Channel,
+    Category,
 )
 from api.products.search.index import JobFunctionIndex, JobTitleIndex, ProductIndex
 from api.tests.integration import force_user_login
@@ -703,7 +704,7 @@ class ProductSearchTestCase(SearchTestCase):
 
 @tag("algolia")
 @tag("integration")
-class ChannelTypeSearchTestCase(SearchTestCase):
+class ProductCategorySearchTestCase(SearchTestCase):
     model_index_class_pairs = [(Product, ProductIndex)]
 
     @classmethod
@@ -717,12 +718,14 @@ class ChannelTypeSearchTestCase(SearchTestCase):
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
             status=Product.Status.ACTIVE,
             channel_id=jobboard_channel.id,
+            unit_price=100,
         )
         community_product = Product.objects.create(
             title="This is a community product",
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
             status=Product.Status.ACTIVE,
             channel_id=community_channel.id,
+            unit_price=200,
         )
 
         publication_product = Product.objects.create(
@@ -730,7 +733,45 @@ class ChannelTypeSearchTestCase(SearchTestCase):
             salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
             status=Product.Status.ACTIVE,
             channel_id=publication_channel.id,
+            unit_price=300,
         )
+
+        cls.senior_career_level = Category.objects.create(
+            type=Category.Type.CAREER_LEVEL, name="senior"
+        )
+        cls.junior_career_level = Category.objects.create(
+            type=Category.Type.CAREER_LEVEL, name="junior"
+        )
+
+        cls.permanent_job_type = Category.objects.create(
+            type=Category.Type.JOB_TYPE,
+            name="permanent",
+        )
+
+        cls.fixed_term_job_type = Category.objects.create(
+            type=Category.Type.JOB_TYPE,
+            name="fixed-term",
+        )
+
+        cls.permanent_job_board = Product.objects.create(
+            title="A Permanent Job Board",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            status=Product.Status.ACTIVE,
+        )
+        cls.permanent_job_board.categories.add(
+            cls.permanent_job_type, cls.senior_career_level
+        )
+        cls.permanent_job_board.save()
+
+        cls.fixed_term_job_poard = Product.objects.create(
+            title="A Temporary Job Board",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            status=Product.Status.ACTIVE,
+        )
+        cls.fixed_term_job_poard.categories.add(
+            cls.fixed_term_job_type, cls.junior_career_level
+        )
+        cls.fixed_term_job_poard.save()
 
     def test_can_filter_by_channel_type(self):
         resp = self.client.get(
@@ -739,38 +780,32 @@ class ChannelTypeSearchTestCase(SearchTestCase):
         self.assertEqual(len(resp.json()["results"]), 1)
         self.assertEqual(resp.json()["results"][0]["title"], "This is a job board")
 
-
-class ProductTypesTestCase(SearchTestCase):
-    model_index_class_pairs = [(Product, ProductIndex)]
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.job_board = Product.objects.create(
-            title="A Job Board",
-            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
-            status=Product.Status.ACTIVE,
+    def test_can_filter_by_category(self):
+        resp = self.client.get(
+            reverse("api.products:products-list")
+            + f"?categoryId={self.senior_career_level.id}"
         )
-        cls.social_board = Product.objects.create(
-            title="A Social Board",
-            salesforce_product_type=Product.SalesforceProductType.SOCIAL,
-            status=Product.Status.ACTIVE,
-        )
+        self.assertEqual(1, resp.json()["count"])
+        self.assertEqual("A Permanent Job Board", resp.json()["results"][0]["title"])
 
-        cls.google_board = Product.objects.create(
-            title="A Google Board",
-            salesforce_product_type=Product.SalesforceProductType.GOOGLE,
-            status=Product.Status.ACTIVE,
+    def test_can_filter_by_job_type(self):
+        resp = self.client.get(
+            reverse("api.products:products-list")
+            + f"?categoryId={self.fixed_term_job_type.id}"
         )
+        self.assertEqual(1, resp.json()["count"])
+        self.assertEqual("A Temporary Job Board", resp.json()["results"][0]["title"])
 
-        cls.other_board = Product.objects.create(
-            title="An 'Other' Board",
-            salesforce_product_type=Product.SalesforceProductType.OTHER,
-            status=Product.Status.ACTIVE,
+    def test_can_filter_by_price(self):
+        resp = self.client.get(
+            reverse("api.products:products-list") + f"?priceFrom=200"
         )
+        self.assertEqual(2, resp.json()["count"])
 
-    def test_mapi_only_sees_specific_product_types(self):
-        force_user_login(self.client, "mapi")
-        resp = self.client.get(reverse("api.products:products-list"))
-        self.assertEqual(len(resp.json()["results"]), 3)
-        titles = [product["title"] for product in resp.json()["results"]]
-        self.assertFalse("An 'Other' Board" in titles)
+        resp = self.client.get(
+            reverse("api.products:products-list") + f"?priceFrom=101&priceTo=299"
+        )
+        self.assertEqual(1, resp.json()["count"])
+
+        resp = self.client.get(reverse("api.products:products-list") + f"?priceTo=90")
+        self.assertEqual(0, resp.json()["count"])

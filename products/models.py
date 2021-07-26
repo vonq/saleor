@@ -493,8 +493,10 @@ class IndexSearchableProductMixin:
     industries: QuerySet
     job_functions: QuerySet
     locations: QuerySet
+    categories: QuerySet
     similarweb_top_country_shares: dict
     status: str
+    unit_price: float
     external_product_name: str
     channel_name: str
 
@@ -793,6 +795,14 @@ class IndexSearchableProductMixin:
     @property
     def searchable_isgeneric_isinternational(self):
         return f"{self.is_generic}{SEPARATOR}{self.is_international}"
+
+    @property
+    def category_ids(self) -> List[int]:
+        return list(self.categories.values_list("id", flat=True))
+
+    @property
+    def list_price(self) -> float:
+        return self.unit_price
 
 
 class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin):
@@ -1193,7 +1203,10 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         null=True, blank=False, verbose_name="VONQ time to process (hours)", default=24
     )
 
+    # unit/list price is what we negotiate and sell them at
     unit_price = models.FloatField(null=True, blank=True, verbose_name="Unit Price (€)")
+
+    # rate card is what the site advertises on their end
     rate_card_price = models.FloatField(
         null=True, blank=True, verbose_name="Rate Card Price (€)"
     )

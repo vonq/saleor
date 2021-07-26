@@ -268,8 +268,11 @@ class ProductSearchSerializer(serializers.Serializer):
     industryId = serializers.CharField(required=False)
     jobTitleId = serializers.IntegerField(required=False)
     jobFunctionId = serializers.IntegerField(required=False)
+    categoryId = serializers.CharField(required=False)
     durationFrom = serializers.IntegerField(required=False)
     durationTo = serializers.IntegerField(required=False)
+    priceFrom = serializers.IntegerField(required=False)
+    priceTo = serializers.IntegerField(required=False)
     currency = serializers.CharField(required=False, max_length=3)
     name = serializers.CharField(required=False)
     recommended = serializers.BooleanField(required=False, default=False)
@@ -308,6 +311,9 @@ class ProductSearchSerializer(serializers.Serializer):
                 self.validated_data.get("name"),
                 self.validated_data.get("channelType"),
                 self.validated_data.get("customerId"),
+                self.validated_data.get("categoryId"),
+                self.validated_data.get("priceTo"),
+                self.validated_data.get("priceFrom"),
             )
         )
 
@@ -337,6 +343,9 @@ class ProductSearchSerializer(serializers.Serializer):
     def validate_industryId(self, value):
         return self.is_a_valid_integer_array(value)
 
+    def validate_categoryId(self, value):
+        return self.is_a_valid_integer_array(value)
+
     def validate_channelType(self, value):
         if value in Channel.Type.values:
             return value
@@ -360,6 +369,10 @@ class ProductSearchSerializer(serializers.Serializer):
 class ProductCategorySerializer(serializers.Serializer):
     name = serializers.CharField(read_only=True)
     type = serializers.ChoiceField(read_only=True, choices=Category.Type.choices)
+
+
+class CategorySerializer(ProductCategorySerializer):
+    id = serializers.IntegerField(read_only=True)
 
 
 class ProductJmpSerializer(ProductSerializer):

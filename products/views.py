@@ -6,7 +6,8 @@ from typing import Iterable, List, Tuple, Type
 from algoliasearch.exceptions import RequestException
 from django.contrib.auth import get_user_model
 from django.db.models import Case, Q, When
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from django.views import View
 from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
 from rest_framework import mixins, viewsets
@@ -28,6 +29,7 @@ from api.products.models import (
     Location,
     Product,
     Profile,
+    Category,
 )
 from api.products.paginators import (
     AutocompleteResultsSetPagination,
@@ -49,6 +51,10 @@ from api.products.search.filters.facet_filters import (
     IsNotMyOwnProductFilter,
     ProductsOnlyFacetFilter,
     StatusFacetFilter,
+    CategoryIdFilter,
+    IndustryFacetFilter,
+    PriceMoreThanFacetFilter,
+    PriceLessThanFacetFilter,
 )
 from api.products.search.filters.facet_filters_groups import (
     FacetFiltersGroup,
@@ -77,6 +83,7 @@ from api.products.serializers import (
     ProductSerializer,
     JobFunctionSerializer,
     InternalUserSerializer,
+    CategorySerializer,
 )
 
 MY_OWN_PRODUCTS = (
@@ -118,6 +125,18 @@ class UserStrategy:
         return (
             self._request_user.is_authenticated
             and self._request_user.profile.type == Profile.Type.INTERNAL
+        )
+
+
+class IndexView(View):
+    def get(self, request, *args, **kwargs):
+        return HttpResponse(
+            """
+        A name indicates what we seek.
+        An address indicates where it is.
+        A route indicates how we get there.
+        """,
+            content_type="text/plain",
         )
 
 
@@ -203,6 +222,54 @@ class LocationSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         return Response(serializer.data)
 
 
+class CategoriesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    permission_classes = [AllowAny]
+    serializer_class = CategorySerializer
+    queryset = Category.objects.all()
+
+    @swagger_auto_schema(
+        operation_id="Categories",
+        operation_summary="List available categories.",
+        operation_description="""
+                           Returns a list of categories available for filtering
+                           """,
+        tags=[ProductsConfig.verbose_name],
+        responses={
+            200: openapi.Response(
+                schema=serializer_class(many=True),
+                description="In case of a successful request.",
+                examples={
+                    "application/json": {
+                        "career level": [
+                            {"name": "Senior level", "type": "career level", "id": 1},
+                            {
+                                "name": "Graduates and Trainees",
+                                "type": "career level",
+                                "id": 2,
+                            },
+                        ],
+                        "job type": [
+                            {"name": "Remote only", "type": "job type", "id": 3},
+                            {"name": "Part time", "type": "job type", "id": 4},
+                        ],
+                        "diversity": [
+                            {"name": "LGBTQ+", "type": "diversity", "id": 7},
+                            {"name": "Disabled", "type": "diversity", "id": 8},
+                        ],
+                    }
+                },
+            )
+        },
+    )
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        grouped_categories = defaultdict(list)
+        for category in serializer.data:
+            grouped_categories[category["type"] or "other"].append(category)
+        return Response(grouped_categories)
+
+
 class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     permission_classes = [AllowAny]
     serializers = {
@@ -236,6 +303,9 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         ExactLocationIdFacetFilter,
         DurationMoreThanFacetFilter,
         DurationLessThanFacetFilter,
+        CategoryIdFilter,
+        PriceMoreThanFacetFilter,
+        PriceLessThanFacetFilter,
     )
     search_group_filters: Tuple[Type[FacetFiltersGroup]] = (
         JobFunctionIndustryAndLocationGroup,
@@ -468,6 +538,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             ProductsOpenApiParameters.EXCLUDE_RECOMMENDED,
             CommonOpenApiParameters.CURRENCY,
             ProductsOpenApiParameters.SORT_BY,
+            IndustryFacetFilter.parameter,
         ],
         tags=[ProductsConfig.verbose_name],
         responses={
