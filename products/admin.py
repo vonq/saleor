@@ -88,13 +88,21 @@ class ProductForm(forms.ModelForm):
     customer_id = AutoCompleteSelectField(
         "customer", required=False, help_text=None, label="Customer ID"
     )
-    remarks = forms.CharField(required=False, label="Remarks", widget=forms.Textarea)
 
     class Meta:
         model = Product
         fields = "__all__"
         help_texts = {
             "time_to_process": "This is auto-calculated by summing up the supplier time to process and vonq time to process.",
+        }
+        widgets = {
+            "remarks": forms.Textarea(
+                attrs={
+                    "rows": "10",
+                    "cols": "100",
+                    "maxlength": "32768",
+                }
+            ),
         }
 
     @staticmethod
