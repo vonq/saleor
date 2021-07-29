@@ -334,6 +334,17 @@ class ProductSearchSerializer(serializers.Serializer):
             raise ValidationError(detail="Invalid parameter values, must be integer")
         return values
 
+    @staticmethod
+    def is_a_valid_string_array(value):
+        """
+        Make sure we're getting a string of comma-separated strings
+        """
+        try:
+            values = list(map(str, value.split(",")))
+        except ValueError:
+            raise ValidationError(detail="Invalid parameter values, must be string")
+        return values
+
     def validate_includeLocationId(self, value):
         return self.is_a_valid_integer_array(value)
 
@@ -347,8 +358,9 @@ class ProductSearchSerializer(serializers.Serializer):
         return self.is_a_valid_integer_array(value)
 
     def validate_channelType(self, value):
-        if value in Channel.Type.values:
-            return value
+        values = self.is_a_valid_string_array(value)
+        if all((value in Channel.Type.values for value in values)):
+            return values
         raise ValidationError(detail="Invalid channel type!")
 
     def validate_customerId(self, value):

@@ -780,6 +780,24 @@ class ProductCategorySearchTestCase(SearchTestCase):
         self.assertEqual(len(resp.json()["results"]), 1)
         self.assertEqual(resp.json()["results"][0]["title"], "This is a job board")
 
+    def test_can_filter_by_multiple_channel_type(self):
+        resp = self.client.get(
+            reverse("api.products:products-list") + "?channelType=job%20board,community"
+        )
+        self.assertEqual(len(resp.json()["results"]), 2)
+        self.assertEqual(
+            resp.json()["results"][0]["title"], "This is a community product"
+        )
+        self.assertEqual(resp.json()["results"][1]["title"], "This is a job board")
+
+    def test_cant_filter_by_invalid_channel_type(self):
+        resp = self.client.get(
+            reverse("api.products:products-list")
+            + "?channelType=job%20board,randomstuff"
+        )
+        self.assertEqual(400, resp.status_code)
+        self.assertEqual({"channelType": ["Invalid channel type!"]}, resp.json())
+
     def test_can_filter_by_category(self):
         resp = self.client.get(
             reverse("api.products:products-list")

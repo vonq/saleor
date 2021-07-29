@@ -358,8 +358,8 @@ class ChannelTypeFilter(FacetFilter):
         parameter_name,
         in_=openapi.IN_QUERY,
         description="Filter by channel type.",
-        type=openapi.TYPE_STRING,
-        enum=Channel.Type.values,
+        type=openapi.TYPE_ARRAY,
+        items=openapi.Items(type=openapi.TYPE_STRING, enum=Channel.Type.values),
         required=False,
         explode=False,
     )
