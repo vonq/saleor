@@ -392,17 +392,49 @@ class IsNotMyOwnProductFilter(FacetFilter):
         self.filters = f"{self.filter_name}:false"
 
 
-class CategoryIdFilter(FacetFilter):
-    filter_name = "category_ids"
-    parameter_name = "categoryId"
+class DiversityFacetFilter(FacetFilter):
+    filter_name = "diversity"
+    parameter_name = "diversityId"
     parameter = openapi.Parameter(
         parameter_name,
         in_=openapi.IN_QUERY,
-        description="Category id",
+        description="Diversity category id",
         type=openapi.TYPE_ARRAY,
         items=openapi.Items(type=openapi.TYPE_INTEGER),
         required=False,
         explode=False,
     )
     operator = "AND"
-    score = 0
+    score = 1
+
+
+class EmploymentTypeFacetFilter(FacetFilter):
+    filter_name = "employment_type"
+    parameter_name = "employmentTypeId"
+    parameter = openapi.Parameter(
+        parameter_name,
+        in_=openapi.IN_QUERY,
+        description="Employment type category id",
+        type=openapi.TYPE_ARRAY,
+        items=openapi.Items(type=openapi.TYPE_INTEGER),
+        required=False,
+        explode=False,
+    )
+    operator = "AND"
+    score = 1
+
+
+class SeniorityLevelFacetFilter(FacetFilter):
+    filter_name = "seniority_level"
+    parameter_name = "seniorityId"
+    parameter = openapi.Parameter(
+        parameter_name,
+        in_=openapi.IN_QUERY,
+        description="Seniority level category id",
+        type=openapi.TYPE_ARRAY,
+        items=openapi.Items(type=openapi.TYPE_INTEGER),
+        required=False,
+        explode=False,
+    )
+    operator = "AND"
+    score = 1

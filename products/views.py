@@ -51,10 +51,12 @@ from api.products.search.filters.facet_filters import (
     IsNotMyOwnProductFilter,
     ProductsOnlyFacetFilter,
     StatusFacetFilter,
-    CategoryIdFilter,
     IndustryFacetFilter,
     PriceMoreThanFacetFilter,
     PriceLessThanFacetFilter,
+    DiversityFacetFilter,
+    EmploymentTypeFacetFilter,
+    SeniorityLevelFacetFilter,
 )
 from api.products.search.filters.facet_filters_groups import (
     FacetFiltersGroup,
@@ -303,7 +305,9 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         ExactLocationIdFacetFilter,
         DurationMoreThanFacetFilter,
         DurationLessThanFacetFilter,
-        CategoryIdFilter,
+        DiversityFacetFilter,
+        EmploymentTypeFacetFilter,
+        SeniorityLevelFacetFilter,
         PriceMoreThanFacetFilter,
         PriceLessThanFacetFilter,
     )

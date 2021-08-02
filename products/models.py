@@ -797,8 +797,28 @@ class IndexSearchableProductMixin:
         return f"{self.is_generic}{SEPARATOR}{self.is_international}"
 
     @property
-    def category_ids(self) -> List[int]:
-        return list(self.categories.values_list("id", flat=True))
+    def diversity(self):
+        return list(
+            self.categories.filter(type=Category.Type.DIVERSITY).values_list(
+                "id", flat=True
+            )
+        )
+
+    @property
+    def employment_type(self):
+        return list(
+            self.categories.filter(type=Category.Type.JOB_TYPE).values_list(
+                "id", flat=True
+            )
+        )
+
+    @property
+    def seniority_level(self):
+        return list(
+            self.categories.filter(type=Category.Type.CAREER_LEVEL).values_list(
+                "id", flat=True
+            )
+        )
 
     @property
     def list_price(self) -> float:

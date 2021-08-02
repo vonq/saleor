@@ -798,10 +798,10 @@ class ProductCategorySearchTestCase(SearchTestCase):
         self.assertEqual(400, resp.status_code)
         self.assertEqual({"channelType": ["Invalid channel type!"]}, resp.json())
 
-    def test_can_filter_by_category(self):
+    def test_can_filter_by_career_level(self):
         resp = self.client.get(
             reverse("api.products:products-list")
-            + f"?categoryId={self.senior_career_level.id}"
+            + f"?seniorityId={self.senior_career_level.id}"
         )
         self.assertEqual(1, resp.json()["count"])
         self.assertEqual("A Permanent Job Board", resp.json()["results"][0]["title"])
@@ -809,7 +809,7 @@ class ProductCategorySearchTestCase(SearchTestCase):
     def test_can_filter_by_job_type(self):
         resp = self.client.get(
             reverse("api.products:products-list")
-            + f"?categoryId={self.fixed_term_job_type.id}"
+            + f"?employmentTypeId={self.fixed_term_job_type.id}"
         )
         self.assertEqual(1, resp.json()["count"])
         self.assertEqual("A Temporary Job Board", resp.json()["results"][0]["title"])

@@ -269,6 +269,10 @@ class ProductSearchSerializer(serializers.Serializer):
     jobTitleId = serializers.IntegerField(required=False)
     jobFunctionId = serializers.IntegerField(required=False)
     categoryId = serializers.CharField(required=False)
+    diversityId = serializers.CharField(required=False)
+    employmentTypeId = serializers.CharField(required=False)
+    seniorityId = serializers.CharField(required=False)
+
     durationFrom = serializers.IntegerField(required=False)
     durationTo = serializers.IntegerField(required=False)
     priceFrom = serializers.IntegerField(required=False)
@@ -312,6 +316,9 @@ class ProductSearchSerializer(serializers.Serializer):
                 self.validated_data.get("channelType"),
                 self.validated_data.get("customerId"),
                 self.validated_data.get("categoryId"),
+                self.validated_data.get("diversityId"),
+                self.validated_data.get("employmentTypeId"),
+                self.validated_data.get("seniorityId"),
                 self.validated_data.get("priceTo"),
                 self.validated_data.get("priceFrom"),
             )
@@ -355,6 +362,15 @@ class ProductSearchSerializer(serializers.Serializer):
         return self.is_a_valid_integer_array(value)
 
     def validate_categoryId(self, value):
+        return self.is_a_valid_integer_array(value)
+
+    def validate_diversityId(self, value):
+        return self.is_a_valid_integer_array(value)
+
+    def validate_employmentTypeId(self, value):
+        return self.is_a_valid_integer_array(value)
+
+    def validate_seniorityId(self, value):
         return self.is_a_valid_integer_array(value)
 
     def validate_channelType(self, value):
