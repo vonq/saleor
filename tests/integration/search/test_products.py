@@ -217,7 +217,7 @@ class ProductsTestCase(TestCase):
         resp = self.client.post(
             reverse("api.products:products-validate"),
             data=random.sample(product_ids_available_in_mapi, 2)
-            + [self.unavailable_in_jmp_product.product_id],
+            + [self.unwanted_status_product.product_id],
             content_type="application/json",
         )
 
