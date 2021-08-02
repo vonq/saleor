@@ -190,6 +190,7 @@ class ProductAdmin(
         "job_functions",
         "status",
         "available_in_jmp",
+        "available_in_ats",
         "is_recommended",
         "remarks",
         "reason",

@@ -44,6 +44,7 @@ class ProductsTestCase(TestCase):
             cls.unavailable_in_jmp_product = Product(
                 status=Product.Status.ACTIVE,
                 available_in_jmp=False,
+                available_in_ats=True,
                 salesforce_id="unavailable_jmp_product",
                 salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
             )
@@ -175,14 +176,16 @@ class ProductsTestCase(TestCase):
 
         self.assertEquals(resp.status_code, 200)
 
+    def test_mapi_sees_ats_products(self):
+        force_user_login(self.client, "mapi")
+
         resp = self.client.get(
             reverse(
                 "api.products:products-detail",
                 kwargs={"product_id": self.unavailable_in_jmp_product.product_id},
             )
         )
-
-        self.assertEquals(resp.status_code, 404)
+        self.assertEqual(200, resp.status_code)
 
     def test_can_validate_existing_product_ids(self):
         resp = self.client.post(
