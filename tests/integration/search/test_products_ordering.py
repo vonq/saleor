@@ -150,25 +150,29 @@ class ProductSearchOrderByRecencyTestCase(SearchTestCase):
         cls.dates.sort()
 
         for i in range(len(cls.dates)):
-            Product.objects.create(
-                created=datetime.strptime(cls.dates[i], cls.date_format),
+            p1 = Product.objects.create(
                 status=Product.Status.ACTIVE,
                 title=cls.dates[i],
                 salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
                 # newer products have lower order frequency
                 order_frequency=1.0 - i / 10,
             )
-            p = Product(
-                created=datetime.strptime(cls.dates[i], cls.date_format),
+            p2 = Product.objects.create(
                 status=Product.Status.ACTIVE,
                 title=cls.dates[i],
                 salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
                 # newer products have lower order frequency
                 order_frequency=1.0 - i / 10,
             )
-            p.save()
-            p.job_functions.add(cls.job_function)
-            p.save()
+            p2.job_functions.add(cls.job_function)
+            p2.save()
+            # Override auto_now_add (which gets overwritten on first save)
+            Product.objects.filter(pk=p1.id).update(
+                created=datetime.strptime(cls.dates[i], cls.date_format)
+            )
+            Product.objects.filter(pk=p2.id).update(
+                created=datetime.strptime(cls.dates[i], cls.date_format)
+            )
 
     def test_it_sorts_all_products_by_recency_when_sortBy_parameter_is_used(self):
         def check_products_are_sorted_descending_by_created_date(products):
@@ -182,14 +186,14 @@ class ProductSearchOrderByRecencyTestCase(SearchTestCase):
                 self.assertGreaterEqual(current_product_time, next_product_time)
 
         products = self.client.get(
-            reverse("api.products:products-list") + f"?sortBy=recent"
+            reverse("api.products:products-list") + f"?sortBy=created.desc"
         ).json()["results"]
 
         check_products_are_sorted_descending_by_created_date(products)
 
         products = self.client.get(
             reverse("api.products:products-list")
-            + f"?jobFunctionId={self.job_function.id}&sortBy=recent"
+            + f"?jobFunctionId={self.job_function.id}&sortBy=created.desc"
         ).json()["results"]
 
         check_products_are_sorted_descending_by_created_date(products)

@@ -19,6 +19,7 @@ from api.products.models import (
     Category,
 )
 from api.products.search.docs import ProductsOpenApiParameters
+from api.products.search.index import ProductIndex
 
 
 class LocationSerializer(serializers.ModelSerializer):
@@ -283,7 +284,14 @@ class ProductSearchSerializer(serializers.Serializer):
     excludeRecommended = serializers.BooleanField(required=False, default=False)
     channelType = serializers.CharField(required=False)
     customerId = serializers.CharField(required=False)
-    sortBy = serializers.ChoiceField(required=False, choices=["relevant", "recent"])
+    sortBy = serializers.ChoiceField(
+        required=False,
+        choices=[
+            "relevant",
+        ]
+        + list(ProductIndex.SORTING_REPLICAS.keys()),
+        default="relevant",
+    )
 
     @property
     def is_recommendation(self) -> bool:
@@ -321,6 +329,7 @@ class ProductSearchSerializer(serializers.Serializer):
                 self.validated_data.get("seniorityId"),
                 self.validated_data.get("priceTo"),
                 self.validated_data.get("priceFrom"),
+                self.validated_data.get("sortBy") != "relevant",
             )
         )
 
@@ -390,6 +399,10 @@ class ProductSearchSerializer(serializers.Serializer):
         if attrs.get("jobTitleId") and attrs.get("jobFunctionId"):
             raise ValidationError(
                 detail="Cannot search by both job title and job function. Please use either field."
+            )
+        if attrs.get("recommended") and attrs.get("excludeRecommended"):
+            raise ValidationError(
+                detail="Parameters 'recommended' and 'excludeRecommended' cannot both be set to true."
             )
         return attrs
 

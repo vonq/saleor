@@ -1,4 +1,7 @@
-from algoliasearch_django import AlgoliaIndex
+from typing import Dict, List, Tuple
+
+from algoliasearch.search_index import SearchIndex
+from algoliasearch_django import AlgoliaIndex, algolia_engine
 from algoliasearch_django.decorators import register
 
 from api.products.models import JobTitle, Product, JobFunction
@@ -6,8 +9,87 @@ from api.products.models import JobTitle, Product, JobFunction
 from django.conf import settings as django_settings
 
 
+class SortingReplicaIndex(AlgoliaIndex):
+    """
+    Like an AlgoliaIndex, but with a twist to automatically setup
+    and initialise virtual replicas
+    """
+
+    SORTING_REPLICAS: Dict[str, List[str]] = {}
+
+    def reindex_all(self, batch_size=1000):
+        """
+        Apply cascade replica settings on reindex
+        """
+        for replica_name, replica_settings in self.SORTING_REPLICAS.items():
+            index = self._AlgoliaIndex__client.init_index(
+                self.get_replica_index_name(replica_name)
+            )  # type: SearchIndex
+            index.set_settings(replica_settings)
+
+        # needed to make sure the replica settings is
+        # taking note of the optional settings' SUFFIX
+        self.settings["replicas"] = get_replicas()
+        counts = super().reindex_all(batch_size)
+        return counts
+
+    def raw_search_sorted(
+        self, sort_index: str, query="", params=None
+    ) -> Tuple[int, List[dict], Dict[str, int]]:
+        """
+        As opposed to standard "relevant" search
+        """
+        if params is None:
+            params = {}
+        if sort_index not in self.SORTING_REPLICAS.keys():
+            raise ValueError(f"Can't sort for {sort_index}")
+        adapter = algolia_engine.client.init_index(
+            self.get_replica_index_name(sort_index)
+        )
+        result = adapter.search(query, params)
+        hits = result.get("hits", [])
+        total_hits = result.get("nbHits")
+        facets = result.get("facets")
+        return total_hits, hits, facets
+
+    def get_replica_index_name(self, replica_name):
+        return f"{self.index_name}_{replica_name}"
+
+
+def get_replica_name_for_settings(replica_name):
+    env = django_settings.ENV
+    model = "Product"
+    suffix = django_settings.ALGOLIA.get("INDEX_SUFFIX")
+    if suffix:
+        return f"{env}_{model}_{suffix}_{replica_name}"
+    return f"{env}_{model}_{replica_name}"
+
+
+def get_replicas():
+    """
+    Needed to make sure that integration tests
+    are able to use the prefixed indices for replicas
+    """
+    return [
+        f"virtual({get_replica_name_for_settings('order_frequency.desc')})",
+        f"virtual({get_replica_name_for_settings('order_frequency.asc')})",
+        f"virtual({get_replica_name_for_settings('created.desc')})",
+        f"virtual({get_replica_name_for_settings('created.asc')})",
+        f"virtual({get_replica_name_for_settings('list_price.desc')})",
+        f"virtual({get_replica_name_for_settings('list_price.asc')})",
+    ]
+
+
 @register(Product)
-class ProductIndex(AlgoliaIndex):
+class ProductIndex(SortingReplicaIndex):
+    SORTING_REPLICAS = {
+        "order_frequency.desc": {"customRanking": ["desc(order_frequency)"]},
+        "order_frequency.asc": {"customRanking": ["asc(order_frequency)"]},
+        "created.desc": {"customRanking": ["desc(created)"]},
+        "created.asc": {"customRanking": ["asc(created)"]},
+        "list_price.desc": {"customRanking": ["desc(list_price)"]},
+        "list_price.asc": {"customRanking": ["asc(list_price)"]},
+    }
     fields = (
         "id",
         "title",
@@ -23,6 +105,7 @@ class ProductIndex(AlgoliaIndex):
         "salesforce_product_category",
         "similarweb_top_country_shares",
         "customer_id",
+        "created",
         # custom properties
         "channel_type",
         "searchable_industries_ids",
@@ -31,6 +114,8 @@ class ProductIndex(AlgoliaIndex):
         "searchable_locations_ids",
         "searchable_locations_mapbox_ids",
         "searchable_locations_names",
+        "searchable_locations_names_de",
+        "searchable_locations_names_nl",
         "searchable_locations_context_mapbox_ids",
         "primary_similarweb_location",
         "secondary_similarweb_location",
@@ -82,6 +167,8 @@ class ProductIndex(AlgoliaIndex):
             "searchable_locations_ids",
             "searchable_locations_mapbox_ids",
             "searchable_locations_names",
+            "searchable_locations_names_de",
+            "searchable_locations_names_nl",
             "searchable_locations_context_mapbox_ids",
             "diversity",
             "employment_type",
@@ -105,6 +192,7 @@ class ProductIndex(AlgoliaIndex):
             "searchable_industries_isinternational_combinations",
             "searchable_isgeneric_isinternational",
         ],
+        "replicas": get_replicas(),
         "attributesToSnippet": None,
         "attributesToHighlight": None,
         "paginationLimitedTo": 1000,

@@ -827,3 +827,11 @@ class ProductCategorySearchTestCase(SearchTestCase):
 
         resp = self.client.get(reverse("api.products:products-list") + f"?priceTo=90")
         self.assertEqual(0, resp.json()["count"])
+
+    def test_returns_facet_counts(self):
+        resp = self.client.get(
+            reverse("api.products:products-list") + "?channelType=job%20board,community"
+        )
+
+        results = resp.json()
+        self.assertIn("facets", results)

@@ -593,6 +593,14 @@ class IndexSearchableProductMixin:
         return [location.fully_qualified_place_name for location in self.all_locations]
 
     @property
+    def searchable_locations_names_nl(self):
+        return [location.mapbox_placename_nl for location in self.all_locations]
+
+    @property
+    def searchable_locations_names_de(self):
+        return [location.mapbox_placename_de for location in self.all_locations]
+
+    @property
     def searchable_locations_context_ids(self):
         def location_id_from_mapbox_id(mapbox_id):
             location_for_mapbox_id = Location.objects.filter(mapbox_id=mapbox_id)

@@ -1,4 +1,4 @@
-from typing import List, ClassVar, Tuple
+from typing import List, ClassVar, Tuple, Dict
 
 from algoliasearch_django import raw_search
 
@@ -9,7 +9,7 @@ from django.conf import settings
 
 def query_search_index(
     model_class: ClassVar, params: dict, query: str = ""
-) -> Tuple[int, List[dict]]:
+) -> Tuple[int, List[dict], Dict[str, int]]:
     """
     NOTE: This will only return a maximum of paginationLimitedTo items
     (which might be what we want – or not).
@@ -21,8 +21,9 @@ def query_search_index(
 
     hits = result.get("hits", [])
     total_hits = result.get("nbHits")
+    facets = result.get("facets")
 
-    return total_hits, hits
+    return total_hits, hits, facets
 
 
 def query_parser_index(title: str) -> Tuple[int, List]:

@@ -83,4 +83,20 @@ class SearchTestCase(AuthenticatedTestCase):
             algolia_engine.client.init_index(
                 f"{index_class.index_name}_{__name__}_{cls.now}"
             ).delete()
+
+            indices = algolia_engine.client.list_indices()
+            ops = []
+
+            for index in indices["items"]:
+                index_name = index["name"]
+                if f"{index_class.index_name}_{__name__}_{cls.now}" in index_name:
+                    ops.append(
+                        {
+                            "indexName": index_name,
+                            "action": "delete",
+                        }
+                    )
+
+            algolia_engine.client.multiple_batch(ops)
+
         algolia_engine.reset(settings.ALGOLIA)

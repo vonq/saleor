@@ -1,11 +1,12 @@
 import itertools
 from collections import defaultdict
 from json import JSONDecodeError
-from typing import Iterable, List, Tuple, Type
+from typing import Iterable, List, Tuple, Type, Dict, Optional
 
 from algoliasearch.exceptions import RequestException
+from algoliasearch_django import algolia_engine
 from django.contrib.auth import get_user_model
-from django.db.models import Case, Q, When
+from django.db.models import Case, Q, When, QuerySet
 from django.http import JsonResponse, HttpResponse
 from django.views import View
 from drf_yasg2 import openapi
@@ -57,6 +58,7 @@ from api.products.search.filters.facet_filters import (
     DiversityFacetFilter,
     EmploymentTypeFacetFilter,
     SeniorityLevelFacetFilter,
+    convert_facet_payload,
 )
 from api.products.search.filters.facet_filters_groups import (
     FacetFiltersGroup,
@@ -293,9 +295,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
 
     search_results_count: int = None
 
-    is_recommendation: bool = False
-    excludes_recommendations: bool = False
-    is_my_own_product_request: bool = False
+    search_serializer: Optional[ProductSearchSerializer] = None
 
     search_filters: Tuple[Type[FacetFilter]] = (
         IsActiveFacetFilter,
@@ -365,7 +365,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
                 | Q(salesforce_product_type=Product.SalesforceProductType.GOOGLE)
             )
 
-        if self.is_recommendation:
+        if self.search_serializer and self.search_serializer.is_recommendation:
             queryset = self.add_recommendation_filter(queryset)
 
         return queryset.order_by("-order_frequency", "id")
@@ -378,7 +378,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
                 IsNotMyOwnProductFilter,
             )
         elif user.is_jmp():
-            if self.is_my_own_product_request:
+            if self.search_serializer.is_my_own_product_request:
                 return self.search_filters + (
                     IsAvailableInJmpFacetFilter,
                     CustomerIdFilter,
@@ -423,13 +423,19 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             social_filter,
         )
 
-    def search_queryset(self, queryset, sort_by_recent):
-        if self.is_recommendation:
+    def search_queryset(self, queryset) -> Tuple[QuerySet, Dict[str, int]]:
+        """
+        Operates on a subset of the dabase
+        after we selected the products available
+        to the requesting user's class in get_queryset
+        """
+        if self.search_serializer.is_recommendation:
             limit = self.recommendation_search_limit
             offset = 0
         else:
             limit = SearchResultsPagination().get_limit(self.request)
             offset = SearchResultsPagination().get_offset(self.request)
+
         filter_collection = FacetFilterCollection.build_filter_collection_from_request(
             request=self.request,
             filters=self.get_all_filters(),
@@ -441,9 +447,19 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             ProductsOpenApiParameters.PRODUCT_NAME.name, ""
         )
 
-        self.search_results_count, results = query_search_index(
-            Product, params=filter_collection.query(), query=product_name
-        )
+        if self.search_serializer.data["sortBy"] != "relevant":
+            # use a replica index for non-default ranking requests
+            adapter = algolia_engine.get_adapter(Product)
+            self.search_results_count, results, facets = adapter.raw_search_sorted(
+                sort_index=self.search_serializer.data["sortBy"],
+                query=product_name,
+                params=filter_collection.query(),
+            )
+        else:
+            # use the default index for relevant-only ranking (default behaviour)
+            self.search_results_count, results, facets = query_search_index(
+                Product, params=filter_collection.query(), query=product_name
+            )
         ids = get_results_ids(results)
 
         queryset = self.queryset.filter(pk__in=ids).order_by(
@@ -451,18 +467,16 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         )
 
         recommendation_queryset = self.add_recommendation_filter(queryset)
-        if self.is_recommendation is True:
+        if self.search_serializer.is_recommendation:
             self.search_results_count = recommendation_queryset.count()
-            return recommendation_queryset
+            return recommendation_queryset, facets
 
-        if self.excludes_recommendations is True:
+        if self.search_serializer.excludes_recommendations:
             exclude_ids = recommendation_queryset.values_list("pk", flat=True)
             self.search_results_count -= len(exclude_ids)
             queryset = queryset.exclude(pk__in=exclude_ids)
 
-        if sort_by_recent is True:
-            return queryset.order_by("-created")
-        return queryset
+        return queryset, facets
 
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
@@ -608,38 +622,36 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     def list(self, request, *args, **kwargs):
         search_serializer = ProductSearchSerializer(data=self.request.query_params)
         search_serializer.is_valid(raise_exception=True)
-        self.is_recommendation = search_serializer.is_recommendation
-        self.excludes_recommendations = search_serializer.excludes_recommendations
-        self.is_my_own_product_request = search_serializer.is_my_own_product_request
+        self.search_serializer = search_serializer
 
-        if self.is_recommendation is True and self.excludes_recommendations:
-            return JsonResponse(
-                data={
-                    "error": "Parameters 'recommended' and 'excludeRecommended' cannot both be set to true."
-                },
-                status=HTTP_400_BAD_REQUEST,
-            )
         queryset = self.get_queryset()
+        facets = {}  # a standard list catalogue view can't return facets
+
         if search_serializer.is_search_request:
             # a pure list view doesn't need to hit the search index
             try:
-                queryset = self.search_queryset(
-                    queryset, sort_by_recent=search_serializer.is_sort_by_recent
-                )
+                queryset, facets = self.search_queryset(queryset)
             except RequestException:
                 return JsonResponse(
                     data={"error": "Invalid request"}, status=HTTP_400_BAD_REQUEST
                 )
-        elif search_serializer.is_sort_by_recent:
-            queryset = queryset.order_by("-created")
         else:
             user = UserStrategy(self.request.user)
-            if (user.is_jmp() or user.is_mapi()) and not self.is_recommendation:
+            if (
+                user.is_jmp() or user.is_mapi()
+            ) and not self.search_serializer.is_recommendation:
                 queryset = queryset.exclude(MY_OWN_PRODUCTS)
 
         page = self.paginate_queryset(queryset)
         serializer = self.get_serializer(page, many=True)
-        return self.get_paginated_response(serializer.data)
+        return self.get_paginated_response(serializer.data, facets)
+
+    def get_paginated_response(self, data, facets=None):
+        response = super().get_paginated_response(data)
+        if facets:
+            facets = convert_facet_payload(facets)
+        response.data["facets"] = facets
+        return response
 
     @swagger_auto_schema(
         operation_id="Retrieve Product details",
@@ -803,7 +815,7 @@ class JobTitleSearchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         text = self.request.query_params.get("text")
         if not text:
             return []
-        _, results = query_search_index(
+        _, results, _ = query_search_index(
             JobTitle,
             query=text,
             params={
@@ -933,7 +945,7 @@ class JobFunctionsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
             serializer = self.serializer_class(job_functions_tree, many=True)
 
         else:
-            _, results = query_search_index(
+            _, results, _ = query_search_index(
                 JobFunction,
                 query=self.request.query_params.get("text"),
                 params={

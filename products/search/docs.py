@@ -1,5 +1,7 @@
 from drf_yasg2 import openapi
 
+from api.products.search.index import ProductIndex
+
 
 class ProductsOpenApiParameters:
     PRODUCT_NAME = openapi.Parameter(
@@ -31,7 +33,7 @@ class ProductsOpenApiParameters:
         in_=openapi.IN_QUERY,
         description="Sort products by different criteria.",
         type=openapi.TYPE_STRING,
-        enum=["relevant", "recent"],
+        enum=["relevant"] + list(ProductIndex.SORTING_REPLICAS.keys()),
         default="relevant",
         required=False,
         example="recent",

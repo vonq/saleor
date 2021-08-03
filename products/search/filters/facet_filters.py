@@ -1,5 +1,5 @@
 import itertools
-from typing import ClassVar, Iterable, Type
+from typing import ClassVar, Iterable, Type, Dict
 
 from drf_yasg2 import openapi
 
@@ -438,3 +438,23 @@ class SeniorityLevelFacetFilter(FacetFilter):
     )
     operator = "AND"
     score = 1
+
+
+MAP_FILTER_NAME_TO_PARAMETERS: Dict[str, str] = {
+    klass.filter_name: klass.parameter_name for klass in FacetFilter.__subclasses__()
+}
+
+
+def convert_facet_payload(facets: Dict[str, int]) -> Dict[str, int]:
+    """
+    A collection of facet counts returned from algolia will use
+    the facet as named in the index, which is different from
+    the parameter name we use in the API interface.
+    """
+    converted = {}
+    for k, v in facets.items():
+        if k in MAP_FILTER_NAME_TO_PARAMETERS.keys():
+            converted[MAP_FILTER_NAME_TO_PARAMETERS[k]] = v
+        else:
+            converted[k] = v
+    return converted
