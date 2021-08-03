@@ -138,14 +138,14 @@ class ProductSearchOrderByRecencyTestCase(SearchTestCase):
             name_en="Some job function", vonq_taxonomy_value_id=vonq_job_category.id
         )
 
-        cls.date_format = "%d/%m/%Y %H:%M:%S"
+        cls.date_format = "%d/%m/%Y %H:%M:%S %z"
         cls.dates = [
-            "01/01/1969 01:02:03",
-            "01/01/2019 01:02:03",
-            "01/01/2020 01:02:03",
-            "01/01/2020 01:02:04",
-            "01/01/2021 01:02:03",
-            "01/01/2022 01:02:03",
+            "01/01/1969 01:02:03 +0000",
+            "01/01/2019 01:02:03 +0000",
+            "01/01/2020 01:02:03 +0000",
+            "01/01/2020 01:02:04 +0000",
+            "01/01/2021 01:02:03 +0000",
+            "01/01/2022 01:02:03 +0000",
         ]
         cls.dates.sort()
 

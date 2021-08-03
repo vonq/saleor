@@ -353,20 +353,16 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
 
         user = UserStrategy(self.request.user)
 
-        if user.is_jmp():
+        if user.is_jmp() or user.is_mapi():
             queryset = queryset.filter(available_in_jmp=True)
 
         if user.is_mapi():
             # MAPI (or HAPI) is only required to show Job Boards, Social or Google products
-            queryset = queryset.filter(available_in_ats=True)
             queryset = queryset.filter(
                 Q(salesforce_product_type=Product.SalesforceProductType.JOB_BOARD)
                 | Q(salesforce_product_type=Product.SalesforceProductType.SOCIAL)
                 | Q(salesforce_product_type=Product.SalesforceProductType.GOOGLE)
             )
-
-        if self.search_serializer and self.search_serializer.is_recommendation:
-            queryset = self.add_recommendation_filter(queryset)
 
         return queryset.order_by("-order_frequency", "id")
 
@@ -470,7 +466,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             )
         ids = get_results_ids(results)
 
-        queryset = self.queryset.filter(pk__in=ids).order_by(
+        queryset = queryset.filter(pk__in=ids).order_by(
             Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(ids)])
         )
 
@@ -645,10 +641,11 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
                 )
         else:
             user = UserStrategy(self.request.user)
-            if (
-                user.is_jmp() or user.is_mapi()
-            ) and not self.search_serializer.is_recommendation:
-                queryset = queryset.exclude(MY_OWN_PRODUCTS)
+            if user.is_jmp() or user.is_mapi():
+                if not self.search_serializer.is_recommendation:
+                    queryset = queryset.exclude(MY_OWN_PRODUCTS)
+                else:
+                    queryset = self.add_recommendation_filter(queryset)
 
         page = self.paginate_queryset(queryset)
         serializer = self.get_serializer(page, many=True)
