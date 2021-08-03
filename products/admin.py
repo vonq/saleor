@@ -302,6 +302,7 @@ class JobTitleAdminForm(forms.ModelForm):
 @admin.register(Channel)
 class ChannelAdmin(CompareVersionAdmin, TranslationAdmin):
     form = ChannelForm
+    ordering = ["name"]
     list_display = ("name", "url", "type", "is_active")
     list_filter = ("type", "is_active")
     search_fields = ("name",)
