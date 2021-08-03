@@ -450,8 +450,16 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         if self.search_serializer.data["sortBy"] != "relevant":
             # use a replica index for non-default ranking requests
             adapter = algolia_engine.get_adapter(Product)
+
+            sort_index = self.search_serializer.data["sortBy"]
+
+            # MAPI offers a "recent" sorting option rather
+            # than the aptly named "created.desc"
+            if sort_index == "recent":
+                sort_index = "created.desc"
+
             self.search_results_count, results, facets = adapter.raw_search_sorted(
-                sort_index=self.search_serializer.data["sortBy"],
+                sort_index=sort_index,
                 query=product_name,
                 params=filter_collection.query(),
             )

@@ -288,6 +288,7 @@ class ProductSearchSerializer(serializers.Serializer):
         required=False,
         choices=[
             "relevant",
+            "recent",  # needed for MAPI backwards compatibility
         ]
         + list(ProductIndex.SORTING_REPLICAS.keys()),
         default="relevant",

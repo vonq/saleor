@@ -33,7 +33,11 @@ class ProductsOpenApiParameters:
         in_=openapi.IN_QUERY,
         description="Sort products by different criteria.",
         type=openapi.TYPE_STRING,
-        enum=["relevant"] + list(ProductIndex.SORTING_REPLICAS.keys()),
+        enum=[
+            "relevant",
+            "recent",  # needed for MAPI backwards compatibility
+        ]
+        + list(ProductIndex.SORTING_REPLICAS.keys()),
         default="relevant",
         required=False,
         example="recent",

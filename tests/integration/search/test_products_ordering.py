@@ -192,6 +192,12 @@ class ProductSearchOrderByRecencyTestCase(SearchTestCase):
         check_products_are_sorted_descending_by_created_date(products)
 
         products = self.client.get(
+            reverse("api.products:products-list") + f"?sortBy=recent"
+        ).json()["results"]
+
+        check_products_are_sorted_descending_by_created_date(products)
+
+        products = self.client.get(
             reverse("api.products:products-list")
             + f"?jobFunctionId={self.job_function.id}&sortBy=created.desc"
         ).json()["results"]
