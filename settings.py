@@ -39,9 +39,8 @@ DEBUG = True if is_development() else False
 
 ALLOWED_HOSTS = (
     [
-        ".pkb.web-acceptance.vonq-aws.com",
+        ".vonq-aws.com",
         ".pkb.web-acceptance.vonq.int",
-        ".pkb.web-production.vonq-aws.com",
         ".pkb.api.vonq.com",
         ".pkb.api.vonq.io",
         "saleor-poc-storefront.herokuapp.com",
