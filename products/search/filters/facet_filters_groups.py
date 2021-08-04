@@ -188,12 +188,22 @@ class GenericAndInternationalGroup(FacetFiltersGroup):
         }
         is_search_for_my_own_contracts = "customerId" in qp_keys
 
+        is_categorical_search = bool(
+            set(list(qp_keys))
+            & {
+                "diversityId",
+                "employmentTypeId",
+                "seniorityId",
+            }
+        )
+
         return (
             super().can_be_included(user_request)
             and not is_search_by_exact_location
             and not is_search_by_name_and_exact_location
             and not is_search_by_inclusive_and_exact_location
             and not is_search_for_my_own_contracts
+            and not is_categorical_search
         )
 
 
