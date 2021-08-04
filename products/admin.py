@@ -183,7 +183,7 @@ class ProductAdmin(
     time_to_process.short_description = "Time to process"
 
     def available_in_hapi(self, product) -> bool:
-        return product.salesforce_product_type in [
+        return product.available_in_jmp and product.salesforce_product_type in [
             Product.SalesforceProductType.JOB_BOARD,
             Product.SalesforceProductType.SOCIAL,
             Product.SalesforceProductType.GOOGLE,
