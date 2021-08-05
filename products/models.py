@@ -428,9 +428,9 @@ class Channel(SFSyncable):
             "aggregator",
             _("Aggregator"),
         )
-        NOT_CHANNEL = (
-            "not channel",
-            _("Not Channel"),
+        SERVICE = (
+            "service",
+            _("Service"),
         )
 
     salesforce_id = models.CharField(max_length=20, null=True)
