@@ -182,6 +182,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:9001",
     "https://platform-acceptance.vonq.it",
     "https://platform.vonq.com",
+    "https://platform.web-acceptance.vonq-aws.com",
     "http://localhost:3000",
     "https://master.djaiqvf4qskm2.amplifyapp.com",
     "https://saleor-poc-storefront.herokuapp.com",
