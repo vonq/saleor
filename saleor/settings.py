@@ -53,7 +53,7 @@ ADMINS = (
 )
 MANAGERS = ADMINS
 
-_DEFAULT_CLIENT_HOSTS = "localhost,127.0.0.1"
+_DEFAULT_CLIENT_HOSTS = "localhost,127.0.0.1,dashboard.vonq.beweis.co.uk,poc.vonq.beweis.co.uk"
 
 ALLOWED_CLIENT_HOSTS = os.environ.get("ALLOWED_CLIENT_HOSTS")
 if not ALLOWED_CLIENT_HOSTS:
@@ -233,11 +233,14 @@ MIDDLEWARE = [
     "saleor.core.middleware.site",
     "saleor.core.middleware.plugins",
     "saleor.core.middleware.jwt_refresh_token_middleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
 ]
 
 INSTALLED_APPS = [
     # External apps that need to go before django's
     "storages",
+    "corsheaders",
     # Django modules
     "django.contrib.contenttypes",
     "django.contrib.sites",
@@ -276,7 +279,6 @@ INSTALLED_APPS = [
     "api.vonqtaxonomy",
     # pkb external apps
     "algoliasearch_django",
-    "corsheaders",
     "modeltranslation",
     "massadmin",
     "django.contrib.admin",
@@ -704,3 +706,8 @@ AJAX_LOOKUP_CHANNELS = {
 AUTH0_DOMAIN = os.getenv('AUTH0_DOMAIN')
 AUTH0_CLIENT_ID = os.getenv('AUTH0_CLIENT_ID')
 AUTH0_CLIENT_SECRET = os.getenv('AUTH0_CLIENT_SECRET')
+
+CORS_ALLOWED_ORIGINS = [
+    "https://dashboard.vonq.beweis.co.uk",
+    "https://poc.vonq.beweis.co.uk"
+]
