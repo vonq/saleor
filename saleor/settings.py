@@ -322,6 +322,21 @@ LOGGING = {
                 + "%(pathname)s %(process)d %(threadName)s"
             ),
         },
+        "celery_json": {
+            "()": "saleor.core.logging.JsonCeleryFormatter",
+            "datefmt": "%Y-%m-%dT%H:%M:%SZ",
+            "format": (
+                "%(asctime)s %(levelname)s %(celeryTaskId)s %(celeryTaskName)s "
+            ),
+        },
+        "celery_task_json": {
+            "()": "saleor.core.logging.JsonCeleryTaskFormatter",
+            "datefmt": "%Y-%m-%dT%H:%M:%SZ",
+            "format": (
+                "%(asctime)s %(levelname)s %(celeryTaskId)s %(celeryTaskName)s "
+                "%(message)s "
+            ),
+        },
         "verbose": {
             "format": (
                 "%(levelname)s %(name)s %(message)s [PID:%(process)d:%(threadName)s]"
@@ -339,6 +354,16 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "django.server" if DEBUG else "json",
         },
+        "celery_app": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose" if DEBUG else "celery_json",
+        },
+        "celery_task": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose" if DEBUG else "celery_task_json",
+        },
         "null": {
             "class": "logging.NullHandler",
         },
@@ -347,6 +372,16 @@ LOGGING = {
         "django": {"level": "INFO", "propagate": True},
         "django.server": {
             "handlers": ["django.server"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "celery.app.trace": {
+            "handlers": ["celery_app"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "celery.task": {
+            "handlers": ["celery_task"],
             "level": "INFO",
             "propagate": False,
         },
@@ -432,7 +467,7 @@ GS_AUTO_CREATE_BUCKET = get_bool_from_env("GS_AUTO_CREATE_BUCKET", False)
 GS_QUERYSTRING_AUTH = get_bool_from_env("GS_QUERYSTRING_AUTH", False)
 GS_DEFAULT_ACL = os.environ.get("GS_DEFAULT_ACL", None)
 GS_MEDIA_CUSTOM_ENDPOINT = os.environ.get("GS_MEDIA_CUSTOM_ENDPOINT", None)
-GS_EXPIRATION = os.environ.get("GS_EXPIRATION", None)
+GS_EXPIRATION = timedelta(seconds=parse(os.environ.get("GS_EXPIRATION", "1 day")))
 GS_FILE_OVERWRITE = get_bool_from_env("GS_FILE_OVERWRITE", True)
 
 # If GOOGLE_APPLICATION_CREDENTIALS is set there is no need to load OAuth token
@@ -521,8 +556,8 @@ GRAPHENE = {
     "RELAY_CONNECTION_ENFORCE_FIRST_OR_LAST": True,
     "RELAY_CONNECTION_MAX_LIMIT": 100,
     "MIDDLEWARE": [
-        "saleor.graphql.middleware.JWTMiddleware",
         "saleor.graphql.middleware.app_middleware",
+        "saleor.graphql.middleware.JWTMiddleware",
     ],
 }
 
