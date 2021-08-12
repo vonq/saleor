@@ -69,6 +69,7 @@ from api.products.search.filters.facet_filters_groups import (
     InternationalAndFunctionGroup,
     JobFunctionAndLocationGroup,
     JobFunctionIndustryAndLocationGroup,
+    JobFunctionGroup,
 )
 from api.products.search.search import (
     get_results_ids,
@@ -316,6 +317,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         JobFunctionAndLocationGroup,
         GenericAndLocationGroup,
         InternationalAndFunctionGroup,
+        JobFunctionGroup,
         IndustryAndLocationGroup,
         IndustryAndInternationalGroup,
         GenericAndInternationalGroup,
@@ -453,7 +455,6 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             # than the aptly named "created.desc"
             if sort_index == "recent":
                 sort_index = "created.desc"
-
             self.search_results_count, results, facets = adapter.raw_search_sorted(
                 sort_index=sort_index,
                 query=product_name,

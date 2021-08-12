@@ -135,6 +135,42 @@ class InternationalAndFunctionGroup(FacetFiltersGroup):
     operator = "AND"
     score = matches_jobfunction_and_international_score
 
+    @classmethod
+    def can_be_included(cls, user_request: Request) -> bool:
+        qp_keys = cls.get_qp_keys(user_request)
+        # Only apply the "is international" condition if there's
+        # no other filter supplied apart from jobTitle and jobFunction
+        return super().can_be_included(user_request) and qp_keys.issubset(
+            {
+                InclusiveJobFunctionChildrenFilter.parameter_name,
+                InclusiveJobFunctionChildrenFilter.secondary_parameter_name,
+            }
+        )
+
+
+class JobFunctionGroup(FacetFiltersGroup):
+    """
+    Pseudo-group to tackle the use case of an inclusive job function search
+    that is not limited to international boards.
+
+    Needs to be a filter group so that it can be toggled depending
+    on the state of InternationalAndFunctionGroup :/
+    """
+
+    parameter_name = InclusiveJobFunctionChildrenFilter.filter_name
+    facet_filters = [InclusiveJobFunctionChildrenFilter]
+    operator = "AND"
+    score = InclusiveJobFunctionChildrenFilter.score
+
+    @classmethod
+    def can_be_included(cls, user_request: Request) -> bool:
+        qp_keys = cls.get_qp_keys(user_request)
+        return (
+            super().can_be_included(user_request)
+            and "jobFunctionId" in qp_keys
+            and not InternationalAndFunctionGroup.can_be_included(user_request)
+        )
+
 
 class IndustryAndLocationGroup(FacetFiltersGroup):
     parameter_name = "searchable_industries_locations_combinations"
