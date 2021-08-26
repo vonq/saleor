@@ -430,6 +430,7 @@ class ProductJmpSerializer(ProductSerializer):
         source="salesforce_product_type", choices=Product.SalesforceProductType.choices
     )
     customer_id = serializers.CharField(read_only=True)
+    tracking_method = serializers.ChoiceField(choices=Product.TrackingMethod.choices)
 
 
 class InternalUserSerializer(ProductJmpSerializer):

@@ -57,10 +57,10 @@ class MapboxLocationsTestCase(TestCase):
             list(Location.objects.all().values_list("mapbox_placename", flat=True)),
             [
                 "London, Greater London, England, United Kingdom",
+                "Londonderry, Londonderry, Northern Ireland, United Kingdom",
                 "London, Ontario, Canada",
                 "London Borough of Enfield, Greater London, England, United Kingdom",
-                "Londonderry, Derry, Northern Ireland, United Kingdom",
-                "London Borough of Barnet, Greater London, England, United Kingdom",
+                "Londonderry, Northern Ireland, United Kingdom",
             ],
         )
 
