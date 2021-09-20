@@ -26,7 +26,8 @@
       mapboxgl.accessToken = '{{ mapbox_key }}';
       var geocoder = new MapboxGeocoder({
           accessToken: mapboxgl.accessToken,
-          types: 'country,region,district'
+          types: 'country,region,district',
+          language: 'en,nl,de'
       });
       geocoder.addTo('#geocoder-name');
       geocoder.on('result', function (result) {
