@@ -163,5 +163,8 @@ class Auth0Plugin(BasePlugin):
         except ValidationError:
             return None
 
-        user = get_user_from_token(token) or create_user_from_token(token)
+        try:
+            user = get_user_from_token(token)
+        except ValidationError:
+            user = create_user_from_token(token)
         return user
