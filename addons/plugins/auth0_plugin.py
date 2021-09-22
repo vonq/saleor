@@ -51,9 +51,9 @@ def get_user_from_token(token) -> Optional[User]:
 
 
 def create_user_from_token(token) -> User:
-    # TODO: check more details!
-    user = User.objects.create(email=token['email'])
-    # TODO: Organization metadata?
+    user_id_token = jwt.decode(token, options={"verify_signature": False})
+    user_email = user_id_token["email"]
+    user = User.objects.create(email=user_email)
     return user
 
 
