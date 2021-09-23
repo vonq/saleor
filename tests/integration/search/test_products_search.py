@@ -142,6 +142,13 @@ class ProductSearchTestCase(SearchTestCase):
         united_kingdom.save()
         cls.united_kingdom_id = united_kingdom.id
 
+        france = Location.objects.create(
+            mapbox_id="country.19008108158641660",
+            canonical_name="Omlette du fromage",
+            mapbox_context=["continent.europe", "global"],
+        )
+        cls.france_id = france.id
+
         england = Location(
             mapbox_id="region.13483278848453920",
             canonical_name="England",
@@ -312,6 +319,26 @@ class ProductSearchTestCase(SearchTestCase):
         )
         web_development_board.job_functions.add(cls.web_development)
         web_development_board.save()
+
+        cls.french_board = Product.objects.create(
+            status=Product.Status.ACTIVE,
+            title="A job board for french developpeurs",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+        )
+
+        cls.french_board.job_functions.add(software_engineering)
+        cls.french_board.locations.add(france)
+        cls.french_board.save()
+
+        cls.uk_board = Product.objects.create(
+            status=Product.Status.ACTIVE,
+            title="A job board for english devs",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+        )
+
+        cls.uk_board.job_functions.add(software_engineering)
+        cls.uk_board.locations.add(united_kingdom)
+        cls.uk_board.save()
 
         # my own products
         cls.my_own_product_1 = Product.objects.create(
@@ -511,6 +538,8 @@ class ProductSearchTestCase(SearchTestCase):
                 continue
             self.assertTrue(product_locations & correct_locations)
 
+    @tag("Requires review")
+    @skip
     def test_return_all_products_with_no_locations(self):
         resp = self.client.get(reverse("api.products:products-list"))
         self.assertEquals(len(resp.json()["results"]), 18)
@@ -645,6 +674,30 @@ class ProductSearchTestCase(SearchTestCase):
                 (self.software_engineering_id, self.web_development.id),
             ),
             3,
+        )
+
+    @tag("PKB-631")
+    def test_searching_by_job_function_and_location_does_not_return_products_from_other_locations(
+        self,
+    ):
+        resp = self.client.get(
+            reverse("api.products:products-list")
+            + f"?jobFunctionId={self.software_engineering_id}&includeLocationId={self.france_id}"
+        )
+
+        self.assertEqual(
+            how_many_products_with_value(
+                resp.json(),
+                "job_functions",
+                (self.software_engineering_id,),
+            ),
+            1,
+        )
+        self.assertEqual(
+            how_many_products_with_value(
+                resp.json(), "locations", (self.united_kingdom_id,)
+            ),
+            0,
         )
 
     def test_can_search_for_product_name(self):

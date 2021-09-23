@@ -6,6 +6,7 @@ from typing import ClassVar, List, Optional, Type
 from rest_framework.request import Request
 
 from api.products.models import SEPARATOR
+from api.products.search import SEARCH_QUERY_PARAMETERS, SEARCH_FILTERS_QUERY_PARAMS
 from api.products.search.filters.facet_filters import (
     FacetFilter,
     InclusiveJobFunctionChildrenFilter,
@@ -62,11 +63,11 @@ class FacetFiltersGroup:
         Returns a list of query parameters that are defined
         for the current user request
         """
-        qp_keys = set(
-            {ele for ele in user_request.query_params if user_request.query_params[ele]}
-        )
-        qp_keys -= {"offset", "limit", "recommended", "format", "currency"}
-        return qp_keys
+        return {
+            ele
+            for ele in user_request.query_params
+            if user_request.query_params[ele] and ele in SEARCH_QUERY_PARAMETERS
+        }
 
 
 def get_group_facet_filter(
@@ -168,6 +169,7 @@ class JobFunctionGroup(FacetFiltersGroup):
         return (
             super().can_be_included(user_request)
             and "jobFunctionId" in qp_keys
+            and qp_keys.intersection(SEARCH_FILTERS_QUERY_PARAMS)
             and not InternationalAndFunctionGroup.can_be_included(user_request)
         )
 

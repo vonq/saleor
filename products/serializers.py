@@ -19,6 +19,7 @@ from api.products.models import (
     Category,
 )
 from api.products.search.docs import ProductsOpenApiParameters
+from api.products.search import SEARCH_QUERY_PARAMETERS, SORT_QUERY_PARAMETER
 from api.products.search.index import ProductIndex
 
 
@@ -312,29 +313,16 @@ class ProductSearchSerializer(serializers.Serializer):
 
     @property
     def is_search_request(self) -> bool:
-        return any(
-            (
-                self.validated_data.get("includeLocationId"),
-                self.validated_data.get("exactLocationId"),
-                self.validated_data.get("industryId"),
-                self.validated_data.get("jobTitleId"),
-                self.validated_data.get("jobFunctionId"),
-                self.validated_data.get("durationFrom"),
-                self.validated_data.get("durationTo"),
-                self.validated_data.get("name"),
-                self.validated_data.get("channelType"),
-                self.validated_data.get("customerId"),
-                self.validated_data.get("categoryId"),
-                self.validated_data.get("diversityId"),
-                self.validated_data.get("employmentTypeId"),
-                self.validated_data.get("seniorityId"),
-                self.validated_data.get("priceTo"),
-                self.validated_data.get("priceFrom"),
-                self.validated_data.get("sortBy") != "relevant",
+        return (
+            any(
+                (
+                    self.validated_data.get(search_param)
+                    for search_param in SEARCH_QUERY_PARAMETERS
+                )
             )
+            or self.validated_data.get(SORT_QUERY_PARAMETER) != "relevant"
         )
 
-    @property
     def is_sort_by_recent(self) -> bool:
         return bool(
             self.validated_data.get(ProductsOpenApiParameters.SORT_BY.name) == "recent"

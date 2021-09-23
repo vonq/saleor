@@ -68,7 +68,9 @@ class InclusiveLocationIdFacetFilter(FacetFilter):
     parameter = openapi.Parameter(
         parameter_name,
         in_=openapi.IN_QUERY,
-        description="Id for a Location to search products against. If no exact matches exist, search will be expanded to the Location's region and country. Optionally, a (comma-separated) array of values can be passed. Passing multiple values increases the number of search results.",
+        description="Id for a Location to search products against. If no exact matches exist, search will be expanded "
+        "to the Location's region and country. Optionally, a (comma-separated) array of values can be "
+        "passed. Passing multiple values increases the number of search results.",
         type=openapi.TYPE_ARRAY,
         items=openapi.Items(type=openapi.TYPE_STRING),
         required=False,
