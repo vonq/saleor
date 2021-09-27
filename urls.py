@@ -30,7 +30,6 @@ from api.products.views import (
     ChannelsViewSet,
     FunctionFromTitleViewSet,
     IndexView,
-    CategoriesViewSet,
 )
 from api.settings import is_development
 

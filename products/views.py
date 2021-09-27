@@ -20,6 +20,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_404_NO
 from rest_framework.utils import json
 
 from api.products.apps import ProductsConfig
+from api.products.delivery_time import calculate_delivery_time
 from api.products.docs import CommonOpenApiParameters
 from api.products.geocoder import Geocoder
 from api.products.models import (
@@ -89,6 +90,7 @@ from api.products.serializers import (
     JobFunctionSerializer,
     InternalUserSerializer,
     CategorySerializer,
+    TotalDeliveryTimeSerializer,
 )
 
 MY_OWN_PRODUCTS = (
@@ -142,6 +144,39 @@ class IndexView(View):
         A route indicates how we get there.
         """,
             content_type="text/plain",
+        )
+
+
+class DeliveryTimeViewSet(viewsets.GenericViewSet):
+    permission_classes = [AllowAny]
+    queryset = Product.objects.all()
+
+    @swagger_auto_schema(
+        operation_id="Retrieve time to process and setup for a list of products.",
+        operation_summary="This endpoint calculates total number of days to process and setup a campaign containing a list of Products, given a comma-separated list of their ids.",
+        operation_description="To be used to display this information in the campaign basket and on the Operation Team's SLA performance dashboard.",
+        tags=[ProductsConfig.verbose_name],
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="(?P<product_ids>.+)",
+    )
+    def totaldeliverytime(self, request, product_ids=None):
+        product_ids = product_ids.split(",")
+        if len(product_ids) > 50:
+            return JsonResponse(
+                data={
+                    "error": "Cannot calculate delivery time for more than 50 products at a time"
+                },
+                status=HTTP_400_BAD_REQUEST,
+            )
+        products = list(self.get_queryset().filter(product_id__in=product_ids))
+
+        if len(products) < len(product_ids):
+            raise NotFound
+        return Response(
+            TotalDeliveryTimeSerializer(calculate_delivery_time(products)).data
         )
 
 

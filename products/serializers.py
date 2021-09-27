@@ -142,6 +142,12 @@ class DeliveryTimeSerializer(serializers.Serializer):
     period = serializers.IntegerField()
 
 
+class TotalDeliveryTimeSerializer(serializers.Serializer):
+    days_to_process = serializers.IntegerField()
+    days_to_setup = serializers.IntegerField()
+    total_days = serializers.IntegerField()
+
+
 class ProductSerializer(serializers.Serializer):
     _selected_currency: Optional[str] = None
     _exchange_rates: Dict[str, float] = {}
@@ -228,11 +234,7 @@ class ProductSerializer(serializers.Serializer):
 
     @swagger_serializer_method(serializer_or_field=DeliveryTimeSerializer)
     def get_time_to_process(self, product) -> dict:
-        return {
-            "range": "hours",
-            "period": (product.supplier_time_to_process or 0)
-            + (product.vonq_time_to_process or 0),
-        }
+        return {"range": "hours", "period": product.total_time_to_process}
 
     @swagger_serializer_method(serializer_or_field=DeliveryTimeSerializer)
     def get_time_to_setup(self, product) -> dict:

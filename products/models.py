@@ -1231,6 +1231,10 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
         null=True, blank=False, verbose_name="VONQ time to process (hours)", default=24
     )
 
+    @property
+    def total_time_to_process(self):
+        return (self.supplier_time_to_process or 0) + (self.vonq_time_to_process or 0)
+
     # unit/list price is what we negotiate and sell them at
     unit_price = models.FloatField(null=True, blank=True, verbose_name="Unit Price (€)")
 
