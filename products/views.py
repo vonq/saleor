@@ -150,6 +150,7 @@ class IndexView(View):
 class DeliveryTimeViewSet(viewsets.GenericViewSet):
     permission_classes = [AllowAny]
     queryset = Product.objects.all()
+    serializer_class = TotalDeliveryTimeSerializer
 
     @swagger_auto_schema(
         operation_id="Retrieve time to process and setup for a list of products.",
