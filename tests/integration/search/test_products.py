@@ -34,6 +34,7 @@ class ProductsTestCase(TestCase):
             cls.available_in_jmp_product = Product(
                 status=Product.Status.ACTIVE,
                 available_in_jmp=True,
+                available_in_ats=False,
                 title="Product available in JMP",
                 salesforce_id="available_jmp_product",
                 salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
@@ -49,15 +50,15 @@ class ProductsTestCase(TestCase):
             )
             cls.unavailable_in_jmp_product.save()
 
-            cls.unavailable_in_mapi_product = Product(
+            cls.unavailable_in_hapi_product = Product(
                 status=Product.Status.ACTIVE,
                 available_in_jmp=True,
-                title="Product unavailable in MAPI",
-                salesforce_id="unavailable_in_mapi_product",
+                title="Product unavailable in HAPI",
+                salesforce_id="unavailable_in_hapi_product",
                 salesforce_product_type=Product.SalesforceProductType.FINANCE,
                 duration_days=90,
             )
-            cls.unavailable_in_mapi_product.save()
+            cls.unavailable_in_hapi_product.save()
 
             cls.unwanted_status_product = Product(
                 status=Product.Status.BLACKLISTED,
@@ -173,37 +174,22 @@ class ProductsTestCase(TestCase):
 
         self.assertEquals(resp.status_code, 404)
 
-    def test_mapi_sees_jmp_products(self):
+    def test_hapi_sees_only_products_available_in_ats(self):
         force_user_login(self.client, "mapi")
 
-        resp = self.client.get(
-            reverse(
-                "api.products:products-detail",
-                kwargs={"product_id": self.available_in_jmp_product.product_id},
-            )
-        )
+        resp = self.client.get(reverse("api.products:products-list"))
+        products = resp.json()["results"]
 
-        self.assertEquals(resp.status_code, 200)
+        self.assertEqual(2, len(products))
 
-    def test_mapi_doesnt_see_products_unavailable_in_jmp(self):
-        force_user_login(self.client, "mapi")
-
-        resp = self.client.get(
-            reverse(
-                "api.products:products-detail",
-                kwargs={"product_id": self.unavailable_in_jmp_product.product_id},
-            )
-        )
-        self.assertEqual(404, resp.status_code)
-
-    def test_mapi_can_see_jmp_board_products(self):
+    def test_hapi_can_see_jmp_board_products(self):
         force_user_login(self.client, "mapi")
 
         resp = self.client.get(reverse("api.products:products-list"))
 
         products = resp.json()["results"]
         self.assertTrue(
-            self.unavailable_in_mapi_product.product_id not in [prod["product_id"]]
+            self.unavailable_in_hapi_product.product_id not in [prod["product_id"]]
             for prod in products
         )
 
@@ -220,15 +206,15 @@ class ProductsTestCase(TestCase):
 
         # fetch list of products available for jmp
         resp = self.client.get(reverse("api.products:products-list"))
-        product_ids_available_in_mapi = [
+        product_ids_available_in_hapi = [
             product["product_id"] for product in resp.json()["results"]
         ]
 
-        random.sample(product_ids_available_in_mapi, 2)
+        random.sample(product_ids_available_in_hapi, 2)
 
         resp = self.client.post(
             reverse("api.products:products-validate"),
-            data=random.sample(product_ids_available_in_mapi, 2),
+            data=random.sample(product_ids_available_in_hapi, 2),
             content_type="application/json",
         )
 
@@ -236,7 +222,7 @@ class ProductsTestCase(TestCase):
 
         resp = self.client.post(
             reverse("api.products:products-validate"),
-            data=random.sample(product_ids_available_in_mapi, 2)
+            data=random.sample(product_ids_available_in_hapi, 2)
             + [self.unwanted_status_product.product_id],
             content_type="application/json",
         )

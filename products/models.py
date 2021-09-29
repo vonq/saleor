@@ -1357,7 +1357,7 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
 class Profile(CreatedUpdatedModelMixin):
     class Type(models.TextChoices):
         JMP = "jmp", _("JMP")
-        MAPI = "mapi", _("MAPI")
+        HAPI = "mapi", _("MAPI")
         INTERNAL = "internal", _("Internal")
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)

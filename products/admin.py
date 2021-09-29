@@ -88,7 +88,6 @@ class ProductForm(forms.ModelForm):
     customer_id = AutoCompleteSelectField(
         "customer", required=False, help_text=None, label="Customer ID"
     )
-    available_in_hapi = forms.BooleanField()
 
     class Meta:
         model = Product
@@ -171,7 +170,6 @@ class ProductAdmin(
         "updated",
         "created",
         "time_to_process",
-        "available_in_hapi",
     ]
     inlines = (JobFunctionModelInline,)
 
@@ -181,16 +179,6 @@ class ProductAdmin(
         )
 
     time_to_process.short_description = "Time to process"
-
-    def available_in_hapi(self, product) -> bool:
-        return product.available_in_jmp and product.salesforce_product_type in [
-            Product.SalesforceProductType.JOB_BOARD,
-            Product.SalesforceProductType.SOCIAL,
-            Product.SalesforceProductType.GOOGLE,
-        ]
-
-    available_in_hapi.boolean = True
-    available_in_hapi.short_description = "Available in HAPI"
 
     fields = [
         "title",
@@ -203,7 +191,7 @@ class ProductAdmin(
         "job_functions",
         "status",
         "available_in_jmp",
-        "available_in_hapi",
+        "available_in_ats",
         "is_recommended",
         "remarks",
         "reason",

@@ -50,6 +50,7 @@ from api.products.search.filters.facet_filters import (
     FacetFilter,
     IsActiveFacetFilter,
     IsAvailableInJmpFacetFilter,
+    IsAvailableInATSFacetFilter,
     IsNotMyOwnProductFilter,
     ProductsOnlyFacetFilter,
     StatusFacetFilter,
@@ -102,14 +103,14 @@ MY_OWN_PRODUCTS = (
 User = get_user_model()
 
 
-class IsMapiOrJmpUser(BasePermission):
+class IsHapiOrJmpUser(BasePermission):
     def has_permission(self, request, view):
         if not hasattr(request.user, "profile"):
             return False
         return bool(
             request.user
             and request.user.is_authenticated
-            and request.user.profile.type in [Profile.Type.JMP, Profile.Type.MAPI],
+            and request.user.profile.type in [Profile.Type.JMP, Profile.Type.HAPI],
         )
 
 
@@ -117,10 +118,10 @@ class UserStrategy:
     def __init__(self, request_user: User):
         self._request_user = request_user
 
-    def is_mapi(self) -> bool:
+    def is_hapi(self) -> bool:
         return (
             self._request_user.is_authenticated
-            and self._request_user.profile.type == Profile.Type.MAPI
+            and self._request_user.profile.type == Profile.Type.HAPI
         )
 
     def is_jmp(self) -> bool:
@@ -374,7 +375,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         if self.request.user.is_authenticated:
             if user.is_jmp():
                 return ProductJmpSerializer
-            if user.is_mapi():
+            if user.is_hapi():
                 return ProductSerializer
             if user.is_internal():
                 return InternalUserSerializer
@@ -391,24 +392,19 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
 
         user = UserStrategy(self.request.user)
 
-        if user.is_jmp() or user.is_mapi():
+        if user.is_jmp():
             queryset = queryset.filter(available_in_jmp=True)
 
-        if user.is_mapi():
-            # MAPI (or HAPI) is only required to show Job Boards, Social or Google products
-            queryset = queryset.filter(
-                Q(salesforce_product_type=Product.SalesforceProductType.JOB_BOARD)
-                | Q(salesforce_product_type=Product.SalesforceProductType.SOCIAL)
-                | Q(salesforce_product_type=Product.SalesforceProductType.GOOGLE)
-            )
+        if user.is_hapi():
+            queryset = queryset.filter(available_in_ats=True)
 
         return queryset.order_by("-order_frequency", "id")
 
     def get_all_filters(self):
         user = UserStrategy(self.request.user)
-        if user.is_mapi():
+        if user.is_hapi():
             return self.search_filters + (
-                IsAvailableInJmpFacetFilter,
+                IsAvailableInATSFacetFilter,
                 IsNotMyOwnProductFilter,
             )
         elif user.is_jmp():
@@ -487,7 +483,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
 
             sort_index = self.search_serializer.data["sortBy"]
 
-            # MAPI offers a "recent" sorting option rather
+            # HAPI offers a "recent" sorting option rather
             # than the aptly named "created.desc"
             if sort_index == "recent":
                 sort_index = "created.desc"
@@ -532,7 +528,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     def validate(self, request, **kwargs):
         """
         A simple endpoint to quickly check whether a list of product ids is valid
-        and available for MAPI to further process.
+        and available for HAPI to further process.
 
         This replaces a database check against portfolio service.
         """
@@ -678,7 +674,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
                 )
         else:
             user = UserStrategy(self.request.user)
-            if user.is_jmp() or user.is_mapi():
+            if user.is_jmp() or user.is_hapi():
                 if not self.search_serializer.is_recommendation:
                     queryset = queryset.exclude(MY_OWN_PRODUCTS)
                 else:
@@ -722,7 +718,7 @@ class AddonsViewSet(ProductsViewSet):
             salesforce_product_type__in=Product.SalesforceProductType.addons(),
         )
         user = UserStrategy(self.request.user)
-        if user.is_mapi() or user.is_jmp():
+        if user.is_hapi() or user.is_jmp():
             return active_products.filter(available_in_jmp=True).exclude(
                 MY_OWN_PRODUCTS
             )

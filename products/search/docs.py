@@ -35,7 +35,7 @@ class ProductsOpenApiParameters:
         type=openapi.TYPE_STRING,
         enum=[
             "relevant",
-            "recent",  # needed for MAPI backwards compatibility
+            "recent",  # needed for HAPI backwards compatibility
         ]
         + list(ProductIndex.SORTING_REPLICAS.keys()),
         default="relevant",

@@ -396,7 +396,7 @@ class ProductSearchTestCase(SearchTestCase):
 
         self.assertFalse(self.not_my_own_product.is_my_own_product)
 
-    def test_mapi_does_not_receive_my_own_products_by_default(self):
+    def test_hapi_does_not_receive_my_own_products_by_default(self):
         force_user_login(self.client, "mapi")
         resp = self.client.get(reverse("api.products:products-list") + f"?name=own")
         results = resp.json()["results"]

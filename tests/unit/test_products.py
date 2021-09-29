@@ -116,7 +116,7 @@ class ProductSchemaSerializerTestCase(TestCase):
         self.assertTrue("customer_id" in resp.json().keys())
         self.assertFalse("salesforce_id" in resp.json().keys())
 
-    def test_mapi_doesnt_see_additional_fields(self):
+    def test_hapi_doesnt_see_additional_fields(self):
         force_user_login(self.client, "mapi")
         resp = self.client.get(
             reverse(
@@ -127,7 +127,7 @@ class ProductSchemaSerializerTestCase(TestCase):
         self.assertFalse("customer_id" in resp.json().keys())
         self.assertFalse("salesforce_id" in resp.json().keys())
 
-    def test_mapi_sees_setup_time(self):
+    def test_hapi_sees_setup_time(self):
         force_user_login(self.client, "mapi")
         resp = self.client.get(
             reverse(

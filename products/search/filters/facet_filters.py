@@ -152,6 +152,16 @@ class IsAvailableInJmpFacetFilter(FacetFilter):
         self.filters = f"{self.filter_name}:true"
 
 
+class IsAvailableInATSFacetFilter(FacetFilter):
+    filter_name = "available_in_ats"
+    parameter_name = "available_in_ats"
+    parameter = None
+    operator = "AND"
+
+    def __init__(self, **kwargs):
+        self.filters = f"{self.filter_name}:true"
+
+
 class IsGenericFacetFilter(FacetFilter):
     filter_name = "is_generic"
     parameter_name = "is_generic"
