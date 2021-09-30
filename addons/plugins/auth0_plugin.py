@@ -53,7 +53,10 @@ def get_user_from_token(token) -> Optional[User]:
 def create_user_from_token(token) -> User:
     user_id_token = jwt.decode(token, options={"verify_signature": False})
     user_email = user_id_token["email"]
-    user = User.objects.create(email=user_email)
+    # This is the auth0 organisation id
+    user_org_id = user_id_token.get("org_id")
+    # TODO: Improve naming for JMP-Id and Auth0-Id?
+    user = User.objects.create(email=user_email, metadata={'org_id': user_org_id})
     return user
 
 
