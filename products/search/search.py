@@ -19,6 +19,12 @@ def query_search_index(
     else:
         result = raw_search(model_class, params=params)
 
+    if not result:
+        # raw_search can return a None
+        # instead of an empty result set
+        # if using empty search parameters
+        return 0, [], {}
+
     hits = result.get("hits", [])
     total_hits = result.get("nbHits")
     facets = result.get("facets")
