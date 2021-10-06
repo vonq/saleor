@@ -2,7 +2,7 @@ import itertools
 import re
 import uuid
 import datetime
-from typing import List, Iterable
+from typing import List, Iterable, Optional
 from storages.backends.s3boto3 import S3Boto3Storage
 from dateutil.tz import UTC
 from django.conf import settings
@@ -17,6 +17,7 @@ from mptt.models import MPTTModel
 from PIL import Image
 from api.field_permissions.models import FieldPermissionModelMixin
 from api.arrayfield import PKBArrayField
+from api.igb.api.client import get_singleton_client
 from api.products.geocoder import Geocoder, MAPBOX_INTERNATIONAL_PLACE_TYPE
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
@@ -457,8 +458,61 @@ Channel with target group segmentation: Indeed - Sales""",
     )
     type = models.CharField(max_length=20, choices=Type.choices, default="job board")
 
+    # the IGB class that maps to this channel
+    # corresponding to IGB's class_name
+    igb_moc_channel_class = models.CharField(max_length=30, null=True, blank=True)
+
+    # The extended information field contains
+    # details about the structure of credentials
+    # facets and fields
+    igb_moc_extended_information = models.JSONField(null=True, blank=True)
+
+    # is this channel enabled for MoC?
+    moc_enabled = models.BooleanField(default=False)
+
     def __str__(self):
         return str(self.name)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        # has a channel class been defined for this instance?
+        if self.igb_moc_channel_class:
+            job_board = get_singleton_client().detail(self.igb_moc_channel_class)
+            if job_board:
+                self.igb_moc_extended_information = job_board.moc
+                self.moc_enabled = True
+                self.create_moc_only_product()
+        else:
+            self.igb_moc_extended_information = None
+            self.moc_enabled = False
+            self.delete_moc_only_product()
+
+    def create_moc_only_product(self):
+        """
+        Create a linked MoC-only pseudoproduct for this channel, if none are present already
+        """
+        if self.product_set.filter(moc_only=True).count() == 0:
+            moc_only_product = Product.objects.create(
+                title=f"MOC ONLY - {self.name}",
+                status=Product.Status.ACTIVE,
+                channel_id=self.id,
+                available_in_ats=True,
+                available_in_jmp=False,
+                moc_only=True,
+                salesforce_product_type=Product.SalesforceProductType.VONQ_SERVICES,
+                salesforce_product_solution=Product.SalesforceProductSolution.MY_OWN_CHANNEL,
+            )
+            moc_only_product.channel = self
+            moc_only_product.save()
+            self.product_set.add(moc_only_product)
+
+    def delete_moc_only_product(self):
+        """
+        Delete linked MoC-only pseudoproducts for this channel, if any
+        """
+        if self.product_set.filter(moc_only=True).count() > 0:
+            self.product_set.filter(moc_only=True).delete()
 
 
 class PostingRequirement(models.Model):
@@ -499,6 +553,15 @@ class IndexSearchableProductMixin:
     unit_price: float
     external_product_name: str
     channel_name: str
+    moc_only: bool
+
+    @property
+    def should_index(self):
+        """
+        Don't bother sending the product to the search index
+        if it's meant to be MoC-only pseudoproduct.
+        """
+        return not self.moc_only
 
     @property
     def all_industries(self) -> Iterable["Industry"]:
@@ -1347,6 +1410,10 @@ class Product(FieldPermissionModelMixin, SFSyncable, IndexSearchableProductMixin
     order_frequency = models.FloatField(null=True, blank=True, default=0)
 
     ra_click_frequency = models.FloatField(null=True, blank=True, default=0)
+
+    # this field will only be True when a product
+    # is a MoC "shadow" product for a given channel
+    moc_only = models.BooleanField(default=False)
 
     objects = AcrossLanguagesQuerySet.as_manager()
 

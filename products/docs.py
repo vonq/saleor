@@ -19,3 +19,11 @@ class CommonOpenApiParameters:
         required=False,
         example="GBP",
     )
+    CUSTOMER_ID = openapi.Parameter(
+        name="X-Customer-Id",
+        in_=openapi.IN_HEADER,
+        type=openapi.TYPE_STRING,
+        format="Uuid",
+        required=False,
+        description="An unique customer identifier",
+    )

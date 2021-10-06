@@ -84,6 +84,7 @@ INSTALLED_APPS = [
     "api.annotations",
     "api.vonqtaxonomy",
     "api.currency",
+    "api.igb",
     "easy_thumbnails",
     "image_cropping",
     "django_better_admin_arrayfield",
@@ -241,6 +242,14 @@ SALESFORCE_CLIENT_ID = os.getenv("SALESFORCE_CLIENT_ID")
 SALESFORCE_CLIENT_SECRET = os.getenv("SALESFORCE_CLIENT_SECRET")
 SALESFORCE_API_USERNAME = os.getenv("SALESFORCE_API_USERNAME")
 SALESFORCE_API_PASSWORD = os.getenv("SALESFORCE_API_PASSWORD")
+
+MOC_ENABLED = bool(int(os.getenv("MOC_ENABLED", 0)))
+IGB_API_KEY = os.getenv("IGB_API_KEY")
+IGB_API_ENVIRONMENT_ID = os.getenv("IGB_API_ENVIRONMENT_ID")
+IGB_URL = os.getenv("IGB_URL")
+
+CREDENTIALS_STORAGE_KEY = os.getenv("CREDENTIALS_STORAGE_KEY")
+CREDENTIALS_TRANSPORT_KEY = os.getenv("CREDENTIALS_TRANSPORT_KEY")
 
 # Related to django-reversion
 ADD_REVERSION_ADMIN = True

@@ -113,11 +113,30 @@ class JobTitleSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "job_function")
 
 
-class LimitedChannelSerializer(serializers.Serializer):
+class MCSerializerMixin(metaclass=serializers.SerializerMetaclass):
+    mc_enabled = serializers.BooleanField(source="moc_enabled")
+    board_credentials = serializers.SerializerMethodField(read_only=True)
+    board_facets = serializers.SerializerMethodField(read_only=True)
+    board_fields = serializers.SerializerMethodField(read_only=True)
+
+    def get_board_credentials(self, channel: "Channel") -> Optional[Dict]:  # noqa
+        if channel.moc_enabled and channel.igb_moc_extended_information:
+            return channel.igb_moc_extended_information.get("credentials")
+
+    def get_board_facets(self, channel: "Channel") -> Optional[Dict]:  # noqa
+        if channel.moc_enabled and channel.igb_moc_extended_information:
+            return channel.igb_moc_extended_information.get("facets")
+
+    def get_board_fields(self, channel: "Channel") -> Optional[Dict]:  # noqa
+        if channel.moc_enabled and channel.igb_moc_extended_information:
+            return channel.igb_moc_extended_information.get("fields")
+
+
+class LimitedChannelSerializer(MCSerializerMixin, serializers.Serializer):
+    id = serializers.IntegerField()
     name = serializers.CharField(read_only=True)
     url = serializers.URLField(read_only=True)
     type = serializers.CharField(read_only=True)
-    id = serializers.IntegerField()
 
 
 class ProductPriceSerializer(serializers.Serializer):
@@ -427,7 +446,7 @@ class InternalUserSerializer(ProductJmpSerializer):
     salesforce_id = serializers.CharField(read_only=True)
 
 
-class ChannelSerializer(serializers.Serializer):
+class ChannelSerializer(serializers.Serializer, MCSerializerMixin):
     class Meta:
         ref_name = "ChannelWithProducts"
 

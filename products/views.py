@@ -114,6 +114,43 @@ class IsHapiOrJmpUser(BasePermission):
         )
 
 
+class IsInternalUser(BasePermission):
+    def has_permission(self, request, view):
+        if not hasattr(request.user, "profile"):
+            return False
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.profile.type == Profile.Type.INTERNAL,
+        )
+
+
+class IsExternalATSUser(BasePermission):
+    """
+    An external ATS user is a user that accesses PKB through HAPI
+    """
+
+    def has_permission(self, request, view):
+        if not hasattr(request.user, "profile"):
+            return False
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.profile.type == Profile.Type.HAPI
+        )
+
+
+class IsExternalATSUserWithMOC(IsExternalATSUser):
+    """
+    An external ATS user with MOC is an ATS which passes an unique identifier
+    for the customer they're requesting on behalf of.
+    """
+
+    def has_permission(self, request, view):
+        is_hapi = super().has_permission(request, view)
+        return is_hapi and request.headers.get("X-Customer-Id")
+
+
 class UserStrategy:
     def __init__(self, request_user: User):
         self._request_user = request_user
@@ -388,6 +425,7 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         queryset = self.queryset.filter(
             status=Product.Status.ACTIVE,
             salesforce_product_type__in=Product.SalesforceProductType.products(),
+            moc_only=False,
         )
 
         user = UserStrategy(self.request.user)
@@ -696,6 +734,48 @@ class ProductsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         operation_summary="This endpoint retrieves a Product by its id.",
         operation_description="Sometimes you already have access to the Identification code of any particular Product and you want to retrieve the most up-to-date information about it.",
         manual_parameters=(CommonOpenApiParameters.ACCEPT_LANGUAGE,),
+        tags=[ProductsConfig.verbose_name],
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+
+class MocViewset(
+    mixins.RetrieveModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet
+):
+    permission_classes = [IsExternalATSUser]
+    serializer_class = ProductSerializer
+    pagination_class = StandardResultsSetPagination
+
+    def get_queryset(self):
+        # TODO: abstract this out in a middleware
+        customer_id = self.request.headers.get("X-Customer-Id")
+        if customer_id:
+            return Product.objects.filter(
+                moc_only=True,
+                channel__contract__customer_id=customer_id,
+                channel__moc_enabled=True,
+            )
+        else:
+            return Product.objects.none()
+
+    @swagger_auto_schema(
+        operation_description="""
+                This endpoint exposes a list of Moc Products
+                """,
+        operation_id="Customer MoC list",
+        operation_summary="List MoC available for current user",
+        tags=[ProductsConfig.verbose_name],
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="""
+                This endpoint exposes a detail view for a customer Moc Products
+                """,
+        operation_id="Customer MoC detail",
+        operation_summary="Detail for a MoC available for current user",
         tags=[ProductsConfig.verbose_name],
     )
     def retrieve(self, request, *args, **kwargs):

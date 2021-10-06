@@ -257,6 +257,13 @@ class ChannelForm(forms.ModelForm):
     salesforce_account_id = AutoCompleteSelectField(
         "account", required=True, help_text=None, label="Salesforce Account"
     )
+    igb_moc_channel_class = AutoCompleteSelectField(
+        "igb_class", required=False, label="IGB Channel"
+    )
+
+    igb_moc_extended_information = forms.CharField(
+        label="MOC Extended Information", widget=forms.Textarea(), required=False
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -265,7 +272,17 @@ class ChannelForm(forms.ModelForm):
 
     def _save_m2m(self):
         super()._save_m2m()
+
+        # Separate MoC-only pseudoproducts before handling the products
+        # added or removed from the admin panel
+        moc_only_product = list(self.instance.product_set.filter(moc_only=True))
+
         self.instance.product_set.set(self.cleaned_data["products"])
+
+        # re-add the previously added moc-only pseudoproducts, if any
+        if moc_only_product:
+            self.instance.product_set.add(moc_only_product[0])
+
         channel_updated.send(sender=self.instance.__class__, instance=self.instance)
 
     def save(self, commit=True):

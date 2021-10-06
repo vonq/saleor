@@ -82,6 +82,9 @@ def get_replicas():
 
 @register(Product)
 class ProductIndex(SortingReplicaIndex):
+
+    should_index = "should_index"
+
     SORTING_REPLICAS = {
         "order_frequency.desc": {"customRanking": ["desc(order_frequency)"]},
         "order_frequency.asc": {"customRanking": ["asc(order_frequency)"]},
