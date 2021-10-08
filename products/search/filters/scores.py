@@ -27,7 +27,6 @@ matches_jobfunction_and_location_score = (
 matches_location_and_generic_score = matches_jobfunction_and_location_score // 3
 matches_jobfunction_and_international_score = matches_location_and_generic_score // 2
 matches_generic_international_score = matches_jobfunction_and_international_score // 2
-matches_industry_and_location_score = matches_generic_international_score // 2
+matches_industry_and_location_score = matches_location_and_generic_score * 3
 
-# only applies when user searches by industry only
-matches_industry_and_international_score = matches_jobfunction_and_international_score
+matches_industry_and_international_score = matches_location_and_generic_score * 2

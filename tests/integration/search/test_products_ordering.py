@@ -100,6 +100,62 @@ class ProductSearchOrderByFrequencyTestCase(SearchTestCase):
         self.assertEqual(response[1]["product_id"], "medium")
         self.assertEqual(response[2]["product_id"], "low")
 
+
+@tag("algolia")
+@tag("integration")
+class ProductSearchOrderFrequencyAndFilter(SearchTestCase):
+    model_index_class_pairs = [
+        (
+            Product,
+            ProductIndex,
+        )
+    ]
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        pkb_industry = VonqIndustry.objects.create(mapi_id=1, name="Something")
+        cls.public_sector_industry = Industry.objects.create(
+            name_en="Public Sector", vonq_taxonomy_value_id=pkb_industry.id
+        )
+
+        cls.uruguay = Location.objects.create(
+            mapbox_id="country.123",
+            mapbox_text="UR",
+            mapbox_context=["continent.south_america"],
+        )
+
+        high_freq_prod = Product.objects.create(
+            title="frequency 3",
+            status=Product.Status.ACTIVE,
+            salesforce_id="high",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            order_frequency=0.9,
+        )
+        high_freq_prod.industries.add(cls.public_sector_industry)
+        high_freq_prod.save()
+
+        low_freq_prod = Product.objects.create(
+            title="frequency 1",
+            status=Product.Status.ACTIVE,
+            salesforce_id="low",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            order_frequency=0.3,
+        )
+        low_freq_prod.industries.add(cls.public_sector_industry)
+        low_freq_prod.locations.add(cls.uruguay)
+        low_freq_prod.save()
+
+        medium_freq_prod = Product.objects.create(
+            title="frequency 2",
+            status=Product.Status.ACTIVE,
+            salesforce_id="medium",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            order_frequency=0.6,
+        )
+        medium_freq_prod.industries.add(cls.public_sector_industry)
+        medium_freq_prod.locations.add(cls.uruguay)
+        medium_freq_prod.save()
+
     def test_order_frequency_rank_does_not_outweigh_filters(self):
         """
         The product with the highest frequency only contains one of the filters, while the other two have both.
@@ -108,7 +164,7 @@ class ProductSearchOrderByFrequencyTestCase(SearchTestCase):
         """
         resp = self.client.get(
             reverse("api.products:products-list")
-            + f"?includeLocationId={self.brazil.id}&industryId={self.recruitment_industry.id}"
+            + f"?includeLocationId={self.uruguay.id}&industryId={self.public_sector_industry.id}"
         )
         response = resp.json()["results"]
 
@@ -203,3 +259,91 @@ class ProductSearchOrderByRecencyTestCase(SearchTestCase):
         ).json()["results"]
 
         check_products_are_sorted_descending_by_created_date(products)
+
+
+@tag("algolia")
+@tag("integration")
+class ProductsSearchByIndustryAndLocation(SearchTestCase):
+    """
+    This class tests against the fixes made as part of PKB-660
+    """
+
+    model_index_class_pairs = [
+        (
+            Product,
+            ProductIndex,
+        )
+    ]
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        pkb_industry = VonqIndustry.objects.create(mapi_id=1, name="Something")
+        cls.public_sector = Industry.objects.create(
+            name_en="Public Sector", vonq_taxonomy_value_id=pkb_industry.id
+        )
+
+        cls.netherlands = Location.objects.create(
+            mapbox_id="country.123",
+            mapbox_text="NL",
+            mapbox_context=["continent.europe"],
+        )
+
+        cls.global_product_in_industry = Product.objects.create(
+            title="Global product for Public Sector",
+            status=Product.Status.ACTIVE,
+            salesforce_id="2",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+        )
+        cls.global_product_in_industry.industries.add(cls.public_sector)
+        cls.global_product_in_industry.save()
+
+        cls.product_that_matches_both_industry_and_location = Product.objects.create(
+            title="Product in NL for Public Sector",
+            status=Product.Status.ACTIVE,
+            salesforce_id="1",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+        )
+        cls.product_that_matches_both_industry_and_location.industries.add(
+            cls.public_sector
+        )
+        cls.product_that_matches_both_industry_and_location.locations.add(
+            cls.netherlands
+        )
+        cls.product_that_matches_both_industry_and_location.save()
+
+        cls.generic_global_product = Product.objects.create(
+            title="Generic Global Product",
+            status=Product.Status.ACTIVE,
+            salesforce_id="4",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+        )
+
+        cls.generic_product_in_location = Product.objects.create(
+            title="Generic NL product",
+            status=Product.Status.ACTIVE,
+            salesforce_id="3",
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+        )
+        cls.generic_product_in_location.locations.add(cls.netherlands)
+        cls.generic_product_in_location.save()
+
+    def test_industry_location_sorting(self):
+        """
+        Ranking should work as follows:
+
+            - Match products that match the industry and the location
+            - If location can’t be matched, then match industry and global location
+            - If industry can’t be matched, then match searched location and generic (products with no industry speficied)
+            - If none matches, then show generic, global products.
+        """
+
+        resp = self.client.get(
+            reverse("api.products:products-list")
+            + f"?includeLocationId={self.netherlands.id}&industryId={self.public_sector.id}"
+        )
+        response = resp.json()["results"]
+
+        self.assertEqual(response[0]["title"], "Product in NL for Public Sector")
+        self.assertEqual(response[1]["title"], "Global product for Public Sector")
+        self.assertEqual(response[2]["title"], "Generic NL product")
+        self.assertEqual(response[3]["title"], "Generic Global Product")
