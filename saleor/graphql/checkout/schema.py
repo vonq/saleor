@@ -46,11 +46,11 @@ class CheckoutQueries(graphene.ObjectType):
     def resolve_checkout(self, info, token):
         return resolve_checkout(info, token)
 
-    @permission_required(CheckoutPermissions.MANAGE_CHECKOUTS)
+    #@permission_required(CheckoutPermissions.MANAGE_CHECKOUTS)
     def resolve_checkouts(self, *_args, channel=None, **_kwargs):
         return resolve_checkouts(channel)
 
-    @permission_required(CheckoutPermissions.MANAGE_CHECKOUTS)
+    #@permission_required(CheckoutPermissions.MANAGE_CHECKOUTS)
     def resolve_checkout_lines(self, *_args, **_kwargs):
         return resolve_checkout_lines()
 

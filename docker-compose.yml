@@ -54,6 +54,7 @@ services:
   worker:
     build:
       dockerfile: ./Dockerfile
+      context: .
       args:
         STATIC_URL: "/static/"
     command: celery -A saleor --app=saleor.celeryconf:app worker --loglevel=info
