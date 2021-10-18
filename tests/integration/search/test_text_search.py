@@ -151,3 +151,50 @@ class MatchingChannelTitleNameTestCase(SearchTestCase):
         self.assertEqual(len(products), 2)
         self.assertEqual(products[0]["title"], "JobBoost.io - Sponsored Job")
         self.assertEqual(products[1]["title"], "Joblift | Germany - Job boost")
+
+
+class TitleDescriptionTestCase(SearchTestCase):
+    model_index_class_pairs = [
+        (Product, ProductIndex),
+    ]
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.linkedin = Channel.objects.create(name="Linkedin")
+        cls.jobboost = Channel.objects.create(name="JobBoost.io")
+        cls.medienjobs = Channel.objects.create(name="Medien Jobs")
+
+        cls.linkedin_product = Product.objects.create(
+            title="Linkedin",
+            status=Product.Status.ACTIVE,
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            channel_id=cls.linkedin.id,
+        )
+
+        cls.jobboost_product = Product.objects.create(
+            # JobBoost.io - Sponsored Job
+            title="JobBoost",
+            status=Product.Status.ACTIVE,
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            channel_id=cls.jobboost.id,
+        )
+
+        cls.medien_product = Product.objects.create(
+            # Medien Jobs | Austria - Social Media Package
+            title="Social Media Package",
+            status=Product.Status.ACTIVE,
+            salesforce_product_type=Product.SalesforceProductType.JOB_BOARD,
+            channel_id=cls.medienjobs.id,
+            description="This description contains the word Linkedin, but not in the title",
+        )
+
+    def test_name_search_can_match_descriptions(self):
+        products = self.client.get(
+            reverse("api.products:products-list") + f"?name=linkedin"
+        ).json()["results"]
+
+        # should match cls.linkedin_product (first) and cls.medien_product (second)
+        self.assertEqual(2, len(products))
+
+        self.assertEqual("Linkedin - Linkedin", products[0]["title"])
+        self.assertEqual("Medien Jobs - Social Media Package", products[1]["title"])

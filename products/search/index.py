@@ -97,6 +97,7 @@ class ProductIndex(SortingReplicaIndex):
         "channel_name",
         "url",
         "channel",
+        "description",
         "is_active",
         "is_generic",
         "is_international",
@@ -148,6 +149,7 @@ class ProductIndex(SortingReplicaIndex):
         "searchableAttributes": [
             "channel_name",
             "title",
+            "description",
         ],
         "numericAttributesToIndex": [
             "maximum_locations_cardinality",
