@@ -4,7 +4,7 @@ drf-yasg2==1.19.4
 mapbox==0.18.0
 dj-static==0.0.6
 simple-salesforce==1.10.1
-django-modeltranslation==0.17.1
+django-modeltranslation==0.17.3
 pycountry-convert==0.7.2
 django-mass-edit==3.2.0
 responses~=0.13.0
