@@ -466,6 +466,7 @@ Channel with target group segmentation: Indeed - Sales""",
     # details about the structure of credentials
     # facets and fields
     igb_moc_extended_information = models.JSONField(null=True, blank=True)
+    igb_facets = models.JSONField(null=True, blank=True)
 
     # is this channel enabled for MoC?
     moc_enabled = models.BooleanField(default=False)
@@ -481,12 +482,21 @@ Channel with target group segmentation: Indeed - Sales""",
             job_board = get_singleton_client().detail(self.igb_moc_channel_class)
             if job_board:
                 self.igb_moc_extended_information = job_board.moc
+                self.igb_facets = job_board.facets
                 self.moc_enabled = True
                 self.create_moc_only_product()
         else:
             self.igb_moc_extended_information = None
             self.moc_enabled = False
+            self.igb_facets = None
             self.delete_moc_only_product()
+
+        super().save(
+            force_insert=False,
+            force_update=True,
+            using=None,
+            update_fields=["igb_moc_extended_information", "moc_enabled", "igb_facets"],
+        )
 
     def create_moc_only_product(self):
         """

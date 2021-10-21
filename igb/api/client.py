@@ -12,7 +12,7 @@ class JobBoard:
     logo: Optional[str] = None
     moc: Optional[dict] = field(default_factory=dict)
     options: Optional[list] = field(default_factory=list)
-    fields: Optional[list] = field(default_factory=list)
+    facets: Optional[list] = field(default_factory=list)
 
     def __str__(self):
         return self.klass
@@ -64,6 +64,7 @@ class IGBJobBoards:
                     name=job_board["name"],
                     klass=job_board["class"],
                     moc=job_board["MOC"],
+                    facets=job_board["facets"],
                 )
 
 

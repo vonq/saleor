@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 from django.http import JsonResponse
 from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
@@ -61,6 +59,7 @@ class ContractViewSet(
         operation_summary="Details for a customer contract",
         tags=[IgbConfig.verbose_name],
         manual_parameters=[CommonOpenApiParameters.CUSTOMER_ID],
+        responses={200: DecryptedContractSerializer()},
     )
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -75,6 +74,7 @@ class ContractViewSet(
         operation_summary="Multiple details of customer contracts",
         tags=[IgbConfig.verbose_name],
         manual_parameters=[CommonOpenApiParameters.CUSTOMER_ID],
+        responses={200: DecryptedContractSerializer(many=True)},
     )
     @action(
         detail=False,
@@ -92,8 +92,14 @@ class ContractViewSet(
                 status=HTTP_400_BAD_REQUEST,
             )
         queryset = self.get_queryset().filter(contract_id__in=contract_ids)
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = DecryptedContractSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
         serializer = DecryptedContractSerializer(queryset, many=True)
-        return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
 
     @swagger_auto_schema(
         operation_description="""
@@ -103,6 +109,7 @@ class ContractViewSet(
         operation_summary="List contract available for a customer",
         tags=[IgbConfig.verbose_name],
         manual_parameters=[CommonOpenApiParameters.CUSTOMER_ID],
+        responses={200: DecryptedContractSerializer(many=True)},
     )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)

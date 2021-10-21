@@ -1,3 +1,5 @@
+from typing import Dict
+
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import ModelSerializer, Serializer
 from rest_framework.fields import (
@@ -5,7 +7,6 @@ from rest_framework.fields import (
     CharField,
     IntegerField,
     JSONField,
-    ListField,
 )
 
 from api.igb.models import Contract
@@ -71,13 +72,18 @@ class DecryptedContractSerializer(ModelSerializer):
             "customer_id",
             "channel_id",
             "credentials",
+            "class_name",
             "facets",
         )
 
     credentials = SerializerMethodField(read_only=True)
+    class_name = SerializerMethodField(read_only=True)
 
-    def get_credentials(self, contract: Contract):
+    def get_credentials(self, contract: Contract) -> Dict[str, str]:
         return contract.transport_credentials
+
+    def get_class_name(self, contract: Contract) -> str:
+        return contract.channel.igb_moc_channel_class
 
 
 class ValidateContractSerializer(Serializer):

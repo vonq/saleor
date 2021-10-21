@@ -1,11 +1,14 @@
 import json
+import xml.etree.ElementTree as ET
 
 from django.urls import reverse
 
+from api.igb.encryption import AESCypher
 from api.products.models import Channel, Product
 from api.tests import AuthenticatedTestCase
 from django.test import override_settings
 from api.tests.integration import force_user_login
+from django.conf import settings
 
 
 @override_settings(
@@ -23,6 +26,7 @@ class ContractsTestCase(AuthenticatedTestCase):
             name="Test Channel",
             type=Channel.Type.JOB_BOARD,
             moc_enabled=True,
+            is_active=True,
             igb_moc_channel_class="Whatever",
             igb_moc_extended_information={
                 "facets": [
@@ -137,6 +141,18 @@ class ContractsTestCase(AuthenticatedTestCase):
 
         self.assertEqual(200, resp.status_code)
         self.assertEqual(contract_id, resp.json().get("contract_id"))
+        self.assertEqual("Whatever", resp.json().get("class_name"))
+
+        # Check that credentials can correctly be decoded on the other end
+        encrypted_credentials = resp.json()["credentials"]
+
+        cipher = AESCypher(shared_key=settings.CREDENTIALS_TRANSPORT_KEY)
+        self.assertEqual(
+            "username", cipher.decrypt(encrypted_credentials["Username_DU"])
+        )
+        self.assertEqual(
+            "secret!!!", cipher.decrypt(encrypted_credentials["Password_DU"])
+        )
 
         # cannot retrieve contracts for another user
         resp = self.client.get(

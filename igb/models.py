@@ -1,8 +1,8 @@
 import json
 import base64
 import uuid
+from typing import Dict
 
-import dicttoxml
 from django.db import models
 
 from django.conf import settings
@@ -24,33 +24,35 @@ class Contract(models.Model):
     def __str__(self):
         return f"({self.id}) for {self.customer_name} on {self.channel.name}"
 
-    def encrypt_credentials(self, credentials: dict):
-        credentials = json.dumps(credentials)
+    def encrypt_credentials(self, credentials: Dict[str, str]):
         cipher = AESCypher(settings.CREDENTIALS_STORAGE_KEY)
-        encoded_credentials = base64.b64encode(
-            json.dumps(credentials).encode()
-        ).decode()
-        self.credentials = cipher.encrypt(encoded_credentials)
+
+        self.credentials = json.dumps(
+            {
+                k: cipher.encrypt(base64.b64encode(v.encode()).decode())
+                for k, v in credentials.items()
+            }
+        )
 
     @property
-    def decrypted_credentials(self):
+    def decrypted_credentials(self) -> Dict[str, str]:
         cipher = AESCypher(settings.CREDENTIALS_STORAGE_KEY)
-        decrypted = cipher.decrypt(self.credentials)
-        decoded = base64.b64decode(decrypted)
-        return json.loads(decoded)
+        encrypted_credentials = json.loads(self.credentials)
+
+        return {
+            k: base64.b64decode(cipher.decrypt(v)).decode()
+            for k, v in encrypted_credentials.items()
+        }
 
     @property
-    def transport_credentials(self):
+    def transport_credentials(self) -> Dict[str, str]:
         cipher = AESCypher(settings.CREDENTIALS_TRANSPORT_KEY)
         credentials = self.decrypted_credentials
-        credentials = dicttoxml.dicttoxml(json.loads(credentials)).decode()
-        encoded_credentials = base64.b64encode(
-            json.dumps(credentials).encode()
-        ).decode()
-        return cipher.encrypt(encoded_credentials)
+
+        return {k: cipher.encrypt(v) for k, v in credentials.items()}
 
     @classmethod
-    def create_encrypted(cls, **kwargs):
+    def create_encrypted(cls, **kwargs) -> "Contract":
         contract = cls(**kwargs)
         contract.encrypt_credentials(contract.credentials)  # noqa
         contract.save()

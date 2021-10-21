@@ -116,6 +116,7 @@ class JobTitleSerializer(serializers.ModelSerializer):
 class MCSerializerMixin(metaclass=serializers.SerializerMetaclass):
     mc_enabled = serializers.BooleanField(source="moc_enabled")
     board_credentials = serializers.SerializerMethodField(read_only=True)
+    vacancy_facets = serializers.SerializerMethodField(read_only=True)
     board_facets = serializers.SerializerMethodField(read_only=True)
     board_fields = serializers.SerializerMethodField(read_only=True)
 
@@ -123,9 +124,13 @@ class MCSerializerMixin(metaclass=serializers.SerializerMetaclass):
         if channel.moc_enabled and channel.igb_moc_extended_information:
             return channel.igb_moc_extended_information.get("credentials")
 
-    def get_board_facets(self, channel: "Channel") -> Optional[Dict]:  # noqa
+    def get_vacancy_facets(self, channel: "Channel") -> Optional[Dict]:  # noqa
         if channel.moc_enabled and channel.igb_moc_extended_information:
             return channel.igb_moc_extended_information.get("facets")
+
+    def get_board_facets(self, channel: "Channel") -> Optional[Dict[str, str]]:  # noqa
+        if channel.moc_enabled and channel.igb_facets:
+            return channel.igb_facets
 
     def get_board_fields(self, channel: "Channel") -> Optional[Dict]:  # noqa
         if channel.moc_enabled and channel.igb_moc_extended_information:
