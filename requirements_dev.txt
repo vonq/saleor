@@ -218,3 +218,5 @@ websockets==8.1; python_full_version >= "3.6.1"
 wrapt==1.12.1; python_version >= "3.6" and python_version < "4.0"
 yarl==1.7.0; python_version >= "3.6"
 zopfli==0.1.8; python_version >= "3.6"
+auth0-python==3.16.2
+-r pkb_requirements.txt

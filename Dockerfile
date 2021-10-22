@@ -9,6 +9,7 @@ RUN apt-get -y update \
 
 # Install Python dependencies
 COPY requirements_dev.txt /app/
+COPY pkb_requirements.txt /app/
 WORKDIR /app
 RUN pip install -r requirements_dev.txt
 
@@ -41,11 +42,13 @@ RUN mkdir -p /app/media /app/static \
 COPY --from=build-python /usr/local/lib/python3.9/site-packages/ /usr/local/lib/python3.9/site-packages/
 COPY --from=build-python /usr/local/bin/ /usr/local/bin/
 COPY . /app
+COPY saleor /app/saleor
 WORKDIR /app
 
 ARG STATIC_URL
 ENV STATIC_URL ${STATIC_URL:-/static/}
-RUN SECRET_KEY=dummy STATIC_URL=${STATIC_URL} python3 manage.py collectstatic --no-input
+ENV PKB_DATABASE_URL ${PKB_DATABASE_URL:-postgres://pkb:pkb@localhost:5432/pkb}
+RUN SECRET_KEY=dummy ALGOLIA_APPLICATION_ID=appid ALGOLIA_API_KEY=apikey STATIC_URL=${STATIC_URL} PKB_DATABASE_URL=${PKB_DATABASE_URL} python3 manage.py collectstatic --no-input
 
 EXPOSE 8000
 ENV PYTHONUNBUFFERED 1

@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 
-from ...api import schema
+# [CORE]: Use the schema as imported in the urls
+from saleor.urls import schema
 
 
 class Command(BaseCommand):

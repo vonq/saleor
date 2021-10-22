@@ -1,6 +1,7 @@
 .*
 **/*.pyc
 *.sqlite
+.venv/
 media
 node_modules
 static

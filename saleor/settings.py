@@ -19,6 +19,8 @@ from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
 
+from api.settings import *
+
 from . import patched_print_object
 from .core.languages import LANGUAGES as CORE_LANGUAGES
 
@@ -52,7 +54,7 @@ ADMINS = (
 )
 MANAGERS = ADMINS
 
-_DEFAULT_CLIENT_HOSTS = "localhost,127.0.0.1"
+_DEFAULT_CLIENT_HOSTS = "localhost,127.0.0.1,dashboard.vonq.beweis.co.uk,poc.vonq.beweis.co.uk"
 
 ALLOWED_CLIENT_HOSTS = os.environ.get("ALLOWED_CLIENT_HOSTS")
 if not ALLOWED_CLIENT_HOSTS:
@@ -70,7 +72,8 @@ INTERNAL_IPS = get_list(os.environ.get("INTERNAL_IPS", "127.0.0.1"))
 DATABASES = {
     "default": dj_database_url.config(
         default="postgres://saleor:saleor@localhost:5432/saleor", conn_max_age=600
-    )
+    ),
+    "pkb": dj_database_url.parse(os.getenv("PKB_DATABASE_URL")),
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
@@ -83,7 +86,6 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
 
 EMAIL_URL = os.environ.get("EMAIL_URL")
 SENDGRID_USERNAME = os.environ.get("SENDGRID_USERNAME")
@@ -133,6 +135,10 @@ STATICFILES_FINDERS = [
 
 context_processors = [
     "django.template.context_processors.debug",
+    "django.template.context_processors.debug",
+    "django.template.context_processors.request",
+    "django.contrib.auth.context_processors.auth",
+    "django.contrib.messages.context_processors.messages",
     "django.template.context_processors.media",
     "django.template.context_processors.static",
     "saleor.site.context_processors.site",
@@ -165,19 +171,28 @@ if not SECRET_KEY and DEBUG:
     SECRET_KEY = get_random_secret_key()
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
     "saleor.core.middleware.request_time",
     "saleor.core.middleware.discounts",
     "saleor.core.middleware.google_analytics",
     "saleor.core.middleware.site",
     "saleor.core.middleware.plugins",
     "saleor.core.middleware.jwt_refresh_token_middleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "vonq.middleware.remote_user"
 ]
 
 INSTALLED_APPS = [
     # External apps that need to go before django's
     "storages",
+    "corsheaders",
     # Django modules
     "django.contrib.contenttypes",
     "django.contrib.sites",
@@ -209,6 +224,31 @@ INSTALLED_APPS = [
     "saleor.webhook",
     "saleor.wishlist",
     "saleor.app",
+    # pkb apps
+    "api.annotations",
+    "api.currency",
+    "api.field_permissions",
+    "api.products",
+    "api.vonqtaxonomy",
+    "api.igb",
+    # pkb external apps
+    "algoliasearch_django",
+    "modeltranslation",
+    "massadmin",
+    "django.contrib.admin",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "health_check",  # required
+    "health_check.db",  # stock Django health checkers
+    "rest_framework",
+    "drf_yasg2",
+    "django_q",
+    "ajax_select",
+    "easy_thumbnails",
+    "image_cropping",
+    "django_better_admin_arrayfield",
+    "reversion",
+    "reversion_compare",
     # External apps
     "versatileimagefield",
     "django_measurement",
@@ -387,9 +427,13 @@ TEST_RUNNER = "saleor.tests.runner.PytestTestRunner"
 
 PLAYGROUND_ENABLED = get_bool_from_env("PLAYGROUND_ENABLED", True)
 
-ALLOWED_HOSTS = get_list(os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1"))
+ALLOWED_HOSTS = get_list(
+    os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,.herokuapp.com,.beweis.co.uk")
+)
 ALLOWED_GRAPHQL_ORIGINS = get_list(os.environ.get("ALLOWED_GRAPHQL_ORIGINS", "*"))
-
+CORS_ALLOWED_ORIGIN_REGEXES = r".*"
+CORS_PREFLIGHT_MAX_AGE = 0
+CORS_ALLOW_CREDENTIALS = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Amazon S3 configuration
@@ -468,6 +512,7 @@ DEFAULT_PLACEHOLDER = "images/placeholder255x255.png"
 AUTHENTICATION_BACKENDS = [
     "saleor.core.auth_backend.JSONWebTokenBackend",
     "saleor.core.auth_backend.PluginBackend",
+    "django.contrib.auth.backends.ModelBackend",
 ]
 
 # CELERY SETTINGS
@@ -557,7 +602,12 @@ BUILTIN_PLUGINS = [
 ]
 
 # Plugin discovery
-EXTERNAL_PLUGINS = []
+EXTERNAL_PLUGINS = [
+    "vonq.plugins.checkout_details_plugin.CheckoutDetailsPlugin",
+    "vonq.plugins.contracts_payment_plugin.ContractsPaymentPlugin",
+    "vonq.plugins.auth0_plugin.Auth0Plugin",
+]
+
 installed_plugins = pkg_resources.iter_entry_points("saleor.plugins")
 for entry_point in installed_plugins:
     plugin_path = "{}.{}".format(entry_point.module_name, entry_point.attrs[0])
@@ -636,3 +686,22 @@ JWT_TTL_REQUEST_EMAIL_CHANGE = timedelta(
 
 assert hasattr(schema_printer, "_print_object")
 schema_printer._print_object = patched_print_object
+
+AJAX_LOOKUP_CHANNELS = {
+    "channel_account": {
+        "model": "products.Channel",
+        "search_field": "salesforce_account_id",
+    },
+}
+
+# Auth0 related settings
+
+AUTH0_DOMAIN = os.getenv('AUTH0_DOMAIN')
+AUTH0_CLIENT_ID = os.getenv('AUTH0_CLIENT_ID')
+AUTH0_CLIENT_SECRET = os.getenv('AUTH0_CLIENT_SECRET')
+API_AUDIENCE = os.getenv('API_AUDIENCE')
+
+CORS_ALLOWED_ORIGINS = [
+    "https://dashboard.vonq.beweis.co.uk",
+    "https://poc.vonq.beweis.co.uk"
+]

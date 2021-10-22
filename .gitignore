@@ -43,3 +43,6 @@ venv.bak/
 
 # Exported results file
 django-queries-results.html
+
+# Other
+dev.env

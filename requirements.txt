@@ -149,3 +149,5 @@ weasyprint==53.3; python_version >= "3.6"
 webencodings==0.5.1; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.6"
 websockets==8.1; python_full_version >= "3.6.1"
 zopfli==0.1.8; python_version >= "3.6"
+auth0-python==3.16.2
+-r pkb_requirements.txt
