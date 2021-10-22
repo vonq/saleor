@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Product Annotation</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/main.css">
+    <link rel="stylesheet" href="/static/autocomplete.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@riophae/vue-treeselect@^0.4.0/dist/vue-treeselect.min.css">
+</head>
+<body>
+    <div id="product-annotation-app" class="container" v-cloak>
+        <div class="row pb-2">
+            <div class="col-12">
+                <h1>Product Annotator</h1>
+                <form class="form-inline">
+                Mode:
+                    <label for="filter-mode">Filter</label> <input type="radio" id="filter-mode" class="form-control" v-model="annotationMode" value="filter">
+                    <label for="filter-mode">Iterate</label> <input type="radio" id="iterate-mode" class="form-control" v-model="annotationMode" value="iterate">
+                </form>
+
+                 <form class="form-inline" v-on:submit.prevent="migrateIndustryToCategory()">
+                     Global mapping Industry to Category
+                    <label for="migrate-to-category">From</label>
+                        <select class="form-control" id="migrate-to-category" v-model="migrationIndustryName">
+                            <option v-for="industry in industries">[[industry]]</option>
+                        </select>
+                     <input class="form-control" type="submit" >
+                </form>
+
+                <div v-if="annotationMode=='filter'" class="row"><!-- filter controls -->
+                    <div class="col-12">
+                        <form v-on:submit.prevent="" class="form">
+                            <div class="form-row">
+                                <div class="col-12">
+                                    <label></label>
+                                    <input id="filter-search-text" v-model="filterModel.text" placeholder="search in description"
+                                           disabled="disabled" class="form-control">
+                                </div>
+
+                                <div  v-if="annotationMode=='iterate'" class="col-4">
+                                    <label></label>
+                                    <input id="iterate-search-text" type="number" v-model="boardIndex"
+                                           disabled="disabled" class="form-control">
+                                </div>
+                            </div>
+                            <b>Values to set</b>
+                            <div class="form-row">
+                                <div class="col">
+                                <label>Job function: </label>
+                                    <select v-model="selectedJobFunction" class="form-control">
+                                        <option v-for="jobFunction in jobFunctions" v-bind:value="jobFunction" v-html="jobFunction"></option>
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <label>Industry: </label>
+                                    <select v-model="selectedIndustry" class="form-control">
+                                        <option v-for="industry in industries" v-bind:value="industry" v-html="industry"></option>
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <label>Channel Type: </label>
+                                    <select v-model="selectedChannelType" class="form-control">
+                                        <option v-for="type in channelTypes" v-bind:value="type" v-html="type"></option>
+                                    </select>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div v-if="annotationMode=='iterate'" class="row justify-content-end"><!-- iteration controls -->
+                    <form class="form-inline" v-on:submit.prevent="">
+                            <button type="button" class="btn btn-lg" v-on:click="prev()">Prev</button>
+                            <input type="number" class="form-control" v-model="boardIndex" min="0" v-bind:max="boards.length">
+                            <button type="button" class="btn btn-lg" v-on:click="next()">Next</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="annotationMode=='filter'" class="row board mb-1" v-for="board in filteredBoards"><!-- filter view -->
+            <div class="col-8">
+                <h3>[[ board.title ]]<br><small><a href="board.url">[[ board.url ]]</a></small></h3>
+                <p class="">[[ board.description_en ]]</p>
+                <div>Locations: [[ board.location.join(', ')  ]]</div>
+            </div>
+            <div class="col-4">
+{#                <div>Job functions: [[ board.jobfunctions.join(', ') ]]</div>#}
+                <div>Industries: [[ board.industries.join(', ')  ]]</div>
+{#                <div>Channel type: [[ board.channel_type  ]]</div>#}
+
+                <button v-if="selectedJobFunction && !board.jobfunctions.includes(selectedJobFunction)"
+                        @click="postCategorisation(board.id, 'job_functions', selectedJobFunction)"
+                        class="btn btn-block btn-outline-primary">
+                    Set as alias of <strong>[[selectedJobFunction]]</strong>
+                </button>
+                <button v-if="selectedIndustry && !board.industries.includes(selectedIndustry)"
+                        @click="postCategorisation(board.id, 'industries', selectedIndustry)"
+                        class="btn btn-block btn-outline-primary">Change to <strong>[[selectedIndustry]]</strong>function</button>
+            </div>
+        </div>
+
+        <div v-if="annotationMode=='filter'" class="row board mb-1" v-for="board in filteredBoards"><!-- filter view -->
+            <div class="col-8">
+                <h3>[[ board.title]]<br><small>[[ board.url ]]</small></h3>
+                <p class="small">[[ board.description_en ]]</p>
+                <div>Locations: [[ board.location.join(', ')  ]]</div>
+            </div>
+            <div class="col-4">
+{#                <div>Job functions: [[ board.jobfunctions.join(', ') ]]</div>#}
+                <div>Industries: [[ board.industries.join(', ')  ]]</div>
+{#                <div>Channel type: [[ board.channel_type  ]]</div>#}
+
+                <button v-if="selectedJobFunction && !board.jobfunctions.includes(selectedJobFunction)"
+                        @click="postCategorisation(board.id, 'job_functions', selectedJobFunction)"
+                        class="btn btn-block btn-outline-primary">
+                    Set as alias of <strong>[[selectedJobFunction]]</strong>
+                </button>
+                <button v-if="selectedIndustry && !board.industries.includes(selectedIndustry)"
+                        @click="postCategorisation(board.id, 'industries', selectedIndustry)"
+                        class="btn btn-block btn-outline-primary">Change to <strong>[[selectedIndustry]]</strong>function</button>
+            </div>
+        </div>
+
+        <div v-if="annotationMode=='iterate'" class="row board mb-1">
+            <div class="col-8">
+                <h3>[[ focusBoard.title_en]]<br>
+                    <small><a :href="focusBoard.url">[[ focusBoard.url ]]</a></small>
+                </h3>
+                <p class="">[[ focusBoard.description_en ]]</p>
+                <div>Locations: [[ focusBoard.location.join(', ')  ]]</div>
+            </div>
+            <div class="col-4">
+                <div class="float-right"><a target="_blank" :href="'/admin/products/product/'+focusBoard.id">edit in admin ([[focusBoard.id]])</a></div>
+                <form v-on:submit.prevent="" class="form-inline">
+                    <h2>Industries</h2>
+                    <p style="clear:left">
+                        <div class="btn btn-sm btn-outline-secondary w-100 mb-1" v-for="industry in focusBoard.industries">[[ industry ]]</div>
+                    </p>
+                    <select class="form-control" v-model="industryToAdd">
+                        <option v-for="industry in industries" :value="industry">[[industry]]</option>
+                    </select>
+                    <button v-if="industryToAdd" class="btn" @click="addIndustry(industryToAdd)">Add '[[industryToAdd]]'</button>
+                    <button v-if="!focusBoard.industries.includes('Generic')" class="btn" @click="addIndustry('Generic')">Add 'Generic'</button>
+                    <div v-if="suggestedIndustries().length">
+                        Suggested by SF Industry mapping <abbr v-bind:title="[[ focusBoard.salesforce_industries ]]">values</abbr>
+                        <button class="btn btn-sm btn-block" v-for="industry in suggestedIndustries()" v-on:click="addIndustry(industry)">
+                            + [[ industry ]]
+                        </button>
+                    </div>
+                </form>
+
+                <h2>Job Functions</h2>
+                <treeselect v-model="focusBoard.jobfunctions" :multiple="true" :options="jobFunctionTree.children"
+                            :search-change="setCategories('jobfunctions')" :max-height="800"
+                            placeholder="Job Functions" :alwaysOpen="true" :default-expand-level=1 :should-show-count="true"/>
+
+                <div>Channel type: [[ focusBoard.channel_type  ]]</div>
+
+                <button v-if="selectedJobFunction && !bofocusBoardard.jobfunctions.includes(selectedJobFunction)"
+                        @click="postCategorisation(focusBoard.id, 'job_functions', selectedJobFunction)"
+                        class="btn btn-block btn-outline-primary">
+                    Set as alias of <strong>[[selectedJobFunction]]</strong>
+                </button>
+                <button v-if="selectedIndustry && !focusBoard.industries.includes(selectedIndustry)"
+                        @click="postCategorisation(focusBoard.id, 'industries', selectedIndustry)"
+                        class="btn btn-block btn-outline-primary">Change to <strong>[[selectedIndustry]]</strong>function</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        data = {
+            'jobFunctions': {{ jobFunctions | safe}},
+            'industries': {{ industries | safe}},
+            'channelTypes': {{ channelTypes | safe}}
+        }
+    </script>
+    <script src="/static/lodash.min.js"></script>
+    <script src="/static/vue.min.js"></script>
+    <script src="/static/d3.v5.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="/static/vue-treeselect.umd.min.js"></script>
+
+
+    <script src="/static/product_annotation_app.js"></script>
+</body>
+</html>

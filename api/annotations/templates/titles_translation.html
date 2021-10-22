@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Job Title Translations</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/autocomplete.css">
+</head>
+<body>
+    <div id="title-translation-app" class="container" v-cloak>
+        <div class="row">
+            <div class="col-12">
+                <h2>Job Title Translation</h2>
+                <span class="float-right">👀 = title seen in orders</span>
+
+                <form class="form-inline" v-on:submit.prevent="">
+                    Page <input class="form-control" type="number" min="0" v-bind:max="titles.length - 1" v-model="pageIndex">
+                        <button class="btn btn-primary float-right" v-on:click="nextPage()">Save & Next</button>
+                </form>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col"></th>
+                            <th scope="col">English 🇬🇧</th>
+                            <th scope="col">copy to blanks</th>
+                            <th scope="col">Dutch 🇳🇱</th>
+                            <th scope="col">German 🇩🇪</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="title in titles.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)">
+                            <td><span v-if="titleSeen(title)">👀</span></td>
+                            <td>[[title.name_en]]</td>
+                            <td><button v-on:click="fillIn(title)" class="btn btn-sm btn-light">→</button></td>
+                            <td><input v-model="title.name_nl" v-on:blur="postUpdate(title)" class="form-control"></td>
+                            <td><input v-model="title.name_de" v-on:blur="postUpdate(title)" class="form-control"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+         </div>
+    </div>
+    <script src="/static/lodash.min.js"></script>
+    <script src="/static/vue.min.js"></script>
+    <script src="/static/d3.v5.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+    <script src="/static/autocomplete.min.js"></script>
+
+    <script src="/static/titles_translation_app.js"></script>
+</body>
+</html>

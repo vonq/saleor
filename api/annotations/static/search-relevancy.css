@@ -1,0 +1,57 @@
+
+.table-results>:not(caption)>*>*, tr, td, tbody {
+    font-size: small;
+    padding: 0rem 0.125rem;
+}
+
+h1 {
+    font-weight: lighter;
+}
+
+.result-row, .result-header {
+    font-size: small;
+    padding: 0rem 0.125rem;
+    margin: 0.125rem 0;
+    border-bottom: 1px solid lightgrey;
+}
+
+.result-header {
+    font-size: large;
+    background-color: #4e555b;
+    color: #ffffff;
+}
+
+.sticky-key {
+    position:sticky;
+    top:0;
+    background-color: #fff;
+    margin-bottom: 0.5rem;;
+}
+
+.sticky-key>div {
+    padding: 0 0.5rem;
+    font-size: small;
+}
+
+.key-row {
+    border-left: 1.0rem solid;
+}
+
+.result-mismatch {
+    background-color: #f68f9f;
+}
+
+.result-present {
+    display: none;
+}
+
+.result-missing {
+    background-color: #fffb88;
+}
+
+.babbage-quote {
+    font-size: xx-small;
+    float:right;
+    color: #878787;
+    text-align: end;
+}

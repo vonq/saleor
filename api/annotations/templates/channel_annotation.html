@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Channel Annotation</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/main.css">
+</head>
+<body>
+    <script>
+        type_options = {{ type_options | safe }}
+    </script>
+    <div id="channel-annotation-app" class="container" v-cloak>
+        <div class="row pb-2">
+            <div class="col-12">
+                <h1>Channel Annotation</h1>
+            </div>
+        </div>
+        <div class="row pb-2">
+            <div class="col-10 col-md-9 col-sm-7">
+                <h2>[[ typeof channels[cursor] == 'object' ? channels[cursor].name_en:'' ]]</h2>
+                <a target="_blank" :href="channels[cursor].url">[[cleanURL(channels[cursor].url)]]</a>
+                <div v-for="product in channels[cursor].products">
+                    <h3>[[ product[0] ]]</h3>
+                        <a :href="cleanURL(product[2])">[[ product[2] ]]</a>
+                        <p>[[ product[1] ]]</p>
+                </div>
+            </div>
+            <div class="col-2 col-md-3 col-sm-5">
+                <input class="form-control-lg my-lg-2" type="number" v-model="cursor">
+
+                <div v-for="option in type_options">
+                    <button @click="selectType(option)"
+                            v-bind:class="{btn:true, 'btn-block': true, 'mb-1': true, 'btn-primary':option==channels[cursor].type}">
+                        [[option]]
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/lodash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.11/vue.js"></script>
+    <script src="/static/d3.v5.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="/static/channel_annotation_app.js"></script>
+</body>
+</html>

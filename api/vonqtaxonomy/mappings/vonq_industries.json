@@ -1,0 +1,716 @@
+[
+  {
+    "id": 1,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Finanzdienstleistungen"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Financial Services"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Financiele dienstverlening"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Beratung"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Consultancy"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Adviesbureau / Consultancy"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Landwirtschaft / Forstwesen / Fischfang"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Agriculture"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Landbouw / Bosbouw / Visserij"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Arbeitsvermittlung / Recruiting"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Recruitment"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Arbeidsbemiddeling / W&S / Uitzenden / Detachering"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Automatisierung / IT"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "IT"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Automatisering / ICT"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Automobilbranche"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Automotive"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Automotive"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Bank- und Versicherungswesen"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Banking & Financial Services"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Bank & Verzekeringswezen"
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Sicherheitsdienst / Reinigungsservice"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Facility services (security / cleaning)"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Facilitaire dienstverlening (Beveiliging / Schoonmaak)"
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Baugewerbe"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Construction"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Bouw"
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Immobilienbranche"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Housing associations / developers / property"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Woningcorporaties / Projectontwikkelaars / Vastgoed"
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Einzelhandel / Gro\u00dfhandel"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Retail / Wholesale"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Detailhandel / Groothandel"
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Energie & Versorgungswirtschaft"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Energy / utilities"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Energie & Nutsvoorziening"
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Konsumg\u00fcterindustrie"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Fast Moving Consumer Goods"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Fast Moving Consumer Goods"
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Gesundheitswesen"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Medical / Health"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Medisch / Zorg / Welzijn"
+      }
+    ]
+  },
+  {
+    "id": 25,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Gastgewerbe / Tourismus / Reisen"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Hospitality / Recreation /  Travel"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Horeca / Recreatie / Reizen"
+      }
+    ]
+  },
+  {
+    "id": 26,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Recht"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Legal"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Juridisch"
+      }
+    ]
+  },
+  {
+    "id": 27,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Bildungswesen / Erwachsenenbildung / Trainer"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Education / Training"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Onderwijs / Opleiding"
+      }
+    ]
+  },
+  {
+    "id": 28,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Beh\u00f6rde / Nicht-Regierungsorganisationen"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Government / Non-profit"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Overheid / Non-profit"
+      }
+    ]
+  },
+  {
+    "id": 31,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Werbung / Kommunikation / Medien"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Advertising / Communications / Media"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Reclame / Communicatie / Media"
+      }
+    ]
+  },
+  {
+    "id": 33,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Ingenieurwesen"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Engineering"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Techniek"
+      }
+    ]
+  },
+  {
+    "id": 34,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Telekommunikation"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Telecommunications"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Telecommunicatie"
+      }
+    ]
+  },
+  {
+    "id": 35,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Transport / Logistik"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Logistics & Supply Chain"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Transport / Logistiek"
+      }
+    ]
+  },
+  {
+    "id": 39,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Unternehmensdienstleistungen"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Business services"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Zakelijke dienstverlening"
+      }
+    ]
+  },
+  {
+    "id": 41,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Druckereigewerbe / grafische Industrie"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Printing / Graphic Arts"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Drukkerij / Grafimedia"
+      }
+    ]
+  },
+  {
+    "id": 43,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Bundeswehr / Polizei / Feuerwehr"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Army / Police / Fire brigade"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Defensie / Politie / Brandweer"
+      }
+    ]
+  },
+  {
+    "id": 44,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Kultur / Kunst"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Culture / Art"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Cultuur / Kunst"
+      }
+    ]
+  },
+  {
+    "id": 45,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Sport"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Sport"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Sport"
+      }
+    ]
+  },
+  {
+    "id": 46,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Sonstiges"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Other"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Overig"
+      }
+    ]
+  },
+  {
+    "id": 47,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "E-Commerce / Internethandel"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "E-commerce"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "E-commerce"
+      }
+    ]
+  },
+  {
+    "id": 48,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Luftfahrt / Raumfahrt"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Aviation / Space travel"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Luchtvaart / Ruimtevaart"
+      }
+    ]
+  },
+  {
+    "id": 49,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Produzierendes Gewerbe"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Manufacturing"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Maakindustrie"
+      }
+    ]
+  },
+  {
+    "id": 50,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Schifffahrtsindustrie"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Maritime"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Maritiem"
+      }
+    ]
+  },
+  {
+    "id": 51,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Biotechnologie"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Biotechnology"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Biotechnologie"
+      }
+    ]
+  },
+  {
+    "id": 52,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Chemische Industrie"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Chemical"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Chemische"
+      }
+    ]
+  },
+  {
+    "id": 53,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Elektronik"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Electronics"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Elektronica"
+      }
+    ]
+  },
+  {
+    "id": 54,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Schwerindustrie"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Heavy Industry"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Zware Industrie"
+      }
+    ]
+  },
+  {
+    "id": 55,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "\u00d6l und Gas"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Oil and Gas"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Olie en Gas"
+      }
+    ]
+  },
+  {
+    "id": 56,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Pharmazeutische Industrie"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Pharmaceutical"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Farmaceutisch"
+      }
+    ]
+  },
+  {
+    "id": 57,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Mode"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Fashion"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Mode"
+      }
+    ]
+  },
+  {
+    "id": 58,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Unterhaltungsindustrie"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Entertainment"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Amusement"
+      }
+    ]
+  },
+  {
+    "id": 59,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Lebensmittelindustrie"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Food"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Voedingsmiddelenindustrie"
+      }
+    ]
+  },
+  {
+    "id": 60,
+    "name": [
+      {
+        "languageCode": "de_DE",
+        "value": "Maschinen und Anlagenbau"
+      },
+      {
+        "languageCode": "en_GB",
+        "value": "Mechanical or Industrial Engineering"
+      },
+      {
+        "languageCode": "nl_NL",
+        "value": "Machines en installatiebouw"
+      }
+    ]
+  }
+]

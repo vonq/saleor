@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Job Titles</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/main.css">
+    <link rel="stylesheet" href="/static/autocomplete.css">
+
+</head>
+<body>
+    <div id="titles-app" class="container" v-cloak>
+        <div class="row">
+            <div class="col-6">
+                <h2>Title Annotation UI</h2>
+                <form class="form-inline" v-on:submit.prevent="">
+                    <button class="form-control"v-on:click="previous()"> < </button>
+                    <input class="form-control" type="number" min="0" v-bind:max="titles.length - 1" v-model="titleIndex">
+                    <button class="form-control" v-on:click="next()"> > </button>
+                    <input class="form-check-inline" type="checkbox" v-model="skipDeactivated" name="skipDeactivatedControl">
+                        <label class="form-check-label" for="skipDeactivatedControl">Skip Deactivated</label>
+                    <input class="form-check-inline" type="checkbox" v-model="skipAliases" name="skipAliasesControl">
+                        <label class="form-check-label" for="skipAliasesControl">Skip Aliases</label>
+                        <div id="autocomplete" class="autocomplete px-2 w-1/4">
+                            <input class="autocomplete-input"
+                            placeholder="Job title" autofocus />
+                            <ul class="autocomplete-result-list"></ul>
+                        </div>
+                        <input class="form-check-inline" type="checkbox" v-model="searchIncludesAliases" name="searchIncludesAliases">
+                        <label class="form-check-label" for="searchIncludesAliases">Include Aliases</label>
+                </form>
+                <div style="position:sticky; top:0px">
+                    <h3 v-bind:class="{'canonical': currentTitle.canonical, 'inactive': !currentTitle.active}">
+                        [[ currentTitle.name ]] <span class="badge badge-pill">&times;[[ currentTitle.frequency ]]</span>
+                        <span v-if="currentTitle.alias_of__id !== null">alias of <a v-bind:href="'#'+currentTitle.alias_of__id" v-on:click="gotoId(currentTitle.alias_of__id)">[[currentTitle.alias_of__name]]</a></span>
+                    </h3>
+                    <div class="" v-if="currentTitle.active" v-on:click="deactivate(currentTitle)">deactivate '[[currentTitle.name]]'</div>
+                        <div class="float-right" v-if="!currentTitle.active" v-on:click="activate(currentTitle)">activate '[[currentTitle.name]]'</div>
+
+                    <h3>Aliases</h3>
+                    <p>Key: <span class="canonical">titles that is not as alias of another (canonical)</span></p>
+
+                    <div v-for="alias in currentAliases">
+                        <div class="btn btn-sm" title="make THIS the canonical title" v-on:click="rebase(alias)">&uarr;</div>
+                        <span v-on:click="goto(alias)" v-bind:class="{'canonical': alias.canonical, 'inactive': !alias.active}">[[alias.name]]</span>
+                        <span class="badge badge-pill">&times;[[ alias.frequency ]]</span>
+
+                        <div class="btn btn-sm" v-on:click="aliasClick(alias)">&rarr;</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6">
+                <h3>Checks</h3>
+                <div v-for="check in checks"><strong>[[ check.label ]]</strong>
+                    <div v-on:click="goto(title)" v-for="title in check.titles">[[ title.name ]]</div>
+                </div>
+
+                <h2>Counts</h2>
+                <div v-for="count in counts"><strong>[[ count.value ]]</strong> [[count.label]]</div>
+
+                <h3>Possible Aliases</h3>
+                <p>Aliases suggested from titles with words in common, excluding: [[ignoredTokens.join(', ')]]</p>
+
+                <div v-for="alias in possibleAliases()" class="my-1">
+                    <div class="btn btn-sm" v-on:click="aliasClick(alias)">&larr;</div>
+                    <span v-on:click="goto(alias)" v-bind:class="{'canonical': alias.canonical, 'inactive': !alias.active}">
+                        [[alias.name]]
+                    </span>
+                    <span class="badge badge-pill">&times;[[ alias.frequency ]]</span>
+
+                    <span v-if="alias.alias_of__id !== null">alias of <a v-bind:href="'#'+alias.alias_of__id" v-on:click="gotoId(alias.alias_of__id)">[[alias.alias_of__name]]</a></span>
+
+                    <div v-if="alias.active" class="btn btn-sm text-muted" class="activation-control float-right" v-on:click="deactivate(alias)">deactivate</div>
+                    <div v-if="!alias.active" class="btn btn-sm text-muted" class="activation-control float-right" v-on:click="activate(alias)">activate</div>
+
+                </div>
+            </div>
+         </div>
+    </div>
+    <script src="/static/lodash.min.js"></script>
+    <script src="/static/vue.min.js"></script>
+    <script src="/static/d3.v5.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+    <script src="/static/autocomplete.min.js"></script>
+
+    <script src="/static/titles_annotation_app.js"></script>
+</body>
+</html>

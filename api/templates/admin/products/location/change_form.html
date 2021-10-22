@@ -1,0 +1,39 @@
+{% extends 'admin/change_form.html' %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <script src="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.min.js"></script>
+  <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.css" type="text/css"/>
+  <!-- Promise polyfill script required to use Mapbox GL Geocoder in IE 11 -->
+  <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.min.js"></script>
+  <style>
+      .mapboxgl-ctrl-geocoder .suggestions {
+          position: relative;
+      }
+
+      .mapboxgl-ctrl-geocoder .mapboxgl-ctrl-geocoder--input {
+          padding-left: 36px !important;
+      }
+  </style>
+{% endblock %}
+
+{% block admin_change_form_document_ready %}
+  {{ block.super }}
+  <script>
+      mapboxgl.accessToken = '{{ mapbox_key }}';
+      var geocoder = new MapboxGeocoder({
+          accessToken: mapboxgl.accessToken,
+          types: 'country,region,district',
+          language: 'en,nl,de'
+      });
+      geocoder.addTo('#geocoder-name');
+      geocoder.on('result', function (result) {
+          let objJsonStr = JSON.stringify(result.result);
+          django.jQuery("#geocoder-data").val(objJsonStr);
+          django.jQuery("#mapbox_placename").val(result.result.text);
+      })
+  </script>
+{% endblock %}

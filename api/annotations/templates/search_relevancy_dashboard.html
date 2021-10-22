@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search Relevancy Dashboard</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/search-relevancy.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="container" id="search-relevancy-app">
+    <div class="row">
+        <div class="col-7">
+             <h1>Search Relevancy Dashboard</h1>
+        </div>
+        <div class="col-5">
+            <div class="babbage-quote">
+                Propose to an Englishman any principle, or any instrument, however admirable, and you will observe that the whole effort of the English mind is directed to find a difficulty, a defect, or an impossibility in it. If you speak to him of a machine for peeling a potato, he will pronounce it impossible: if you peel a potato with it before his eyes, he will declare it useless, because it will not slice a pineapple. &mdash; Charles Babbage
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="row">
+                <div class="col result-mismatch">Mismatched</div>
+                <div class="col result-missing">Missing</div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div v-for="searchCase,i in searchCases">
+                    <div class="accordion-body">
+                        <div class="row result-header">
+{#                            <div class='col-1'>rank</div>#}
+                            <div class='col-4'>[[ searchCase.query.jobFunction.name ]]</div>
+                            <div class='col-3'>[[ searchCase.query.location.name ]]</div>
+                            <div class='col-3'>[[ searchCase.query.industry.name ]]</div>
+                            <div class='col-2'>product</div>
+                        </div>
+                        <div class="row result-row" v-for="result,resultIndex in searchCase.results">
+                            <div class='col-4' v-bind:class="{'result-mismatch':!result.outcomes.functionMatch}">[[names(result.job_functions)]]</div>
+                            <div class='col-3' v-bind:class="{'result-mismatch':!result.outcomes.locationMatch}">[[names(result.locations)]]</div>
+                            <div class='col-3'>[[names(result.industries)]]</div>
+                            <div class='col-1'>[[result.product_id]]</div>
+                        </div>
+                        <div class="row result-row"
+                             v-bind:class="{'result-missing':missingResult(searchCase, result), 'result-present':!missingResult(searchCase, result)}"
+                             v-for="result,resultIndex in searchCase.reference_results">
+                            <div class='col-4' Xv-bind:class="{'result-mismatch':!missingResult(result)}">[[names(result.job_functions)]]</div>
+                            <div class='col-3' Xv-bind:class="{'result-mismatch':!result.outcomes.locationMatch}">[[names(result.locations)]]</div>
+                            <div class='col-3'>[[names(result.industries)]]</div>
+                            <div class='col-2'><a :href="'/admin/products/product/'+result.id+'/change/'">[[result.product_id]]</a></div>
+                        </div>
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/static/vue.min.js"></script>
+<script src="https://d3js.org/d3.v5.js"></script>
+<script src="https://d3js.org/d3-hierarchy.v2.min.js"></script>
+<script src="/static/search_relevancy_dashboard.js"></script>
+</body>
+</html>
