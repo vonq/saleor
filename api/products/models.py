@@ -3,6 +3,8 @@ import re
 import uuid
 import datetime
 from typing import List, Iterable, Optional
+
+from django.contrib.auth import get_user_model
 from storages.backends.s3boto3 import S3Boto3Storage
 from dateutil.tz import UTC
 from django.conf import settings
@@ -29,6 +31,8 @@ from io import BytesIO
 from django.core.files import File
 
 SEPARATOR = "|"
+
+User = get_user_model()
 
 
 class CreatedUpdatedModelMixin(models.Model):
