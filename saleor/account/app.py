@@ -6,8 +6,11 @@ class AccountAppConfig(AppConfig):
     name = "saleor.account"
 
     def ready(self):
-        from .models import User
+        from django.contrib.auth import get_user_model
+
         from .signals import delete_avatar
+
+        User = get_user_model()
 
         post_delete.connect(
             delete_avatar,

@@ -3,13 +3,15 @@ import uuid
 from decimal import Decimal
 
 import pytest
+from django.contrib.auth import get_user_model
 from prices import Money, TaxedMoney
 
-from .....account.models import User
 from .....order import OrderEvents, OrderStatus
 from .....order.models import Fulfillment, Order, OrderEvent, OrderLine
 from .....payment import ChargeStatus
 from .....payment.models import Payment
+
+User = get_user_model()
 
 ORDER_COUNT_IN_BENCHMARKS = 10
 EVENTS_PER_ORDER = 5

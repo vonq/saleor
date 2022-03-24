@@ -1,6 +1,7 @@
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Iterable, Optional, Tuple, Union
 
+from django.contrib.auth import get_user_model
 from django.core.handlers.wsgi import WSGIRequest
 from django.http import HttpResponse, HttpResponseNotFound, JsonResponse
 from django_countries.fields import Country
@@ -9,7 +10,6 @@ from graphql import GraphQLError, ResolveInfo
 from graphql.execution import ExecutionResult
 from prices import Money, TaxedMoney
 
-from ...account.models import User
 from ...checkout.interface import CheckoutTaxedPricesData
 from ...core.taxes import TaxType
 from ...order.interface import OrderTaxedPricesData
@@ -26,6 +26,8 @@ if TYPE_CHECKING:
     from ...graphql.discount.mutations import NodeCatalogueInfo
     from ...order.models import Order, OrderLine
     from ...product.models import Product, ProductType, ProductVariant
+
+User = get_user_model()
 
 
 class PluginSample(BasePlugin):

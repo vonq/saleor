@@ -3,14 +3,16 @@ from urllib.parse import urlencode
 
 import i18naddress
 import pytest
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.http import QueryDict
 from django_countries.fields import Country
 
 from ...order.models import Order
 from .. import forms, i18n
-from ..models import User
 from ..validators import validate_possible_number
+
+User = get_user_model()
 
 
 @pytest.mark.parametrize("country", ["CN", "PL", "US", "IE"])

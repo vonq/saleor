@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 import graphene
 import pytest
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db.models import Sum
 from django.test import override_settings
@@ -16,7 +17,6 @@ from django_countries.fields import Country
 from measurement.measures import Weight
 from prices import Money
 
-from ....account.models import User
 from ....channel.utils import DEPRECATION_WARNING_MESSAGE
 from ....checkout import AddressType, calculations
 from ....checkout.checkout_cleaner import (
@@ -53,6 +53,8 @@ from ..mutations.utils import (
     clean_delivery_method,
     update_checkout_shipping_method_if_invalid,
 )
+
+User = get_user_model()
 
 
 def test_clean_delivery_method_after_shipping_address_changes_stay_the_same(

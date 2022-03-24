@@ -1,18 +1,21 @@
 from typing import TYPE_CHECKING
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 
 from ..checkout import AddressType
 from ..core.utils import create_thumbnails
-from .models import User
 
 if TYPE_CHECKING:
     from ..plugins.manager import PluginsManager
     from .models import Address
+    from .models import User as UserType
+
+User = get_user_model()
 
 
 def store_user_address(
-    user: User,
+    user: "UserType",
     address: "Address",
     address_type: str,
     manager: "PluginsManager",
@@ -40,18 +43,18 @@ def store_user_address(
             set_user_default_shipping_address(user, address)
 
 
-def is_user_address_limit_reached(user: "User"):
+def is_user_address_limit_reached(user: "UserType"):
     """Return True if user cannot have more addresses."""
     return user.addresses.count() >= settings.MAX_USER_ADDRESSES
 
 
-def remove_the_oldest_user_address_if_address_limit_is_reached(user: "User"):
+def remove_the_oldest_user_address_if_address_limit_is_reached(user: "UserType"):
     """Remove the oldest user address when max address limit is reached."""
     if is_user_address_limit_reached(user):
         remove_the_oldest_user_address(user)
 
 
-def remove_the_oldest_user_address(user: "User"):
+def remove_the_oldest_user_address(user: "UserType"):
     user_default_addresses_ids = [
         user.default_billing_address_id,
         user.default_shipping_address_id,
@@ -74,7 +77,7 @@ def set_user_default_shipping_address(user, address):
 
 
 def change_user_default_address(
-    user: User, address: "Address", address_type: str, manager: "PluginsManager"
+    user: "UserType", address: "Address", address_type: str, manager: "PluginsManager"
 ):
     address = manager.change_user_address(address, address_type, user)
     if address_type == AddressType.BILLING:

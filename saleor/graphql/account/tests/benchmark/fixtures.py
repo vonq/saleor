@@ -2,13 +2,16 @@ import random
 import uuid
 
 import pytest
+from django.contrib.auth import get_user_model
 from django.contrib.auth import models as auth_models
 from prices import Money, TaxedMoney
 
 from .....account import CustomerEvents
-from .....account.models import CustomerEvent, User
+from .....account.models import CustomerEvent
 from .....giftcard.models import GiftCard
 from .....order.models import Order
+
+User = get_user_model()
 
 ORDER_COUNT_IN_BENCHMARKS = 10
 GIFT_CARDS_PER_USER = 5

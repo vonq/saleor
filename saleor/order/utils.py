@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union, cast
 
 import graphene
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from prices import Money, TaxedMoney, fixed_discount, percentage_discount
 
-from ..account.models import User
 from ..core.taxes import zero_money
 from ..core.tracing import traced_atomic_transaction
 from ..core.weight import zero_weight
@@ -41,9 +41,12 @@ from ..warehouse.models import Warehouse
 from . import events
 
 if TYPE_CHECKING:
+    from ..account.models import User as UserType
     from ..app.models import App
     from ..checkout.fetch import CheckoutInfo
     from ..plugins.manager import PluginsManager
+
+User = get_user_model()
 
 
 def get_order_country(order: Order) -> str:
@@ -480,7 +483,7 @@ def add_gift_cards_to_order(
     checkout_info: "CheckoutInfo",
     order: Order,
     total_price_left: Money,
-    user: Optional[User],
+    user: Optional["UserType"],
     app: Optional["App"],
 ):
     order_gift_cards = []
@@ -527,7 +530,7 @@ def update_gift_card_balance(
 
 def set_gift_card_user(
     gift_card: GiftCard,
-    used_by_user: Optional[User],
+    used_by_user: Optional["UserType"],
     used_by_email: str,
 ):
     """Set user when the gift card is used for the first time."""
@@ -790,7 +793,7 @@ def get_voucher_discount_for_order(order: Order) -> Money:
     raise NotImplementedError("Unknown discount type")
 
 
-def match_orders_with_new_user(user: User) -> None:
+def match_orders_with_new_user(user: "UserType") -> None:
     Order.objects.confirmed().filter(user_email=user.email, user=None).update(user=user)
 
 

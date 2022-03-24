@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta
-from typing import Any, Dict, Iterable, Optional
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional
 
 import graphene
 import jwt
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 
-from ..account.models import User
 from ..app.models import App, AppExtension
 from .jwt_manager import get_jwt_manager
 from .permissions import (
@@ -14,6 +14,12 @@ from .permissions import (
     get_permissions_from_codenames,
     get_permissions_from_names,
 )
+
+if TYPE_CHECKING:
+    from ..account.models import User as UserType
+
+User = get_user_model()
+
 
 JWT_ACCESS_TYPE = "access"
 JWT_REFRESH_TYPE = "refresh"
@@ -36,7 +42,7 @@ def jwt_base_payload(
 
 
 def jwt_user_payload(
-    user: User,
+    user: "UserType",
     token_type: str,
     exp_delta: Optional[timedelta],
     additional_payload: Optional[Dict[str, Any]] = None,
@@ -83,7 +89,7 @@ def create_token(payload: Dict[str, Any], exp_delta: timedelta) -> str:
 
 
 def create_access_token(
-    user: User, additional_payload: Optional[Dict[str, Any]] = None
+    user: "UserType", additional_payload: Optional[Dict[str, Any]] = None
 ) -> str:
     payload = jwt_user_payload(
         user, JWT_ACCESS_TYPE, settings.JWT_TTL_ACCESS, additional_payload
@@ -92,7 +98,7 @@ def create_access_token(
 
 
 def create_refresh_token(
-    user: User, additional_payload: Optional[Dict[str, Any]] = None
+    user: "UserType", additional_payload: Optional[Dict[str, Any]] = None
 ) -> str:
     payload = jwt_user_payload(
         user,
@@ -103,7 +109,7 @@ def create_refresh_token(
     return jwt_encode(payload)
 
 
-def get_user_from_payload(payload: Dict[str, Any]) -> Optional[User]:
+def get_user_from_payload(payload: Dict[str, Any]) -> Optional["UserType"]:
     user = User.objects.filter(email=payload["email"], is_active=True).first()
     user_jwt_token = payload.get("token")
     if not user_jwt_token or not user:
@@ -129,14 +135,14 @@ def is_saleor_token(token: str) -> bool:
     return True
 
 
-def get_user_from_access_token(token: str) -> Optional[User]:
+def get_user_from_access_token(token: str) -> Optional["UserType"]:
     if not is_saleor_token(token):
         return None
     payload = jwt_decode(token)
     return get_user_from_access_payload(payload)
 
 
-def get_user_from_access_payload(payload: dict) -> Optional[User]:
+def get_user_from_access_payload(payload: dict) -> Optional["UserType"]:
     jwt_type = payload.get("type")
     if jwt_type not in [JWT_ACCESS_TYPE, JWT_THIRDPARTY_ACCESS_TYPE]:
         raise jwt.InvalidTokenError(
@@ -158,7 +164,7 @@ def get_user_from_access_payload(payload: dict) -> Optional[User]:
 
 def _create_access_token_for_third_party_actions(
     permissions: Iterable["Permission"],
-    user: "User",
+    user: "UserType",
     type: str,
     object_id: int,
     object_payload_key: str,
@@ -181,7 +187,7 @@ def _create_access_token_for_third_party_actions(
     return jwt_encode(payload)
 
 
-def create_access_token_for_app(app: "App", user: "User"):
+def create_access_token_for_app(app: "App", user: "UserType"):
     """Create access token for app.
 
     App can use user's JWT token to proceed given operation in Saleor.
@@ -200,7 +206,7 @@ def create_access_token_for_app(app: "App", user: "User"):
 
 
 def create_access_token_for_app_extension(
-    app_extension: "AppExtension", permissions: Iterable["Permission"], user: "User"
+    app_extension: "AppExtension", permissions: Iterable["Permission"], user: "UserType"
 ):
     return _create_access_token_for_third_party_actions(
         permissions=permissions,

@@ -1,11 +1,11 @@
 from typing import List, Tuple
 
 import graphene
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from graphene.types import InputObjectType
 
-from ....account.models import User
 from ....checkout import AddressType
 from ....core.exceptions import InsufficientStock
 from ....core.permissions import OrderPermissions
@@ -43,6 +43,8 @@ from ..utils import (
     validate_product_is_published_in_channel,
     validate_variant_channel_listings,
 )
+
+User = get_user_model()
 
 
 class OrderLineInput(graphene.InputObjectType):

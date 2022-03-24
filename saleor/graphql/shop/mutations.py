@@ -1,4 +1,5 @@
 import graphene
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
 from ...account import models as account_models
@@ -21,6 +22,8 @@ from ..core.types.common import (
 )
 from .enums import GiftCardSettingsExpiryTypeEnum
 from .types import GiftCardSettings, OrderSettings, Shop
+
+User = get_user_model()
 
 
 class ShopSettingsInput(graphene.InputObjectType):
@@ -273,7 +276,7 @@ class StaffNotificationRecipientCreate(ModelMutation):
         cls.validate_input(instance, cleaned_input)
         email = cleaned_input.pop("email", None)
         if email:
-            staff_user = account_models.User.objects.filter(email=email).first()
+            staff_user = User.objects.filter(email=email).first()
             if staff_user:
                 cleaned_input["user"] = staff_user
             else:

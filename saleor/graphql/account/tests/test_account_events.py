@@ -1,9 +1,11 @@
 import graphene
+from django.contrib.auth import get_user_model
 from django.db import models
 
 from ....account import events as account_events
-from ....account.models import User
 from ...tests.utils import get_graphql_content
+
+User = get_user_model()
 
 QUERY_CUSTOMER_EVENTS = """
 query customerEvents($customerId: ID!) {

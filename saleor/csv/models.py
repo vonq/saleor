@@ -1,8 +1,8 @@
+from django.conf import settings
 from django.db import models
 from django.db.models import JSONField  # type: ignore
 from django.utils import timezone
 
-from ..account.models import User
 from ..app.models import App
 from ..core.models import Job
 from ..core.utils.json_serializer import CustomJsonEncoder
@@ -11,7 +11,10 @@ from . import ExportEvents
 
 class ExportFile(Job):
     user = models.ForeignKey(
-        User, related_name="export_files", on_delete=models.CASCADE, null=True
+        settings.AUTH_USER_MODEL,
+        related_name="export_files",
+        on_delete=models.CASCADE,
+        null=True,
     )
     app = models.ForeignKey(
         App, related_name="export_files", on_delete=models.CASCADE, null=True
@@ -29,7 +32,10 @@ class ExportEvent(models.Model):
         ExportFile, related_name="events", on_delete=models.CASCADE
     )
     user = models.ForeignKey(
-        User, related_name="export_csv_events", on_delete=models.SET_NULL, null=True
+        settings.AUTH_USER_MODEL,
+        related_name="export_csv_events",
+        on_delete=models.SET_NULL,
+        null=True,
     )
     app = models.ForeignKey(
         App, related_name="export_csv_events", on_delete=models.SET_NULL, null=True

@@ -1,6 +1,7 @@
 from typing import Union
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import _user_has_perm  # type: ignore
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -212,12 +213,12 @@ class User(PermissionsMixin, ModelWithMetadata, AbstractBaseUser):
             self._effective_permissions = get_permissions()
             if not self.is_superuser:
 
-                UserPermission = User.user_permissions.through
+                UserPermission = get_user_model().user_permissions.through
                 user_permission_queryset = UserPermission.objects.filter(
                     user_id=self.pk
                 ).values("permission_id")
 
-                UserGroup = User.groups.through
+                UserGroup = get_user_model().groups.through
                 GroupPermission = Group.permissions.through
                 user_group_queryset = UserGroup.objects.filter(user_id=self.pk).values(
                     "group_id"
@@ -301,7 +302,7 @@ class CustomerEvent(models.Model):
     order = models.ForeignKey("order.Order", on_delete=models.SET_NULL, null=True)
     parameters = JSONField(blank=True, default=dict, encoder=CustomJsonEncoder)
     user = models.ForeignKey(
-        User, related_name="events", on_delete=models.CASCADE, null=True
+        settings.AUTH_USER_MODEL, related_name="events", on_delete=models.CASCADE, null=True
     )
     app = models.ForeignKey(App, related_name="+", on_delete=models.SET_NULL, null=True)
 
@@ -314,7 +315,7 @@ class CustomerEvent(models.Model):
 
 class StaffNotificationRecipient(models.Model):
     user = models.OneToOneField(
-        User,
+        settings.AUTH_USER_MODEL,
         related_name="staff_notification",
         on_delete=models.CASCADE,
         blank=True,

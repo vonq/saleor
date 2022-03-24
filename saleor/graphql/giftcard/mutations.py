@@ -2,10 +2,10 @@ from copy import deepcopy
 from typing import Iterable
 
 import graphene
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 
-from ...account.models import User
 from ...core.permissions import GiftcardPermissions
 from ...core.tracing import traced_atomic_transaction
 from ...core.utils.promo_code import generate_promo_code
@@ -26,6 +26,8 @@ from ..core.utils import validate_required_string_field
 from ..core.validators import validate_price_precision
 from ..utils.validators import check_for_duplicates
 from .types import GiftCard, GiftCardEvent
+
+User = get_user_model()
 
 
 def clean_gift_card(gift_card: GiftCard):

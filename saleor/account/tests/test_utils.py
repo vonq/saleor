@@ -1,11 +1,12 @@
 from unittest.mock import patch
 
 import pytest
+from django.contrib.auth import get_user_model
 from django.test import override_settings
 
 from ...checkout import AddressType
 from ...plugins.manager import get_plugins_manager
-from ..models import Address, User
+from ..models import Address
 from ..utils import (
     is_user_address_limit_reached,
     remove_staff_member,
@@ -13,6 +14,8 @@ from ..utils import (
     remove_the_oldest_user_address_if_address_limit_is_reached,
     store_user_address,
 )
+
+User = get_user_model()
 
 
 def test_remove_staff_member_with_orders(staff_user, permission_manage_products, order):

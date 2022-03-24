@@ -1,6 +1,7 @@
 from typing import Any, List
 
-from ...account import models as account_models
+from django.contrib.auth import get_user_model
+
 from ...attribute import AttributeType
 from ...attribute import models as attribute_models
 from ...core.exceptions import PermissionDenied
@@ -22,6 +23,8 @@ from ...core.permissions import (
 )
 from ...payment.utils import payment_owned_by_user
 
+User = get_user_model()
+
 
 def no_permissions(_info, _object_pk: Any) -> List[None]:
     return []
@@ -34,7 +37,7 @@ def public_user_permissions(info, user_pk: int) -> List[BasePermissionEnum]:
     Staff user with `MANAGE_USERS` have access to customers public metadata.
     Staff user with `MANAGE_STAFF` have access to staff users public metadata.
     """
-    user = account_models.User.objects.filter(pk=user_pk).first()
+    user = User.objects.filter(pk=user_pk).first()
     if not user:
         raise PermissionDenied()
     if info.context.user.pk == user.pk:
@@ -45,7 +48,7 @@ def public_user_permissions(info, user_pk: int) -> List[BasePermissionEnum]:
 
 
 def private_user_permissions(_info, user_pk: int) -> List[BasePermissionEnum]:
-    user = account_models.User.objects.filter(pk=user_pk).first()
+    user = User.objects.filter(pk=user_pk).first()
     if not user:
         raise PermissionDenied()
     if user.is_staff:

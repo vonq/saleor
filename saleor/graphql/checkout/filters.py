@@ -1,9 +1,9 @@
 from uuid import UUID
 
 import django_filters
+from django.contrib.auth import get_user_model
 from django.db.models import Exists, OuterRef, Q
 
-from ...account.models import User
 from ...checkout.models import Checkout
 from ...payment.models import Payment
 from ..channel.types import Channel
@@ -17,6 +17,8 @@ from ..core.types.common import DateRangeInput
 from ..core.utils import from_global_id_or_error
 from ..utils import resolve_global_ids_to_primary_keys
 from ..utils.filters import filter_range_field
+
+User = get_user_model()
 
 
 def get_checkout_token_from_query(value):

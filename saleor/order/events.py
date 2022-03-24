@@ -1,9 +1,9 @@
 from decimal import Decimal
-from typing import Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
+
+from django.contrib.auth import get_user_model
 
 from ..account import events as account_events
-from ..account.models import User
-from ..app.models import App
 from ..core.utils.validators import user_is_valid
 from ..discount.models import OrderDiscount
 from ..order.models import Fulfillment, FulfillmentLine, Order, OrderLine
@@ -11,8 +11,14 @@ from ..payment.models import Payment
 from . import OrderEvents, OrderEventsEmails
 from .models import OrderEvent
 
-UserType = Optional[User]
-AppType = Optional[App]
+if TYPE_CHECKING:
+    from ..account.models import User as UserModel
+    from ..app.models import App
+
+    UserType = Optional[UserModel]
+    AppType = Optional[App]
+
+User = get_user_model()
 
 
 def _line_per_quantity_to_line_object(quantity, line):
@@ -139,8 +145,8 @@ def event_payment_confirmed_notification(
 def invoice_requested_event(
     *,
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
 ) -> OrderEvent:
     if not user_is_valid(user):
         user = None
@@ -152,8 +158,8 @@ def invoice_requested_event(
 def invoice_generated_event(
     *,
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     invoice_number: str,
 ) -> OrderEvent:
     if not user_is_valid(user):
@@ -170,8 +176,8 @@ def invoice_generated_event(
 def invoice_updated_event(
     *,
     order: Order,
-    user: Optional[UserType],
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     invoice_number: str,
     url: str,
     status: str
@@ -200,13 +206,13 @@ def event_invoice_sent_notification(
 
 
 def email_resent_event(
-    *, order: Order, user: UserType, email_type: OrderEventsEmails
+    *, order: Order, user: "UserType", email_type: OrderEventsEmails
 ) -> OrderEvent:
     raise NotImplementedError
 
 
 def draft_order_created_event(
-    *, order: Order, user: UserType, app: AppType
+    *, order: Order, user: "UserType", app: "AppType"
 ) -> OrderEvent:
     if not user_is_valid(user):
         user = None
@@ -218,8 +224,8 @@ def draft_order_created_event(
 def order_added_products_event(
     *,
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     order_lines: List[Tuple[int, OrderLine]]
 ) -> OrderEvent:
     if not user_is_valid(user):
@@ -236,8 +242,8 @@ def order_added_products_event(
 def order_removed_products_event(
     *,
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     order_lines: List[Tuple[int, OrderLine]]
 ) -> OrderEvent:
     if not user_is_valid(user):
@@ -255,8 +261,8 @@ def draft_order_created_from_replace_event(
     *,
     draft_order: Order,
     original_order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     lines: List[Tuple[int, OrderLine]]
 ):
     if not user_is_valid(user):
@@ -275,7 +281,7 @@ def draft_order_created_from_replace_event(
 
 
 def order_created_event(
-    *, order: Order, user: UserType, app: AppType, from_draft=False
+    *, order: Order, user: "UserType", app: "AppType", from_draft=False
 ) -> OrderEvent:
     if from_draft:
         event_type = OrderEvents.PLACED_FROM_DRAFT
@@ -292,7 +298,9 @@ def order_created_event(
     return OrderEvent.objects.create(order=order, type=event_type, user=user, app=app)
 
 
-def order_confirmed_event(*, order: Order, user: UserType, app: AppType) -> OrderEvent:
+def order_confirmed_event(
+    *, order: Order, user: "UserType", app: "AppType"
+) -> OrderEvent:
     if not user_is_valid(user):
         user = None
     return OrderEvent.objects.create(
@@ -300,7 +308,9 @@ def order_confirmed_event(*, order: Order, user: UserType, app: AppType) -> Orde
     )
 
 
-def order_canceled_event(*, order: Order, user: UserType, app: AppType) -> OrderEvent:
+def order_canceled_event(
+    *, order: Order, user: "UserType", app: "AppType"
+) -> OrderEvent:
     if not user_is_valid(user):
         user = None
     return OrderEvent.objects.create(
@@ -311,8 +321,8 @@ def order_canceled_event(*, order: Order, user: UserType, app: AppType) -> Order
 def order_manually_marked_as_paid_event(
     *,
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     transaction_reference: Optional[str] = None
 ) -> OrderEvent:
     if not user_is_valid(user):
@@ -329,7 +339,9 @@ def order_manually_marked_as_paid_event(
     )
 
 
-def order_fully_paid_event(*, order: Order, user: UserType, app: AppType) -> OrderEvent:
+def order_fully_paid_event(
+    *, order: Order, user: "UserType", app: "AppType"
+) -> OrderEvent:
     if not user_is_valid(user):
         user = None
     return OrderEvent.objects.create(
@@ -338,7 +350,7 @@ def order_fully_paid_event(*, order: Order, user: UserType, app: AppType) -> Ord
 
 
 def order_replacement_created(
-    *, original_order: Order, replace_order: Order, user: UserType, app: AppType
+    *, original_order: Order, replace_order: Order, user: "UserType", app: "AppType"
 ) -> OrderEvent:
     if not user_is_valid(user):
         user = None
@@ -353,7 +365,7 @@ def order_replacement_created(
 
 
 def payment_authorized_event(
-    *, order: Order, user: UserType, app: AppType, amount: Decimal, payment: Payment
+    *, order: Order, user: "UserType", app: "AppType", amount: Decimal, payment: Payment
 ) -> OrderEvent:
     if not user_is_valid(user):
         user = None
@@ -367,7 +379,7 @@ def payment_authorized_event(
 
 
 def payment_captured_event(
-    *, order: Order, user: UserType, app: AppType, amount: Decimal, payment: Payment
+    *, order: Order, user: "UserType", app: "AppType", amount: Decimal, payment: Payment
 ) -> OrderEvent:
     if not user_is_valid(user):
         user = None
@@ -381,7 +393,7 @@ def payment_captured_event(
 
 
 def payment_refunded_event(
-    *, order: Order, user: UserType, app: AppType, amount: Decimal, payment: Payment
+    *, order: Order, user: "UserType", app: "AppType", amount: Decimal, payment: Payment
 ) -> OrderEvent:
     if not user_is_valid(user):
         user = None
@@ -395,7 +407,7 @@ def payment_refunded_event(
 
 
 def payment_voided_event(
-    *, order: Order, user: UserType, app: AppType, payment: Payment
+    *, order: Order, user: "UserType", app: "AppType", payment: Payment
 ) -> OrderEvent:
     if not user_is_valid(user):
         user = None
@@ -409,7 +421,7 @@ def payment_voided_event(
 
 
 def payment_failed_event(
-    *, order: Order, user: UserType, app: AppType, message: str, payment: Payment
+    *, order: Order, user: "UserType", app: "AppType", message: str, payment: Payment
 ) -> OrderEvent:
 
     if not user_is_valid(user):
@@ -431,8 +443,8 @@ def payment_failed_event(
 def external_notification_event(
     *,
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     message: Optional[str],
     parameters: Optional[dict]
 ) -> OrderEvent:
@@ -451,7 +463,11 @@ def external_notification_event(
 
 
 def fulfillment_canceled_event(
-    *, order: Order, user: UserType, app: AppType, fulfillment: Optional[Fulfillment]
+    *,
+    order: Order,
+    user: "UserType",
+    app: "AppType",
+    fulfillment: Optional[Fulfillment]
 ) -> OrderEvent:
     if not user_is_valid(user):
         user = None
@@ -467,8 +483,8 @@ def fulfillment_canceled_event(
 def fulfillment_restocked_items_event(
     *,
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     fulfillment: Union[Order, Fulfillment],
     warehouse_pk: Optional[int] = None,
 ) -> OrderEvent:
@@ -489,8 +505,8 @@ def fulfillment_restocked_items_event(
 def fulfillment_fulfilled_items_event(
     *,
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     fulfillment_lines: List[FulfillmentLine]
 ) -> OrderEvent:
     if not user_is_valid(user):
@@ -507,8 +523,8 @@ def fulfillment_fulfilled_items_event(
 def fulfillment_awaits_approval_event(
     *,
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     fulfillment_lines: List[FulfillmentLine]
 ) -> OrderEvent:
     if not user_is_valid(user):
@@ -525,8 +541,8 @@ def fulfillment_awaits_approval_event(
 def order_returned_event(
     *,
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     returned_lines: List[Tuple[int, OrderLine]],
 ):
     if not user_is_valid(user):
@@ -544,8 +560,8 @@ def order_returned_event(
 def fulfillment_replaced_event(
     *,
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     replaced_lines: List[Tuple[int, OrderLine]],
 ):
     if not user_is_valid(user):
@@ -562,8 +578,8 @@ def fulfillment_replaced_event(
 def fulfillment_refunded_event(
     *,
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     refunded_lines: List[Tuple[int, OrderLine]],
     amount: Decimal,
     shipping_costs_included: bool
@@ -586,8 +602,8 @@ def fulfillment_refunded_event(
 def fulfillment_tracking_updated_event(
     *,
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     tracking_number: str,
     fulfillment: Fulfillment
 ) -> OrderEvent:
@@ -606,9 +622,9 @@ def fulfillment_tracking_updated_event(
 
 
 def order_note_added_event(
-    *, order: Order, user: UserType, app: AppType, message: str
+    *, order: Order, user: "UserType", app: "AppType", message: str
 ) -> OrderEvent:
-    kwargs: Dict[str, Union[AppType, UserType]] = {"app": app}
+    kwargs: Dict[str, Union["AppType", "UserType"]] = {"app": app}
     if user is not None and not user.is_anonymous:
         if order.user is not None and order.user.pk == user.pk:
             account_events.customer_added_to_note_order_event(
@@ -646,8 +662,8 @@ def order_discount_event(
     *,
     event_type: str,
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     order_discount: "OrderDiscount",
     old_order_discount: Optional["OrderDiscount"] = None
 ) -> OrderEvent:
@@ -689,7 +705,7 @@ def order_discount_automatically_updated_event(
 
 
 def order_discount_added_event(
-    order: Order, user: UserType, app: AppType, order_discount: "OrderDiscount"
+    order: Order, user: "UserType", app: "AppType", order_discount: "OrderDiscount"
 ) -> OrderEvent:
     return order_discount_event(
         event_type=OrderEvents.ORDER_DISCOUNT_ADDED,
@@ -702,8 +718,8 @@ def order_discount_added_event(
 
 def order_discount_updated_event(
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     order_discount: "OrderDiscount",
     old_order_discount: Optional["OrderDiscount"] = None,
 ) -> OrderEvent:
@@ -719,8 +735,8 @@ def order_discount_updated_event(
 
 def order_discount_deleted_event(
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     order_discount: "OrderDiscount",
 ) -> OrderEvent:
     return order_discount_event(
@@ -736,8 +752,8 @@ def order_line_discount_event(
     *,
     event_type: str,
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     line: OrderLine,
     line_before_update: Optional["OrderLine"] = None
 ) -> OrderEvent:
@@ -770,8 +786,8 @@ def order_line_discount_event(
 
 def order_line_discount_updated_event(
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     line: OrderLine,
     line_before_update: Optional["OrderLine"] = None,
 ) -> OrderEvent:
@@ -787,8 +803,8 @@ def order_line_discount_updated_event(
 
 def order_line_discount_removed_event(
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     line: OrderLine,
 ) -> OrderEvent:
     return order_line_discount_event(
@@ -802,8 +818,8 @@ def order_line_discount_removed_event(
 
 def order_line_product_removed_event(
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     order_lines: List[Tuple[int, OrderLine]],
 ):
     return OrderEvent.objects.create(
@@ -817,8 +833,8 @@ def order_line_product_removed_event(
 
 def order_line_variant_removed_event(
     order: Order,
-    user: UserType,
-    app: AppType,
+    user: "UserType",
+    app: "AppType",
     order_lines: List[Tuple[int, OrderLine]],
 ):
     return OrderEvent.objects.create(

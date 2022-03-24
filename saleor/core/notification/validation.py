@@ -1,6 +1,6 @@
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
-from ...account.models import User
 from ...account.notifications import get_user_custom_payload
 from ...core.permissions import AccountPermissions, OrderPermissions
 from ...graphql.channel.utils import validate_channel
@@ -8,6 +8,9 @@ from ...graphql.core.enums import ExternalNotificationTriggerErrorCode
 from ...graphql.utils import resolve_global_ids_to_primary_keys
 from ...order.models import Order
 from ...order.notifications import get_custom_order_payload
+
+User = get_user_model()
+
 
 PAYLOAD_MAPPING_FOR_CUSTOM_NOTIFICATION = {
     "User": (

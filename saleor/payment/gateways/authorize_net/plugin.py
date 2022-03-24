@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING, List
 
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
-from saleor.account.models import User
 from saleor.plugins.base_plugin import BasePlugin, ConfigurationTypeField
 from saleor.plugins.error_codes import PluginErrorCode
 
@@ -19,6 +19,8 @@ from . import (
     refund,
     void,
 )
+
+User = get_user_model()
 
 GATEWAY_NAME = "Authorize.Net"
 

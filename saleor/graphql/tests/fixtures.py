@@ -5,17 +5,19 @@ from unittest.mock import Mock
 
 import graphene
 import pytest
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.core.serializers.json import DjangoJSONEncoder
 from django.shortcuts import reverse
 from django.test.client import MULTIPART_CONTENT, Client
 
-from ...account.models import User
 from ...core.jwt import create_access_token
 from ...plugins.manager import get_plugins_manager
 from ...tests.utils import flush_post_commit_hooks
 from ..views import handled_errors_logger, unhandled_errors_logger
 from .utils import assert_no_permission
+
+User = get_user_model()
 
 API_PATH = reverse("api")
 ACCESS_CONTROL_ALLOW_ORIGIN = "Access-Control-Allow-Origin"

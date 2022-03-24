@@ -1,6 +1,6 @@
+from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 
-from ....account.models import User
 from ....order.models import Order
 from ....product.models import Product
 from ...search_tasks import (
@@ -8,6 +8,8 @@ from ...search_tasks import (
     set_product_search_document_values,
     set_user_search_document_values,
 )
+
+User = get_user_model()
 
 
 class Command(BaseCommand):

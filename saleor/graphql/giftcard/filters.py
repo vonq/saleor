@@ -2,10 +2,10 @@ from typing import List
 
 import django_filters
 import graphene
+from django.contrib.auth import get_user_model
 from django.db.models import Exists, OuterRef
 from graphql.error import GraphQLError
 
-from ...account import models as account_models
 from ...giftcard import models
 from ...product import models as product_models
 from ..core.filters import (
@@ -18,6 +18,8 @@ from ..core.types import FilterInputObjectType
 from ..core.types.common import PriceRangeInput
 from ..utils import resolve_global_ids_to_primary_keys
 from .enums import GiftCardEventsEnum
+
+User = get_user_model()
 
 
 def filter_products(qs, _, value):
@@ -40,7 +42,7 @@ def filter_used_by(qs, _, value):
 
 
 def filter_gift_cards_by_used_by_user(qs, user_pks):
-    users = account_models.User.objects.filter(pk__in=user_pks)
+    users = User.objects.filter(pk__in=user_pks)
     return qs.filter(Exists(users.filter(pk=OuterRef("used_by_id"))))
 
 
