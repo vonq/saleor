@@ -1,7 +1,11 @@
 from collections import defaultdict
+from django.contrib.auth import get_user_model
 
-from ...account.models import Address, CustomerEvent, User
+from ...account.models import Address, CustomerEvent
 from ..core.dataloaders import DataLoader
+
+
+User = get_user_model()
 
 
 class AddressByIdLoader(DataLoader):

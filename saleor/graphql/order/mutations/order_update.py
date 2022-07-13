@@ -1,8 +1,8 @@
 import graphene
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from ....account.models import User
 from ....core.permissions import OrderPermissions
 from ....core.tracing import traced_atomic_transaction
 from ....order import OrderStatus, models
@@ -13,6 +13,9 @@ from ...account.types import AddressInput
 from ...core.types import OrderError
 from ..types import Order
 from .draft_order_create import DraftOrderCreate
+
+
+User = get_user_model()
 
 
 class OrderUpdateInput(graphene.InputObjectType):

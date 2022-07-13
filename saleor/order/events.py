@@ -1,8 +1,8 @@
 from decimal import Decimal
+from django.contrib.auth import get_user_model
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
 from ..account import events as account_events
-from ..account.models import User
 from ..app.models import App
 from ..core.utils.validators import user_is_valid
 from ..discount.models import OrderDiscount
@@ -14,6 +14,8 @@ from .models import OrderEvent
 if TYPE_CHECKING:
     from uuid import UUID
 
+
+User = get_user_model
 
 UserType = Optional[User]
 AppType = Optional[App]

@@ -1,15 +1,20 @@
 import copy
 import logging
+from django.contrib.auth import get_user_model
 from typing import TYPE_CHECKING
 
 from faker import Faker
 
-from ...account.models import Address, User
+from ...account.models import Address
 from .random_data import create_address, create_fake_user
 
 if TYPE_CHECKING:
     from ...checkout.models import Checkout
     from ...order.models import Order
+
+
+User = get_user_model()
+
 
 logger = logging.getLogger(__name__)
 

@@ -38,7 +38,8 @@ from .models import PluginConfiguration
 
 if TYPE_CHECKING:
     # flake8: noqa
-    from ..account.models import Address, User
+    from django.contrib.auth import get_user_model
+    from ..account.models import Address
     from ..app.models import App
     from ..attribute.models import Attribute, AttributeValue
     from ..checkout.fetch import CheckoutInfo, CheckoutLineInfo
@@ -71,6 +72,8 @@ if TYPE_CHECKING:
     from ..translation.models import Translation
     from ..warehouse.models import Stock, Warehouse
     from .base_plugin import BasePlugin
+
+    User = get_user_model()
 
 NotifyEventTypeChoice = str
 

@@ -17,8 +17,10 @@ from ..product.product_images import AVAILABLE_PRODUCT_SIZES, get_thumbnail
 from .models import FulfillmentLine, Order, OrderLine
 
 if TYPE_CHECKING:
-    from ..account.models import User  # noqa: F401
+    from django.contrib.auth import get_user_model
     from ..app.models import App
+
+    User = get_user_model()
 
 
 def get_image_payload(instance: ProductMedia):

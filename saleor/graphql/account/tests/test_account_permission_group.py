@@ -1,15 +1,19 @@
 import graphene
 import pytest
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 
 from ....account.error_codes import PermissionGroupErrorCode
-from ....account.models import User
 from ....core.permissions import AccountPermissions, AppPermission, OrderPermissions
 from ...tests.utils import (
     assert_no_permission,
     get_graphql_content,
     get_graphql_content_from_response,
 )
+
+
+User = get_user_model()
+
 
 PERMISSION_GROUP_CREATE_MUTATION = """
     mutation PermissionGroupCreate(

@@ -4,9 +4,11 @@ from . import ExportEvents
 from .models import ExportEvent
 
 if TYPE_CHECKING:
-    from ..account.models import User
+    from django.contrib.auth import get_user_model
     from ..app.models import App
     from .models import ExportFile
+
+    User = get_user_model()
 
 
 UserType = Optional["User"]

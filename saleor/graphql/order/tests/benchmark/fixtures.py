@@ -2,9 +2,9 @@ import random
 from decimal import Decimal
 
 import pytest
+from django.contrib.auth import get_user_model
 from prices import Money, TaxedMoney
 
-from .....account.models import User
 from .....order import OrderEvents, OrderStatus
 from .....order.models import Fulfillment, FulfillmentLine, Order, OrderEvent, OrderLine
 from .....payment import ChargeStatus
@@ -14,6 +14,9 @@ ORDER_COUNT_IN_BENCHMARKS = 10
 EVENTS_PER_ORDER = 5
 LINES_PER_ORDER = 3
 TRANSACTIONS_PER_PAYMENT = 3
+
+
+User = get_user_model()
 
 
 def _prepare_payment_transactions(payments):

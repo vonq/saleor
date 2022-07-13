@@ -5,13 +5,13 @@ from dataclasses import asdict
 from typing import TYPE_CHECKING, Any, DefaultDict, Dict, Iterable, List, Optional, Set
 
 import graphene
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import F, QuerySet, Sum
 from django.utils import timezone
 from graphene.utils.str_converters import to_camel_case
 
 from .. import __version__
-from ..account.models import User
 from ..attribute.models import AttributeValueTranslation
 from ..checkout.models import Checkout
 from ..core.prices import quantize_price, quantize_price_fields
@@ -53,6 +53,9 @@ if TYPE_CHECKING:
     from ..payment.models import Payment
     from ..plugins.base_plugin import RequestorOrLazyObject
     from ..translation.models import Translation
+
+
+User = get_user_model()
 
 
 ADDRESS_FIELDS = (

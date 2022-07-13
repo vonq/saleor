@@ -1,12 +1,16 @@
 from unittest.mock import patch
 
 import graphene
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser, Group
 
 from ....account.error_codes import AccountErrorCode
-from ....account.models import User
 from ....core.permissions import AccountPermissions, OrderPermissions
 from ...tests.utils import assert_no_permission, get_graphql_content
+
+
+User = get_user_model()
+
 
 CUSTOMER_BULK_DELETE_MUTATION = """
     mutation customerBulkDelete($ids: [ID!]!) {

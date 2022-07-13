@@ -11,8 +11,11 @@ from ..base_plugin import BasePlugin
 from . import obfuscate_order
 
 if TYPE_CHECKING:
-    from ...account.models import Address, User
+    from django.contrib.auth import get_user_model
+    from ...account.models import Address
     from ...order.models import Order
+
+    User = get_user_model()
 
 faker = Faker()
 

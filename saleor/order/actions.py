@@ -5,10 +5,10 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple
 from uuid import UUID
 
+from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.db import transaction
 
-from ..account.models import User
 from ..core import analytics
 from ..core.exceptions import AllocationError, InsufficientStock, InsufficientStockData
 from ..core.tracing import traced_atomic_transaction
@@ -74,6 +74,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+
+User = get_user_model()
 
 OrderLineIDType = UUID
 QuantityType = int

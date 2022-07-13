@@ -1,10 +1,13 @@
 import django_filters
+from django.contrib.auth import get_user_model
 from django.db.models import Exists, OuterRef, Q
 
-from ...account.models import User
 from ...app.models import App
 from ..core.filters import BaseJobFilter
 from ..core.types import FilterInputObjectType
+
+
+User = get_user_model()
 
 
 def filter_user(qs, _, value):

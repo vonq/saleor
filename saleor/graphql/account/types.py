@@ -1,5 +1,5 @@
 import uuid
-from typing import List
+from typing import List, TYPE_CHECKING
 
 import graphene
 from django.contrib.auth import get_user_model
@@ -37,6 +37,12 @@ from ..utils import format_permissions_for_display, get_user_or_app_from_context
 from .dataloaders import CustomerEventsByUserLoader
 from .enums import CountryCodeEnum, CustomerEventsEnum
 from .utils import can_user_manage_group, get_groups_which_user_can_manage
+
+
+if TYPE_CHECKING:
+    from django.contrib.auth import get_user_model
+
+    UserModel = get_user_model()
 
 
 class AddressInput(graphene.InputObjectType):
@@ -315,16 +321,16 @@ class User(ModelObjectType):
         model = get_user_model()
 
     @staticmethod
-    def resolve_addresses(root: models.User, _info):
+    def resolve_addresses(root: "UserModel", _info):
         return root.addresses.annotate_default(root).all()  # type: ignore
 
     @staticmethod
-    def resolve_checkout(root: models.User, _info):
+    def resolve_checkout(root: "UserModel", _info):
         return get_user_checkout(root)
 
     @staticmethod
     @traced_resolver
-    def resolve_checkout_tokens(root: models.User, info, channel=None):
+    def resolve_checkout_tokens(root: "UserModel", info, channel=None):
         def return_checkout_tokens(checkouts):
             if not checkouts:
                 return []
@@ -347,7 +353,7 @@ class User(ModelObjectType):
 
     @staticmethod
     @traced_resolver
-    def resolve_checkout_ids(root: models.User, info, channel=None):
+    def resolve_checkout_ids(root: "UserModel", info, channel=None):
         def return_checkout_ids(checkouts):
             if not checkouts:
                 return []
@@ -369,7 +375,7 @@ class User(ModelObjectType):
         )
 
     @staticmethod
-    def resolve_gift_cards(root: models.User, info, **kwargs):
+    def resolve_gift_cards(root: "UserModel", info, **kwargs):
         from ..giftcard.types import GiftCardCountableConnection
 
         def _resolve_gift_cards(gift_cards):
@@ -382,29 +388,29 @@ class User(ModelObjectType):
         )
 
     @staticmethod
-    def resolve_user_permissions(root: models.User, _info):
+    def resolve_user_permissions(root: "UserModel", _info):
         from .resolvers import resolve_permissions
 
         return resolve_permissions(root)
 
     @staticmethod
-    def resolve_permission_groups(root: models.User, _info):
+    def resolve_permission_groups(root: "UserModel", _info):
         return root.groups.all()
 
     @staticmethod
-    def resolve_editable_groups(root: models.User, _info):
+    def resolve_editable_groups(root: "UserModel", _info):
         return get_groups_which_user_can_manage(root)
 
     @staticmethod
-    def resolve_note(root: models.User, info):
+    def resolve_note(root: "UserModel", info):
         return root.note
 
     @staticmethod
-    def resolve_events(root: models.User, info):
+    def resolve_events(root: "UserModel", info):
         return CustomerEventsByUserLoader(info.context).load(root.id)
 
     @staticmethod
-    def resolve_orders(root: models.User, info, **kwargs):
+    def resolve_orders(root: "UserModel", info, **kwargs):
         from ..order.types import OrderCountableConnection
 
         def _resolve_orders(orders):
@@ -430,7 +436,7 @@ class User(ModelObjectType):
         return OrdersByUserLoader(info.context).load(root.id).then(_resolve_orders)
 
     @staticmethod
-    def resolve_avatar(root: models.User, info, size=None):
+    def resolve_avatar(root: "UserModel", info, size=None):
         if root.avatar:
             return Image.get_adjusted(
                 image=root.avatar,
@@ -441,7 +447,7 @@ class User(ModelObjectType):
             )
 
     @staticmethod
-    def resolve_stored_payment_sources(root: models.User, info, channel=None):
+    def resolve_stored_payment_sources(root: "UserModel", info, channel=None):
         from .resolvers import resolve_payment_sources
 
         if root == info.context.user:

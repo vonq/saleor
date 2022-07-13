@@ -2,13 +2,17 @@ import datetime
 
 import graphene
 import pytest
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from .....account.models import User
 from .....app.models import App
 from .....core import JobStatus
 from .....csv.models import ExportFile
 from ....tests.utils import get_graphql_content
+
+
+User = get_user_model()
+
 
 FILTER_EXPORT_FILES_QUERY = """
     query($filter: ExportFileFilterInput!){

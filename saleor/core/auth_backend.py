@@ -1,8 +1,11 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 
-from ..account.models import User
 from .auth import get_token_from_request
 from .jwt import get_user_from_access_token
+
+
+User = get_user_model()
 
 
 class JSONWebTokenBackend(ModelBackend):

@@ -21,7 +21,9 @@ from ..core.utils.translations import Translation, TranslationProxy
 from . import DiscountValueType, OrderDiscountType, VoucherType
 
 if TYPE_CHECKING:
-    from ..account.models import User
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
 
 
 class NotApplicable(ValueError):

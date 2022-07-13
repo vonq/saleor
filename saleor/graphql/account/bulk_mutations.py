@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import graphene
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
 from ...account import models
@@ -25,7 +26,7 @@ class UserBulkDelete(ModelBulkDeleteMutation):
 class CustomerBulkDelete(CustomerDeleteMixin, UserBulkDelete):
     class Meta:
         description = "Deletes customers."
-        model = models.User
+        model = get_user_model()
         object_type = User
         permissions = (AccountPermissions.MANAGE_USERS,)
         error_type_class = AccountError
@@ -48,7 +49,7 @@ class CustomerBulkDelete(CustomerDeleteMixin, UserBulkDelete):
 class StaffBulkDelete(StaffDeleteMixin, UserBulkDelete):
     class Meta:
         description = "Deletes staff users."
-        model = models.User
+        model = get_user_model()
         object_type = User
         permissions = (AccountPermissions.MANAGE_STAFF,)
         error_type_class = StaffError
@@ -61,7 +62,7 @@ class StaffBulkDelete(StaffDeleteMixin, UserBulkDelete):
         count = len(instances)
         if not errors and count:
             clean_instance_ids = [instance.pk for instance in instances]
-            qs = models.User.objects.filter(pk__in=clean_instance_ids)
+            qs = get_user_model().objects.filter(pk__in=clean_instance_ids)
             cls.bulk_action(info=info, queryset=qs, **data)
         else:
             count = 0
@@ -97,7 +98,7 @@ class UserBulkSetActive(BaseBulkMutation):
 
     class Meta:
         description = "Activate or deactivate users."
-        model = models.User
+        model = get_user_model()
         object_type = User
         permissions = (AccountPermissions.MANAGE_USERS,)
         error_type_class = AccountError

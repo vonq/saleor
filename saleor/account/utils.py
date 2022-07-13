@@ -1,14 +1,17 @@
 from typing import TYPE_CHECKING
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 
 from ..checkout import AddressType
 from ..core.utils import create_thumbnails
-from .models import User
 
 if TYPE_CHECKING:
     from ..plugins.manager import PluginsManager
     from .models import Address
+
+
+User = get_user_model()
 
 
 def store_user_address(

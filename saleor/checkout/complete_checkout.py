@@ -12,13 +12,13 @@ from typing import (
 from uuid import UUID
 
 import graphene
+from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from prices import Money, TaxedMoney
 
 from ..account.error_codes import AccountErrorCode
-from ..account.models import User
 from ..account.utils import store_user_address
 from ..checkout import calculations
 from ..checkout.error_codes import CheckoutErrorCode
@@ -69,6 +69,9 @@ if TYPE_CHECKING:
     from ..plugins.manager import PluginsManager
     from ..site.models import SiteSettings
     from .models import Checkout
+
+
+User = get_user_model()
 
 
 def _process_voucher_data_for_order(checkout_info: "CheckoutInfo") -> dict:

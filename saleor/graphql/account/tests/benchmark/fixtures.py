@@ -2,11 +2,11 @@ import random
 import uuid
 
 import pytest
-from django.contrib.auth import models as auth_models
+from django.contrib.auth import get_user_model, models as auth_models
 from prices import Money, TaxedMoney
 
 from .....account import CustomerEvents
-from .....account.models import CustomerEvent, User
+from .....account.models import CustomerEvent
 from .....giftcard.models import GiftCard
 from .....order.models import Order
 
@@ -14,6 +14,9 @@ ORDER_COUNT_IN_BENCHMARKS = 10
 GIFT_CARDS_PER_USER = 5
 EVENTS_PER_USER = 5
 GROUPS_PER_USER = 5
+
+
+User = get_user_model()
 
 
 def _prepare_events_for_user(user):

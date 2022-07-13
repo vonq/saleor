@@ -5,10 +5,12 @@ from ..core.notify_events import NotifyEventType
 from ..graphql.core.utils import to_global_id_or_none
 
 if TYPE_CHECKING:
-    from ..account.models import User
+    from django.contrib.auth import get_user_model
     from ..app.models import App
     from ..plugins.manager import PluginsManager
     from .models import Invoice
+
+    User = get_user_model()
 
 
 def get_invoice_payload(invoice):

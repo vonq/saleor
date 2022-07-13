@@ -8,12 +8,12 @@ from unittest.mock import MagicMock, Mock
 import pytest
 import pytz
 import requests
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.utils.timezone import make_aware
 from freezegun import freeze_time
 from requests import Response
 
-from ....account.models import User
 from ....core.jwt import (
     JWT_REFRESH_TYPE,
     PERMISSIONS_FIELD,
@@ -36,6 +36,9 @@ from ..utils import (
     get_user_info,
     validate_refresh_token,
 )
+
+
+User = get_user_model()
 
 
 @pytest.mark.parametrize(

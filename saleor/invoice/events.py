@@ -1,10 +1,13 @@
+from django.contrib.auth import get_user_model
 from typing import Optional
 
-from ..account.models import User
 from ..app.models import App
 from ..core.utils.validators import user_is_valid
 from ..order.models import Order
 from .models import Invoice, InvoiceEvent, InvoiceEvents
+
+
+User = get_user_model()
 
 UserType = Optional[User]
 AppType = Optional[App]

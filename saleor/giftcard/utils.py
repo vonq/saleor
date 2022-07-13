@@ -20,13 +20,15 @@ from .models import GiftCard, GiftCardEvent
 from .notifications import send_gift_card_notification
 
 if TYPE_CHECKING:
+    from django.contrib.auth import get_user_model
     from django.db.models import QuerySet
 
-    from ..account.models import User
     from ..app.models import App
     from ..order.models import Order
     from ..plugins.manager import PluginsManager
     from ..site.models import SiteSettings
+
+    User = get_user_model()
 
 
 def add_gift_card_code_to_checkout(

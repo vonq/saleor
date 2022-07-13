@@ -4,11 +4,11 @@ from unittest.mock import patch
 import before_after
 import graphene
 import pytest
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from ....account.error_codes import AccountErrorCode
-from ....account.models import User
 from ....app.models import App
 from ....checkout.models import Checkout
 from ....core.error_codes import MetadataErrorCode
@@ -19,6 +19,10 @@ from ....payment.models import TransactionItem
 from ....payment.utils import payment_owned_by_user
 from ...tests.fixtures import ApiClient
 from ...tests.utils import assert_no_permission, get_graphql_content
+
+
+User = get_user_model()
+
 
 PRIVATE_KEY = "private_key"
 PRIVATE_VALUE = "private_vale"

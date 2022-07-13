@@ -50,7 +50,8 @@ from .utils import (
 )
 
 if TYPE_CHECKING:
-    from ...account.models import Address, User
+    from django.contrib.auth import get_user_model
+    from ...account.models import Address
     from ...attribute.models import Attribute, AttributeValue
     from ...channel.models import Channel
     from ...checkout.models import Checkout
@@ -71,6 +72,8 @@ if TYPE_CHECKING:
     from ...shipping.models import ShippingMethod, ShippingZone
     from ...translation.models import Translation
     from ...warehouse.models import Stock, Warehouse
+
+    User = get_user_model()
 
 logger = logging.getLogger(__name__)
 

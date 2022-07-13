@@ -3,12 +3,15 @@ from datetime import date, timedelta
 
 import graphene
 import pytest
+from django.contrib.auth import get_user_model
 from freezegun import freeze_time
 
-from ....account.models import User
 from ....checkout.models import Checkout
 from ....payment.models import ChargeStatus, Payment
 from ...tests.utils import get_graphql_content
+
+
+User = get_user_model()
 
 
 @pytest.fixture

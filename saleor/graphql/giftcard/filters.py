@@ -3,10 +3,10 @@ from uuid import UUID
 
 import django_filters
 import graphene
+from django.contrib.auth import get_user_model
 from django.db.models import Exists, OuterRef, Q
 from graphql.error import GraphQLError
 
-from ...account import models as account_models
 from ...giftcard import models
 from ...order import models as order_models
 from ...product import models as product_models
@@ -41,7 +41,7 @@ def filter_used_by(qs, _, value):
 
 
 def filter_gift_cards_by_used_by_user(qs, user_pks):
-    users = account_models.User.objects.filter(pk__in=user_pks)
+    users = get_user_model().objects.filter(pk__in=user_pks)
     return qs.filter(Exists(users.filter(pk=OuterRef("used_by_id"))))
 
 

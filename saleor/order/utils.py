@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union, cast
 
 import graphene
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from prices import Money, TaxedMoney, fixed_discount, percentage_discount
 
-from ..account.models import User
 from ..core.prices import quantize_price
 from ..core.taxes import zero_money
 from ..core.tracing import traced_atomic_transaction
@@ -51,6 +51,9 @@ if TYPE_CHECKING:
     from ..app.models import App
     from ..checkout.fetch import CheckoutInfo
     from ..plugins.manager import PluginsManager
+
+
+User = get_user_model()
 
 
 def get_order_country(order: Order) -> str:

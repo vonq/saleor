@@ -2,11 +2,14 @@ from unittest.mock import MagicMock
 
 import graphene
 import pytest
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.files import File
 
-from .....account.models import User
 from ....tests.utils import get_graphql_content
+
+
+User = get_user_model()
 
 
 @pytest.mark.django_db

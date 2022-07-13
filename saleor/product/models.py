@@ -65,10 +65,12 @@ if TYPE_CHECKING:
     # flake8: noqa
     from decimal import Decimal
 
+    from django.contrib.auth import get_user_model
     from django.db.models import OrderBy
 
-    from ..account.models import User
     from ..app.models import App
+
+    User = get_user_model()
 
 ALL_PRODUCTS_PERMISSIONS = [
     # List of permissions, where each of them allows viewing all products

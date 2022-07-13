@@ -3,10 +3,10 @@ from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union, cast
 
 import graphene
 from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from prices import Money
 
-from ..account.models import User
 from ..core.exceptions import ProductNotPublished
 from ..core.taxes import zero_money, zero_taxed_money
 from ..core.utils.promo_code import (
@@ -54,6 +54,8 @@ if TYPE_CHECKING:
     from ..order.models import Order
     from .fetch import CheckoutInfo, CheckoutLineInfo
 
+
+User = get_user_model()
 
 PRIVATE_META_APP_SHIPPING_ID = "external_app_shipping_id"
 

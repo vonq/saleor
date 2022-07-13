@@ -1,7 +1,7 @@
 import graphene
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
-from ....account.models import User
 from ....core.exceptions import InsufficientStock
 from ....core.permissions import OrderPermissions
 from ....core.taxes import zero_taxed_money
@@ -21,6 +21,9 @@ from ..utils import (
     prepare_insufficient_stock_order_validation_errors,
     validate_draft_order,
 )
+
+
+User = get_user_model()
 
 
 class DraftOrderComplete(BaseMutation):

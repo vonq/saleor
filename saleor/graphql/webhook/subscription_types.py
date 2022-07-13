@@ -1,11 +1,11 @@
 import graphene
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.utils import timezone
 from graphene import AbstractType, ObjectType, Union
 from rx import Observable
 
 from ... import __version__
-from ...account.models import User
 from ...attribute.models import AttributeTranslation, AttributeValueTranslation
 from ...core.prices import quantize_price
 from ...discount.models import SaleTranslation, VoucherTranslation
@@ -28,6 +28,10 @@ from ..core.scalars import PositiveDecimal
 from ..payment.enums import TransactionActionEnum
 from ..payment.types import TransactionItem
 from ..translations import types as translation_types
+
+
+User = get_user_model()
+
 
 TRANSLATIONS_TYPES_MAP = {
     ProductTranslation: translation_types.ProductTranslation,

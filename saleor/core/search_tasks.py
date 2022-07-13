@@ -1,8 +1,8 @@
 from typing import List
 
+from django.contrib.auth import get_user_model
 from celery.utils.log import get_task_logger
 
-from ..account.models import User
 from ..account.search import prepare_user_search_document_value
 from ..celeryconf import app
 from ..order.models import Order
@@ -12,6 +12,10 @@ from ..product.search import (
     PRODUCT_FIELDS_TO_PREFETCH,
     prepare_product_search_vector_value,
 )
+
+
+User = get_user_model()
+
 
 task_logger = get_task_logger(__name__)
 

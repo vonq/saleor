@@ -1,5 +1,5 @@
 import graphene
-from django.contrib.auth import password_validation
+from django.contrib.auth import get_user_model, password_validation
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
@@ -97,7 +97,7 @@ class SetPassword(CreateToken):
     @classmethod
     def _set_password_for_user(cls, email, password, token):
         try:
-            user = models.User.objects.get(email=email)
+            user = get_user_model().objects.get(email=email)
         except ObjectDoesNotExist:
             raise ValidationError(
                 {
@@ -155,7 +155,7 @@ class RequestPasswordReset(BaseMutation):
             )
 
         try:
-            user = models.User.objects.get(email=email)
+            user = get_user_model().objects.get(email=email)
         except ObjectDoesNotExist:
             raise ValidationError(
                 {
@@ -225,7 +225,7 @@ class ConfirmAccount(BaseMutation):
     @classmethod
     def perform_mutation(cls, _root, info, **data):
         try:
-            user = models.User.objects.get(email=data["email"])
+            user = get_user_model().objects.get(email=data["email"])
         except ObjectDoesNotExist:
             raise ValidationError(
                 {

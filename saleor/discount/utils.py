@@ -25,12 +25,14 @@ from .models import NotApplicable, Sale, SaleChannelListing, VoucherCustomer
 
 if TYPE_CHECKING:
     # flake8: noqa
-    from ..account.models import User
+    from django.contrib.auth import get_user_model
     from ..checkout.fetch import CheckoutInfo, CheckoutLineInfo
     from ..order.models import Order
     from ..plugins.manager import PluginsManager
     from ..product.models import Collection, Product
     from .models import Voucher
+
+    User = get_user_model()
 
 CatalogueInfo = DefaultDict[str, Set[int]]
 

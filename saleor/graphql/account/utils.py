@@ -19,10 +19,12 @@ from ...core.permissions import (
 )
 
 if TYPE_CHECKING:
+    from django.contrib.auth import get_user_model
     from django.db.models import QuerySet
 
-    from ...account.models import User
     from ...app.models import App
+
+    User = get_user_model()
 
 
 class UserDeleteMixin:

@@ -17,8 +17,10 @@ from . import analytics
 from .jwt import JWT_REFRESH_TOKEN_COOKIE_NAME, jwt_decode_with_exception_handler
 
 if TYPE_CHECKING:
-    from ..account.models import User
+    from django.contrib.auth import get_user_model
     from ..app.models import App
+
+    User = get_user_model()
 
 Requestor = Union["User", "App"]
 

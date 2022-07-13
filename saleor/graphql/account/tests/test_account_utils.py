@@ -1,6 +1,6 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 
-from ....account.models import User
 from ....app.models import App
 from ....core.permissions import (
     AccountPermissions,
@@ -24,6 +24,9 @@ from ..utils import (
     is_owner_or_has_one_of_perms,
     look_for_permission_in_users_with_manage_staff,
 )
+
+
+User = get_user_model()
 
 
 def test_can_manage_group_user_without_permissions(

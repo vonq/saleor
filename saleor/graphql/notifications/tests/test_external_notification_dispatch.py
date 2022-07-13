@@ -1,8 +1,10 @@
 from unittest.mock import patch
 
+from django.contrib.auth import get_user_model
 from graphql_relay.node.node import to_global_id
 
-from ....account.models import User
+
+User = get_user_model()
 
 
 @patch("saleor.plugins.manager.PluginsManager.notify")

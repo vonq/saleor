@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 from urllib.parse import urljoin
 
 import pytest
+from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
 from django.core.management import CommandError, call_command
 from django.db.utils import DataError
@@ -11,7 +12,7 @@ from django.templatetags.static import static
 from django.test import RequestFactory, override_settings
 from django_countries.fields import Country
 
-from ...account.models import Address, User
+from ...account.models import Address
 from ...account.utils import create_superuser
 from ...channel.models import Channel
 from ...discount.models import Sale, SaleChannelListing, Voucher, VoucherChannelListing
@@ -30,6 +31,10 @@ from ..utils import (
     get_currency_for_country,
     random_data,
 )
+
+
+User = get_user_model()
+
 
 type_schema = {
     "Vegetable": {

@@ -1,7 +1,7 @@
 import dataclasses
+from django.contrib.auth import get_user_model
 from operator import itemgetter
 
-from ...account import models as account_models
 from ...app import models as app_models
 from ...attribute import models as attribute_models
 from ...checkout import models as checkout_models
@@ -64,7 +64,7 @@ def resolve_object_with_metadata_type(instance):
             menu_models.MenuItem: menu_types.MenuItem,
             shipping_models.ShippingMethod: shipping_types.ShippingMethodType,
             shipping_models.ShippingZone: shipping_types.ShippingZone,
-            account_models.User: account_types.User,
+            get_user_model(): account_types.User,
             warehouse_models.Warehouse: warehouse_types.Warehouse,
             discount_models.Sale: discount_types.Sale,
             discount_models.Voucher: discount_types.Voucher,

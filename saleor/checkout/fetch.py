@@ -13,6 +13,7 @@ from typing import (
     Union,
 )
 
+from django.contrib.auth import get_user_model
 from django.utils.encoding import smart_text
 from django.utils.functional import SimpleLazyObject
 
@@ -29,7 +30,7 @@ from ..warehouse import WarehouseClickAndCollectOption
 from ..warehouse.models import Warehouse
 
 if TYPE_CHECKING:
-    from ..account.models import Address, User
+    from ..account.models import Address
     from ..channel.models import Channel
     from ..discount.interface import VoucherInfo
     from ..discount.models import Voucher
@@ -43,6 +44,8 @@ if TYPE_CHECKING:
         ProductVariantChannelListing,
     )
     from .models import Checkout, CheckoutLine
+
+    User = get_user_model()
 
 
 @dataclass

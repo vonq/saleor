@@ -1,9 +1,13 @@
 import graphene
+from django.contrib.auth import get_user_model
 
-from .....account.models import User
 from .....checkout.error_codes import CheckoutErrorCode
 from ....core.utils import to_global_id_or_none
 from ....tests.utils import assert_no_permission, get_graphql_content
+
+
+User = get_user_model()
+
 
 MUTATION_CHECKOUT_CUSTOMER_ATTACH = """
     mutation checkoutCustomerAttach($id: ID, $customerId: ID) {

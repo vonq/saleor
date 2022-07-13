@@ -13,6 +13,7 @@ import graphene
 import pytest
 import pytz
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.contrib.sites.models import Site
 from django.core.files import File
@@ -27,7 +28,7 @@ from freezegun import freeze_time
 from PIL import Image
 from prices import Money, TaxedMoney, fixed_discount
 
-from ..account.models import Address, StaffNotificationRecipient, User
+from ..account.models import Address, StaffNotificationRecipient
 from ..app.models import App, AppExtension, AppInstallation
 from ..app.types import AppExtensionMount, AppType
 from ..attribute import AttributeEntityType, AttributeInputType, AttributeType
@@ -130,6 +131,9 @@ from ..webhook.event_types import WebhookEventAsyncType, WebhookEventSyncType
 from ..webhook.models import Webhook, WebhookEvent
 from ..webhook.observability import WebhookData
 from .utils import dummy_editorjs
+
+
+User = get_user_model()
 
 
 class CaptureQueriesContext(BaseCaptureQueriesContext):

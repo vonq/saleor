@@ -5,10 +5,10 @@ from typing import Dict, List, Optional, cast
 
 import graphene
 from babel.numbers import get_currency_precision
+from django.contrib.auth import get_user_model
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Q
 
-from ..account.models import User
 from ..checkout.fetch import fetch_checkout_info, fetch_checkout_lines
 from ..checkout.models import Checkout
 from ..core.prices import quantize_price
@@ -43,6 +43,8 @@ logger = logging.getLogger(__name__)
 
 GENERIC_TRANSACTION_ERROR = "Transaction was unsuccessful"
 ALLOWED_GATEWAY_KINDS = {choices[0] for choices in TransactionKind.CHOICES}
+
+User = get_user_model()
 
 
 def create_payment_lines_information(

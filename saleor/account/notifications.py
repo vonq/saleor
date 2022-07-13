@@ -1,6 +1,7 @@
 from typing import Optional
 from urllib.parse import urlencode
 
+from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 
 from ..core.notification.utils import get_site_context
@@ -8,7 +9,9 @@ from ..core.notify_events import NotifyEventType
 from ..core.tokens import account_delete_token_generator
 from ..core.utils.url import prepare_url
 from ..graphql.core.utils import to_global_id_or_none
-from .models import User
+
+
+User = get_user_model()
 
 
 def get_default_user_payload(user: User):

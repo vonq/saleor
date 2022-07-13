@@ -23,7 +23,9 @@ from ...utils.validators import check_for_duplicates
 from ..types import Group
 
 if TYPE_CHECKING:
-    from ....account.models import User
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
 
 
 class PermissionGroupInput(graphene.InputObjectType):

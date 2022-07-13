@@ -2,9 +2,9 @@ from datetime import date
 from typing import Any, Dict, Optional, Tuple
 
 import micawber
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
-from ...account.models import User
 from ...product import ProductMediaTypes
 from ...product.error_codes import ProductErrorCode
 
@@ -14,6 +14,9 @@ SUPPORTED_MEDIA_TYPES = {
 }
 MEDIA_MAX_WIDTH = 1920
 MEDIA_MAX_HEIGHT = 1080
+
+
+User = get_user_model()
 
 
 def get_oembed_data(url: str, field_name: str) -> Tuple[Dict[str, Any], str]:

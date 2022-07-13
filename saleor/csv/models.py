@@ -1,12 +1,15 @@
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import JSONField  # type: ignore
 from django.utils import timezone
 
-from ..account.models import User
 from ..app.models import App
 from ..core.models import Job
 from ..core.utils.json_serializer import CustomJsonEncoder
 from . import ExportEvents
+
+
+User = get_user_model()
 
 
 class ExportFile(Job):

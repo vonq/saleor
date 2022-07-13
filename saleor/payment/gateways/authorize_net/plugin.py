@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING, List
 
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
-from saleor.account.models import User
 from saleor.plugins.base_plugin import BasePlugin, ConfigurationTypeField
 from saleor.plugins.error_codes import PluginErrorCode
 
@@ -27,6 +27,9 @@ if TYPE_CHECKING:
     from ...interface import CustomerSource
     from ..models import PluginConfiguration
     from . import GatewayResponse, PaymentData
+
+
+User = get_user_model()
 
 
 class AuthorizeNetGatewayPlugin(BasePlugin):

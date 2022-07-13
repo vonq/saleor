@@ -4,7 +4,10 @@ from django.contrib.postgres.search import SearchVector
 from django.db.models import Q, Value, prefetch_related_objects
 
 if TYPE_CHECKING:
-    from .models import Address, User
+    from django.contrib.auth import get_user_model
+    from .models import Address
+
+    User = get_user_model()
 
 
 USER_SEARCH_FIELDS = ["email", "first_name", "last_name"]

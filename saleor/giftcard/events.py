@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple
 
-from ..account.models import User
+from django.contrib.auth import get_user_model
 from ..app.models import App
 from ..core.utils.validators import user_is_valid
 from . import GiftCardEvents
@@ -8,6 +8,9 @@ from .models import GiftCard, GiftCardEvent
 
 if TYPE_CHECKING:
     from ..order.models import Order
+
+
+User = get_user_model()
 
 UserType = Optional[User]
 AppType = Optional[App]

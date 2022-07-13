@@ -4,9 +4,9 @@ from typing import Any, Dict, Iterable, Optional
 import graphene
 import jwt
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 
-from ..account.models import User
 from ..app.models import App, AppExtension
 from .jwt_manager import get_jwt_manager
 from .permissions import (
@@ -24,6 +24,9 @@ PERMISSIONS_FIELD = "permissions"
 USER_PERMISSION_FIELD = "user_permissions"
 JWT_SALEOR_OWNER_NAME = "saleor"
 JWT_OWNER_FIELD = "owner"
+
+
+User = get_user_model()
 
 
 def jwt_base_payload(

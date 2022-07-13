@@ -6,10 +6,10 @@ accounts, plugin configurations, site settings or navigation menus.
 """
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Q
 
-from ....account.models import User
 from ....attribute.models import Attribute
 from ....checkout.models import Checkout
 from ....discount.models import Sale, Voucher
@@ -21,6 +21,9 @@ from ....product.models import Category, Collection, Product, ProductType
 from ....shipping.models import ShippingMethod, ShippingZone
 from ....warehouse.models import Warehouse
 from ....webhook.models import Webhook
+
+
+User = get_user_model()
 
 
 class Command(BaseCommand):

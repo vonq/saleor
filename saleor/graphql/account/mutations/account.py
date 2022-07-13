@@ -1,7 +1,7 @@
 import graphene
 import jwt
 from django.conf import settings
-from django.contrib.auth import password_validation
+from django.contrib.auth import get_user_model, password_validation
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
@@ -82,7 +82,7 @@ class AccountRegister(ModelMutation):
     class Meta:
         description = "Register a new user."
         exclude = ["password"]
-        model = models.User
+        model = get_user_model()
         object_type = User
         error_type_class = AccountError
         error_type_field = "account_errors"
@@ -176,7 +176,7 @@ class AccountUpdate(BaseCustomerCreate):
     class Meta:
         description = "Updates the account of the logged-in user."
         exclude = ["password"]
-        model = models.User
+        model = get_user_model()
         object_type = User
         permissions = (AuthorizationFilters.AUTHENTICATED_USER,)
         error_type_class = AccountError
@@ -244,7 +244,7 @@ class AccountDelete(ModelDeleteMutation):
 
     class Meta:
         description = "Remove user account."
-        model = models.User
+        model = get_user_model()
         object_type = User
         error_type_class = AccountError
         error_type_field = "account_errors"
@@ -453,7 +453,7 @@ class RequestEmailChange(BaseMutation):
                     )
                 }
             )
-        if models.User.objects.filter(email=new_email).exists():
+        if get_user_model().objects.filter(email=new_email).exists():
             raise ValidationError(
                 {
                     "new_email": ValidationError(
@@ -533,7 +533,7 @@ class ConfirmEmailChange(BaseMutation):
         new_email = payload["new_email"]
         old_email = payload["old_email"]
 
-        if models.User.objects.filter(email=new_email).exists():
+        if get_user_model().objects.filter(email=new_email).exists():
             raise ValidationError(
                 {
                     "new_email": ValidationError(

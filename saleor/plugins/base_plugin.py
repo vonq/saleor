@@ -38,7 +38,8 @@ from .models import PluginConfiguration
 
 if TYPE_CHECKING:
     # flake8: noqa
-    from ..account.models import Address, User
+    from django.contrib.auth import get_user_model
+    from ..account.models import Address
     from ..app.models import App
     from ..attribute.models import Attribute, AttributeValue
     from ..channel.models import Channel
@@ -64,6 +65,8 @@ if TYPE_CHECKING:
     from ..shipping.interface import ShippingMethodData
     from ..shipping.models import ShippingMethod, ShippingZone
     from ..warehouse.models import Warehouse
+
+    User = get_user_model()
 
 PluginConfigurationType = List[dict]
 NoneType = type(None)

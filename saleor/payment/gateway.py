@@ -2,9 +2,9 @@ import logging
 from decimal import Decimal
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
 
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 
-from ..account.models import User
 from ..app.models import App
 from ..core.prices import quantize_price
 from ..core.tracing import traced_atomic_transaction
@@ -35,6 +35,8 @@ from .utils import (
 if TYPE_CHECKING:
     # flake8: noqa
     from ..plugins.manager import PluginsManager
+
+User = get_user_model()
 
 UserType = Optional[User]
 AppType = Optional[App]

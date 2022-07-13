@@ -67,8 +67,10 @@ __all__ = [
 ]
 
 if TYPE_CHECKING:
-    from ...account.models import User
+    from django.contrib.auth import get_user_model
     from ...app.models import App
+
+    User = get_user_model()
 
 
 def one_of_permissions_or_auth_filter_required(context, permissions):
@@ -119,7 +121,9 @@ def one_of_permissions_or_auth_filter_required(context, permissions):
 def permission_required(
     requestor: Union["User", "App"], perms: Collection[BasePermissionEnum]
 ) -> bool:
-    from ...account.models import User
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
 
     if isinstance(requestor, User):
         return requestor.has_perms(perms)

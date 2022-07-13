@@ -3,13 +3,13 @@ from typing import Optional, Tuple
 
 from authlib.common.errors import AuthlibBaseError
 from authlib.integrations.requests_client import OAuth2Session
+from django.contrib.auth import get_user_model
 from django.core import signing
 from django.core.exceptions import ValidationError
 from django.core.handlers.wsgi import WSGIRequest
 from jwt import ExpiredSignatureError, InvalidTokenError
 from requests import HTTPError, PreparedRequest
 
-from ...account.models import User
 from ...core.auth import get_token_from_request
 from ...core.jwt import (
     JWT_REFRESH_TOKEN_COOKIE_NAME,
@@ -39,6 +39,10 @@ from .utils import (
     is_owner_of_token_valid,
     validate_refresh_token,
 )
+
+
+User = get_user_model()
+
 
 logger = logging.getLogger(__name__)
 

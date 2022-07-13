@@ -1,8 +1,8 @@
 from typing import Any, List
 
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
-from ...account import models as account_models
 from ...account.error_codes import AccountErrorCode
 from ...attribute import AttributeType
 from ...attribute import models as attribute_models
@@ -39,7 +39,7 @@ def public_user_permissions(info, user_pk: int) -> List[BasePermissionEnum]:
     Staff user with `MANAGE_USERS` have access to customers public metadata.
     Staff user with `MANAGE_STAFF` have access to staff users public metadata.
     """
-    user = account_models.User.objects.filter(pk=user_pk).first()
+    user = get_user_model().objects.filter(pk=user_pk).first()
     if not user:
         raise ValidationError(
             {
@@ -56,7 +56,7 @@ def public_user_permissions(info, user_pk: int) -> List[BasePermissionEnum]:
 
 
 def private_user_permissions(_info, user_pk: int) -> List[BasePermissionEnum]:
-    user = account_models.User.objects.filter(pk=user_pk).first()
+    user = get_user_model().objects.filter(pk=user_pk).first()
     if not user:
         raise PermissionDenied()
     if user.is_staff:

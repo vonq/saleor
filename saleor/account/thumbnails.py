@@ -1,6 +1,9 @@
+from django.contrib.auth import get_user_model
 from ..celeryconf import app
 from ..core.utils import create_thumbnails
-from .models import User
+
+
+User = get_user_model()
 
 
 @app.task

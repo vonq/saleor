@@ -1,12 +1,11 @@
 from typing import Optional, Protocol, Union, cast
 
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import Exists, OuterRef
 from django.utils.functional import SimpleLazyObject
 
-from ..account.models import User
 from ..app.models import App, AppToken
 from ..core.auth import get_token_from_request
 from ..core.jwt import jwt_decode_with_exception_handler
@@ -19,6 +18,8 @@ def get_context_value(request):
     set_decoded_auth_token(request)
     return request
 
+
+User = get_user_model()
 
 UserType = Union[User, AnonymousUser]
 

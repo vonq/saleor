@@ -1,7 +1,7 @@
 from itertools import chain
 from typing import Optional
 
-from django.contrib.auth import models as auth_models
+from django.contrib.auth import get_user_model, models as auth_models
 from django.db.models import Q
 from i18naddress import get_validation_rules
 
@@ -39,7 +39,7 @@ USER_SEARCH_FIELDS = (
 
 
 def resolve_customers(_info):
-    return models.User.objects.customers()
+    return get_user_model().objects.customers()
 
 
 def resolve_permission_group(id):
@@ -51,7 +51,7 @@ def resolve_permission_groups(_info):
 
 
 def resolve_staff_users(_info):
-    return models.User.objects.staff()
+    return get_user_model().objects.staff()
 
 
 @traced_resolver
@@ -66,13 +66,13 @@ def resolve_user(info, id=None, email=None):
         if requester.has_perms(
             [AccountPermissions.MANAGE_STAFF, AccountPermissions.MANAGE_USERS]
         ):
-            return models.User.objects.filter(**filter_kwargs).first()
+            return get_user_model().objects.filter(**filter_kwargs).first()
         if requester.has_perm(AccountPermissions.MANAGE_STAFF):
-            return models.User.objects.staff().filter(**filter_kwargs).first()
+            return get_user_model().objects.staff().filter(**filter_kwargs).first()
         if has_one_of_permissions(
             requester, [AccountPermissions.MANAGE_USERS, OrderPermissions.MANAGE_ORDERS]
         ):
-            return models.User.objects.customers().filter(**filter_kwargs).first()
+            return get_user_model().objects.customers().filter(**filter_kwargs).first()
     return PermissionDenied(
         permissions=[
             AccountPermissions.MANAGE_STAFF,
@@ -86,22 +86,22 @@ def resolve_user(info, id=None, email=None):
 def resolve_users(info, ids=None, emails=None):
     requester = get_user_or_app_from_context(info.context)
     if not requester:
-        return models.User.objects.none()
+        return get_user_model().objects.none()
 
     if requester.has_perms(
         [AccountPermissions.MANAGE_STAFF, AccountPermissions.MANAGE_USERS]
     ):
-        qs = models.User.objects
+        qs = get_user_model().objects
     elif requester.has_perm(AccountPermissions.MANAGE_STAFF):
-        qs = models.User.objects.staff()
+        qs = get_user_model().objects.staff()
     elif requester.has_perm(AccountPermissions.MANAGE_USERS):
-        qs = models.User.objects.customers()
+        qs = get_user_model().objects.customers()
     elif requester.id:
         # If user has no access to all users, we can only return themselves, but
         # only if they are authenticated and one of requested users
-        qs = models.User.objects.filter(id=requester.id)
+        qs = get_user_model().objects.filter(id=requester.id)
     else:
-        qs = models.User.objects.none()
+        qs = get_user_model().objects.none()
 
     if ids:
         ids = {from_global_id_or_error(id, User, raise_error=True)[1] for id in ids}
@@ -157,7 +157,7 @@ def resolve_address_validation_rules(
 
 
 @traced_resolver
-def resolve_payment_sources(info, user: models.User, channel_slug: str):
+def resolve_payment_sources(info, user: get_user_model(), channel_slug: str):
     manager = info.context.plugins
     stored_customer_accounts = (
         (gtw.id, fetch_customer_id(user, gtw.id))
@@ -226,7 +226,7 @@ def resolve_addresses(info, ids):
     return models.Address.objects.none()
 
 
-def resolve_permissions(root: models.User):
+def resolve_permissions(root: get_user_model()):
     permissions = get_user_permissions(root)
     permissions = permissions.order_by("codename")
     return format_permissions_for_display(permissions)

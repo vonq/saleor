@@ -2,12 +2,15 @@ import json
 from unittest.mock import patch
 
 import pytest
+from django.contrib.auth import get_user_model
 from graphql_relay.node.node import to_global_id
 
-from ....account.models import User
 from ....core.notify_events import UserNotifyEvent
 from ....graphql.tests.utils import assert_no_permission
 from ....plugins.tests.sample_plugins import PluginSample
+
+
+User = get_user_model()
 
 query_test_invalid_data = [
     (
