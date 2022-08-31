@@ -1,6 +1,7 @@
 import json
 import logging
 from datetime import datetime
+from jwt import PyJWTError
 from typing import List, Optional
 
 import requests
@@ -15,9 +16,8 @@ from django.db.models import QuerySet
 from django.middleware.csrf import _compare_masked_tokens  # type: ignore
 from django.middleware.csrf import _get_new_csrf_token
 from django.utils.timezone import make_aware
-from jwt import PyJWTError
+from django.contrib.auth import get_user_model
 
-from ...account.models import User
 from ...core.jwt import (
     JWT_ACCESS_TYPE,
     JWT_OWNER_FIELD,
@@ -34,6 +34,7 @@ from . import PLUGIN_ID
 from .const import SALEOR_STAFF_PERMISSION
 from .exceptions import AuthenticationError
 
+
 JWKS_KEY = "oauth_jwks"
 JWKS_CACHE_TIME = 60 * 60  # 1 hour
 USER_INFO_DEFAULT_CACHE_TIME = 60 * 60  # 1 hour
@@ -45,6 +46,7 @@ OAUTH_TOKEN_REFRESH_FIELD = "oauth_refresh_token"
 CSRF_FIELD = "csrf_token"
 
 
+User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
@@ -169,7 +171,7 @@ def get_user_from_oauth_access_token_in_jwt_format(
     )
     if not user_info:
         logger.info(
-            "Failed to fetch user info for a valid OIDC access token",
+            f"Failed to fetch user info for a valid OIDC access token: {user_info_url}",
             extra={"token_exp": token_payload["exp"], "user_info_url": user_info_url},
         )
         return None
