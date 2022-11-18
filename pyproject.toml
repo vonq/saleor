@@ -153,3 +153,7 @@ exclude = """
   |locale
 )/
 """
+
+
+[project]
+name = "saleor"
