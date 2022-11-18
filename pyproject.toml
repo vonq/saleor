@@ -325,7 +325,7 @@ dependencies = [
   "websockets==10.3",
   "wrapt==1.14.1",
   "zipp==3.8.0",
-  "zopfli==0.2.1"
+  "zopfli==0.2.1",
 ]
 requires-python = ">=3.9"
 license = {text = "Proprietary"}
