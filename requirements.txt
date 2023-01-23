@@ -95,7 +95,7 @@ msrest==0.7.1; python_version >= "3.6"
 oauthlib==3.2.0; python_version >= "3.6"
 openpyxl==3.0.10; python_version >= "3.6"
 opentracing==2.4.0
-packaging==21.3; python_version >= "3.7"
+packaging==23.0; python_version >= "3.7"
 petl==1.7.9; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.4.0")
 phonenumberslite==8.12.51
 pillow==9.2.0; python_version >= "3.7"
