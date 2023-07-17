@@ -171,7 +171,7 @@ pytest-recording==0.12.1; python_version >= "3.5"
 pytest-socket==0.5.1; python_version >= "3.7" and python_version < "4.0"
 pytest-xdist==2.5.0; python_version >= "3.6"
 pytest==7.1.2; python_version >= "3.7"
-python-crontab==2.6.0
+python-crontab==3.0.0
 python-dateutil==2.8.2; python_version >= "3.7" and python_full_version < "3.0.0" or python_full_version >= "3.3.0" and python_version >= "3.7"
 python-dotenv==0.20.0; python_version >= "3.7"
 python-http-client==3.3.7; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
