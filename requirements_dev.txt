@@ -165,7 +165,7 @@ pytest-celery==0.0.0
 pytest-cov==3.0.0; python_version >= "3.6"
 pytest-django-queries==1.2.0
 pytest-django==4.5.2; python_version >= "3.5"
-pytest-forked==1.4.0; python_version >= "3.6"
+pytest-forked==1.6.0; python_version >= "3.6"
 pytest-mock==3.8.1; python_version >= "3.7"
 pytest-recording==0.12.1; python_version >= "3.5"
 pytest-socket==0.5.1; python_version >= "3.7" and python_version < "4.0"
